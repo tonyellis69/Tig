@@ -10,6 +10,8 @@ using namespace std;
 extern FILE* yyin;
 extern  int yyparse();
 
+extern int yydebug ;
+
 extern CTigCompiler* tigC;
 
 
@@ -20,8 +22,6 @@ CTigCompiler::CTigCompiler() {
 
 /** Compile the given Tig file. */
 void CTigCompiler::compile(std::string filename) {
-
-
 	yyin = NULL;
 	yyin = fopen(filename.c_str(), "rt"); //attemp to open the given file
 	if (yyin == NULL) {
@@ -30,7 +30,7 @@ void CTigCompiler::compile(std::string filename) {
 	}
 	
 	tigC = this;
-
+	//yydebug = 1;
 	yyparse();
 	fclose(yyin);
 }

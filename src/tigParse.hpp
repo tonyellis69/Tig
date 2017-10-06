@@ -46,11 +46,14 @@ extern int yydebug;
   enum yytokentype
   {
     PRINT = 258,
-    INTEGER = 259,
-    VARIABLE = 260,
-    STRING = 261,
-    END = 262,
-    ENDL = 263
+    EVENT = 259,
+    OPTION = 260,
+    INTEGER = 261,
+    VARIABLE = 262,
+    IDENTIFIER = 263,
+    STRING = 264,
+    END = 265,
+    ENDL = 266
   };
 #endif
 
@@ -59,7 +62,7 @@ extern int yydebug;
 typedef union YYSTYPE YYSTYPE;
 union YYSTYPE
 {
-#line 21 "tig.y" /* yacc.c:1909  */
+#line 24 "tig.y" /* yacc.c:1909  */
 				 						
     int iValue;                 // integer value - for numeric constants etc 
 	float fValue;				//float value - for floating-point constants
@@ -68,7 +71,7 @@ union YYSTYPE
 	 char sIndex;                /* symbol table index */
 	 std::string* str;
 
-#line 72 "tigParse.hpp" /* yacc.c:1909  */
+#line 75 "tigParse.hpp" /* yacc.c:1909  */
 };
 # define YYSTYPE_IS_TRIVIAL 1
 # define YYSTYPE_IS_DECLARED 1

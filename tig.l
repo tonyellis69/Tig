@@ -34,6 +34,9 @@ EOL		'\n'
 	//Excusive states are useful for sequences where the usual rules change.
 %x	COMMENT STR
 
+	//supposedly hits performance: %option yylineno 
+ 
+
 %%
 	//Rules section. Here we tell the lexer what to look out for and what to do when it finds it.
 	
@@ -58,13 +61,18 @@ EOL		'\n'
 						}
 					
 "print"         		return PRINT;
+"event"					return EVENT;
+"option"				return OPTION;
+{IDENT}					{	stringBuf.assign(yytext,yyleng);
+							yylval.str = &stringBuf;
+							return IDENTIFIER;
+						}
 						
 \"						{ 	BEGIN(STR); //We've started lexxing a string. 
 							stringBuf.clear(); 
 						}	
 
 <STR>\"					{								//End of string. 
-							//yylval.str = (char*)stringBuf.c_str(); /*Give the text to Yacc. */
 							yylval.str = &stringBuf;
 							BEGIN INITIAL;			/*The string ended normally with a quote, so no more to be done. */
 							return STRING;

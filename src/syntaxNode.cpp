@@ -5,6 +5,8 @@ using namespace std;
 
 std::vector<std::string>* CSyntaxNode::stringList = NULL;
 std::ofstream* CSyntaxNode::outputFile = NULL;
+std::map<std::string, int> CSyntaxNode::eventIDs;
+int CSyntaxNode::nextEventId = 1;
 
 using  strList_t = std::vector<std::string>*;
 
@@ -29,6 +31,16 @@ void CSyntaxNode::writeWord(unsigned int word) {
 
 void CSyntaxNode::writeString(std::string & text) {
 	*outputFile << text.c_str();
+}
+
+/** Return the unique id number for this event identifier. */
+int CSyntaxNode::getEventId(std::string & identifier) {
+	auto iter = eventIDs.find(identifier);
+	if (iter == eventIDs.end()) {
+		eventIDs[identifier] = nextEventId;
+		return nextEventId++;
+	}
+	return iter->second;
 }
 
 CStrNode::CStrNode(int index) {
@@ -71,4 +83,17 @@ void CBranchNode::encode() {
 	if (b2) {
 		b2->encode();
 	}
+}
+
+/** Create a node storing the text of this option and its associated ID. */
+COptionNode::COptionNode(std::string* text, std::string* branchEvent) {
+	choiceText = *text;
+	branchID = getEventId(*branchEvent);
+}
+
+/** Create a node storing the text of this event, its ID and pointer to its options. */
+CEventNode::CEventNode(std::string* identifier, std::string* text, CSyntaxNode* options) {
+	eventText = *text;
+	eventID = getEventId(*identifier);
+	optionList.push_back(options);
 }

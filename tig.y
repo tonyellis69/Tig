@@ -14,6 +14,9 @@
 
 	CTigCompiler* tigC;
 
+	extern int yylineno;
+	extern int lineNo;
+
 %}
 
 	// Definition of YYSTYPE - the type used for symbols, which enables them to hold various values. 
@@ -28,15 +31,19 @@
 };	
 
 %type <nPtr> program tigcode statement expression 
+%type <nPtr> event option_list option
 
-%token PRINT
-
+%token PRINT 
+%token EVENT OPTION
 %token <iValue> INTEGER
 %token <sIndex> VARIABLE
-%token <str> STRING
+%token <str> IDENTIFIER STRING
 %token END ENDL
 %left '+' '-'
 %left '*' '/'
+
+//%verbose
+
 
 %%
 
@@ -53,7 +60,22 @@ tigcode:
 statement:
         PRINT expression ';'			{ $$ = new COpNode(opPrint,$2); }   //         printf("%s\n", tigC->getString($2->getStrIndex())); }	
         //| VARIABLE '=' expression		{ sym[$1] = $3; }
+		| event	';'					{ $$ = $1; }
         ;
+
+event:
+		EVENT IDENTIFIER STRING	',' option_list 	{ $$ = new CEventNode($2,$3,$5); }
+		;
+
+option_list:
+		option							{ $$ = $1; }
+		| option_list ',' option		{ $$ = tigC->branchNode($1,$3); }
+		;
+
+option:								
+		OPTION STRING IDENTIFIER				{ $$ = new COptionNode($2,$3); }
+		;
+
 
 expression:
       STRING 							{ $$ = tigC->stringNode($1); } 
@@ -63,5 +85,6 @@ expression:
 %%
 
 void yyerror(char *s) {
-    fprintf(stderr, "%s\n", s);
+   // fprintf(stderr, "%s\n", s);
+	fprintf(stderr, "line %d: %s\n", lineNo, s);
 }

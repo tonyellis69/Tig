@@ -29,6 +29,8 @@ int main(void) {
 	//_CrtSetDbgFlag( );
 	CTigCompiler* tig = new CTigCompiler();
 
+	
+
 	std::string homeDir = getHomeDirectory();
 #ifdef _DEBUG
 	//homeDir += "..\\";

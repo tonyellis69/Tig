@@ -7,6 +7,7 @@
 
 #include <vector>
 #include <fstream>
+#include <map>
 
 #include "sharedTypes.h"
 
@@ -21,9 +22,12 @@ public:
 	void writeByte(char byte);
 	void writeWord(unsigned int word);
 	void writeString(std::string& text);
+	int getEventId(std::string& identifier);
 
 	static std::vector<std::string>* stringList;
 	static std::ofstream* outputFile;
+	static std::map<std::string, int> eventIDs;
+	static int nextEventId;
 };
 
 
@@ -54,4 +58,22 @@ public:
 
 	CSyntaxNode* b1;
 	CSyntaxNode* b2;
+};
+
+class COptionNode : public CSyntaxNode {
+public:
+	COptionNode(std::string* text, std::string* branchEvent);
+
+
+	std::string choiceText;
+	int branchID;
+};
+
+class CEventNode : public CSyntaxNode {
+public:
+	CEventNode(std::string* identifier, std::string* text, CSyntaxNode* options);
+	
+	std::string eventText;
+	int eventID;
+	std::vector<CSyntaxNode*> optionList;
 };

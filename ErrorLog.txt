@@ -1,0 +1,381 @@
+Starting parse
+Entering state 0
+Reading a token: Next token is token EVENT ()
+Shifting token EVENT ()
+Entering state 2
+Reading a token: Next token is token IDENTIFIER ()
+Shifting token IDENTIFIER ()
+Entering state 10
+Reading a token: Next token is token STRING ()
+Shifting token STRING ()
+Entering state 15
+Reading a token: Next token is token ',' ()
+Shifting token ',' ()
+Entering state 16
+Reading a token: Next token is token OPTION ()
+Shifting token OPTION ()
+Entering state 17
+Reading a token: Next token is token STRING ()
+Shifting token STRING ()
+Entering state 20
+Reading a token: Next token is token IDENTIFIER ()
+Shifting token IDENTIFIER ()
+Entering state 22
+Reducing stack by rule 10 (line 77):
+   $1 = token OPTION ()
+   $2 = token STRING ()
+   $3 = token IDENTIFIER ()
+-> $$ = nterm option ()
+Stack now 0 2 10 15 16
+Entering state 19
+Reducing stack by rule 8 (line 72):
+   $1 = nterm option ()
+-> $$ = nterm option_list ()
+Stack now 0 2 10 15 16
+Entering state 18
+Reading a token: Next token is token ',' ()
+Shifting token ',' ()
+Entering state 21
+Reading a token: Next token is token OPTION ()
+Shifting token OPTION ()
+Entering state 17
+Reading a token: Next token is token STRING ()
+Shifting token STRING ()
+Entering state 20
+Reading a token: Next token is token IDENTIFIER ()
+Shifting token IDENTIFIER ()
+Entering state 22
+Reducing stack by rule 10 (line 77):
+   $1 = token OPTION ()
+   $2 = token STRING ()
+   $3 = token IDENTIFIER ()
+-> $$ = nterm option ()
+Stack now 0 2 10 15 16 18 21
+Entering state 23
+Reducing stack by rule 9 (line 73):
+   $1 = nterm option_list ()
+   $2 = token ',' ()
+   $3 = nterm option ()
+-> $$ = nterm option_list ()
+Stack now 0 2 10 15 16
+Entering state 18
+Reading a token: Next token is token ',' ()
+Shifting token ',' ()
+Entering state 21
+Reading a token: Next token is token OPTION ()
+Shifting token OPTION ()
+Entering state 17
+Reading a token: Next token is token STRING ()
+Shifting token STRING ()
+Entering state 20
+Reading a token: Next token is token IDENTIFIER ()
+Shifting token IDENTIFIER ()
+Entering state 22
+Reducing stack by rule 10 (line 77):
+   $1 = token OPTION ()
+   $2 = token STRING ()
+   $3 = token IDENTIFIER ()
+-> $$ = nterm option ()
+Stack now 0 2 10 15 16 18 21
+Entering state 23
+Reducing stack by rule 9 (line 73):
+   $1 = nterm option_list ()
+   $2 = token ',' ()
+   $3 = nterm option ()
+-> $$ = nterm option_list ()
+Stack now 0 2 10 15 16
+Entering state 18
+Reading a token: Next token is token ';' ()
+Reducing stack by rule 7 (line 68):
+   $1 = token EVENT ()
+   $2 = token IDENTIFIER ()
+   $3 = token STRING ()
+   $4 = token ',' ()
+   $5 = nterm option_list ()
+-> $$ = nterm event ()
+Stack now 0
+Entering state 6
+Next token is token ';' ()
+Shifting token ';' ()
+Entering state 13
+Reducing stack by rule 6 (line 64):
+   $1 = nterm event ()
+   $2 = token ';' ()
+-> $$ = nterm statement ()
+Stack now 0
+Entering state 5
+Reducing stack by rule 3 (line 57):
+   $1 = nterm statement ()
+-> $$ = nterm tigcode ()
+Stack now 0
+Entering state 4
+Reading a token: Next token is token EVENT ()
+Shifting token EVENT ()
+Entering state 2
+Reading a token: Next token is token IDENTIFIER ()
+Shifting token IDENTIFIER ()
+Entering state 10
+Reading a token: Next token is token STRING ()
+Shifting token STRING ()
+Entering state 15
+Reading a token: Next token is token ',' ()
+Shifting token ',' ()
+Entering state 16
+Reading a token: Next token is token OPTION ()
+Shifting token OPTION ()
+Entering state 17
+Reading a token: Next token is token STRING ()
+Shifting token STRING ()
+Entering state 20
+Reading a token: Next token is token IDENTIFIER ()
+Shifting token IDENTIFIER ()
+Entering state 22
+Reducing stack by rule 10 (line 77):
+   $1 = token OPTION ()
+   $2 = token STRING ()
+   $3 = token IDENTIFIER ()
+-> $$ = nterm option ()
+Stack now 0 4 2 10 15 16
+Entering state 19
+Reducing stack by rule 8 (line 72):
+   $1 = nterm option ()
+-> $$ = nterm option_list ()
+Stack now 0 4 2 10 15 16
+Entering state 18
+Reading a token: Next token is token ',' ()
+Shifting token ',' ()
+Entering state 21
+Reading a token: Next token is token OPTION ()
+Shifting token OPTION ()
+Entering state 17
+Reading a token: Next token is token STRING ()
+Shifting token STRING ()
+Entering state 20
+Reading a token: Next token is token IDENTIFIER ()
+Shifting token IDENTIFIER ()
+Entering state 22
+Reducing stack by rule 10 (line 77):
+   $1 = token OPTION ()
+   $2 = token STRING ()
+   $3 = token IDENTIFIER ()
+-> $$ = nterm option ()
+Stack now 0 4 2 10 15 16 18 21
+Entering state 23
+Reducing stack by rule 9 (line 73):
+   $1 = nterm option_list ()
+   $2 = token ',' ()
+   $3 = nterm option ()
+-> $$ = nterm option_list ()
+Stack now 0 4 2 10 15 16
+Entering state 18
+Reading a token: Next token is token ';' ()
+Reducing stack by rule 7 (line 68):
+   $1 = token EVENT ()
+   $2 = token IDENTIFIER ()
+   $3 = token STRING ()
+   $4 = token ',' ()
+   $5 = nterm option_list ()
+-> $$ = nterm event ()
+Stack now 0 4
+Entering state 6
+Next token is token ';' ()
+Shifting token ';' ()
+Entering state 13
+Reducing stack by rule 6 (line 64):
+   $1 = nterm event ()
+   $2 = token ';' ()
+-> $$ = nterm statement ()
+Stack now 0 4
+Entering state 12
+Reducing stack by rule 4 (line 58):
+   $1 = nterm tigcode ()
+   $2 = nterm statement ()
+-> $$ = nterm tigcode ()
+Stack now 0
+Entering state 4
+Reading a token: Next token is token EVENT ()
+Shifting token EVENT ()
+Entering state 2
+Reading a token: Next token is token IDENTIFIER ()
+Shifting token IDENTIFIER ()
+Entering state 10
+Reading a token: Next token is token STRING ()
+Shifting token STRING ()
+Entering state 15
+Reading a token: Next token is token ',' ()
+Shifting token ',' ()
+Entering state 16
+Reading a token: Next token is token OPTION ()
+Shifting token OPTION ()
+Entering state 17
+Reading a token: Next token is token STRING ()
+Shifting token STRING ()
+Entering state 20
+Reading a token: Next token is token IDENTIFIER ()
+Shifting token IDENTIFIER ()
+Entering state 22
+Reducing stack by rule 10 (line 77):
+   $1 = token OPTION ()
+   $2 = token STRING ()
+   $3 = token IDENTIFIER ()
+-> $$ = nterm option ()
+Stack now 0 4 2 10 15 16
+Entering state 19
+Reducing stack by rule 8 (line 72):
+   $1 = nterm option ()
+-> $$ = nterm option_list ()
+Stack now 0 4 2 10 15 16
+Entering state 18
+Reading a token: Next token is token ';' ()
+Reducing stack by rule 7 (line 68):
+   $1 = token EVENT ()
+   $2 = token IDENTIFIER ()
+   $3 = token STRING ()
+   $4 = token ',' ()
+   $5 = nterm option_list ()
+-> $$ = nterm event ()
+Stack now 0 4
+Entering state 6
+Next token is token ';' ()
+Shifting token ';' ()
+Entering state 13
+Reducing stack by rule 6 (line 64):
+   $1 = nterm event ()
+   $2 = token ';' ()
+-> $$ = nterm statement ()
+Stack now 0 4
+Entering state 12
+Reducing stack by rule 4 (line 58):
+   $1 = nterm tigcode ()
+   $2 = nterm statement ()
+-> $$ = nterm tigcode ()
+Stack now 0
+Entering state 4
+Reading a token: Next token is token EVENT ()
+Shifting token EVENT ()
+Entering state 2
+Reading a token: Next token is token IDENTIFIER ()
+Shifting token IDENTIFIER ()
+Entering state 10
+Reading a token: Next token is token STRING ()
+Shifting token STRING ()
+Entering state 15
+Reading a token: Next token is token ',' ()
+Shifting token ',' ()
+Entering state 16
+Reading a token: Next token is token OPTION ()
+Shifting token OPTION ()
+Entering state 17
+Reading a token: Next token is token STRING ()
+Shifting token STRING ()
+Entering state 20
+Reading a token: Next token is token IDENTIFIER ()
+Shifting token IDENTIFIER ()
+Entering state 22
+Reducing stack by rule 10 (line 77):
+   $1 = token OPTION ()
+   $2 = token STRING ()
+   $3 = token IDENTIFIER ()
+-> $$ = nterm option ()
+Stack now 0 4 2 10 15 16
+Entering state 19
+Reducing stack by rule 8 (line 72):
+   $1 = nterm option ()
+-> $$ = nterm option_list ()
+Stack now 0 4 2 10 15 16
+Entering state 18
+Reading a token: Next token is token ';' ()
+Reducing stack by rule 7 (line 68):
+   $1 = token EVENT ()
+   $2 = token IDENTIFIER ()
+   $3 = token STRING ()
+   $4 = token ',' ()
+   $5 = nterm option_list ()
+-> $$ = nterm event ()
+Stack now 0 4
+Entering state 6
+Next token is token ';' ()
+Shifting token ';' ()
+Entering state 13
+Reducing stack by rule 6 (line 64):
+   $1 = nterm event ()
+   $2 = token ';' ()
+-> $$ = nterm statement ()
+Stack now 0 4
+Entering state 12
+Reducing stack by rule 4 (line 58):
+   $1 = nterm tigcode ()
+   $2 = nterm statement ()
+-> $$ = nterm tigcode ()
+Stack now 0
+Entering state 4
+Reading a token: Next token is token EVENT ()
+Shifting token EVENT ()
+Entering state 2
+Reading a token: Next token is token IDENTIFIER ()
+Shifting token IDENTIFIER ()
+Entering state 10
+Reading a token: Next token is token STRING ()
+Shifting token STRING ()
+Entering state 15
+Reading a token: Next token is token ',' ()
+Shifting token ',' ()
+Entering state 16
+Reading a token: Next token is token OPTION ()
+Shifting token OPTION ()
+Entering state 17
+Reading a token: Next token is token STRING ()
+Shifting token STRING ()
+Entering state 20
+Reading a token: Next token is token IDENTIFIER ()
+Shifting token IDENTIFIER ()
+Entering state 22
+Reducing stack by rule 10 (line 77):
+   $1 = token OPTION ()
+   $2 = token STRING ()
+   $3 = token IDENTIFIER ()
+-> $$ = nterm option ()
+Stack now 0 4 2 10 15 16
+Entering state 19
+Reducing stack by rule 8 (line 72):
+   $1 = nterm option ()
+-> $$ = nterm option_list ()
+Stack now 0 4 2 10 15 16
+Entering state 18
+Reading a token: Next token is token ';' ()
+Reducing stack by rule 7 (line 68):
+   $1 = token EVENT ()
+   $2 = token IDENTIFIER ()
+   $3 = token STRING ()
+   $4 = token ',' ()
+   $5 = nterm option_list ()
+-> $$ = nterm event ()
+Stack now 0 4
+Entering state 6
+Next token is token ';' ()
+Shifting token ';' ()
+Entering state 13
+Reducing stack by rule 6 (line 64):
+   $1 = nterm event ()
+   $2 = token ';' ()
+-> $$ = nterm statement ()
+Stack now 0 4
+Entering state 12
+Reducing stack by rule 4 (line 58):
+   $1 = nterm tigcode ()
+   $2 = nterm statement ()
+-> $$ = nterm tigcode ()
+Stack now 0
+Entering state 4
+Reading a token: Now at end of input.
+Reducing stack by rule 1 (line 52):
+   $1 = nterm tigcode ()
+-> $$ = nterm program ()
+Stack now 0
+Entering state 3
+Now at end of input.
+Shifting token $end ()
+Entering state 11
+Stack now 0 3 11
+Cleanup: popping token $end ()
+Cleanup: popping nterm program ()
