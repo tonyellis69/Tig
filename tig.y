@@ -31,7 +31,7 @@
 };	
 
 %type <nPtr> program tigcode statement expression 
-%type <nPtr> event option_list option
+%type <nPtr> event option_list option string_literal event_identifier
 
 %token PRINT 
 %token EVENT OPTION
@@ -54,31 +54,39 @@ program:
 
 tigcode:
 		statement						{ $$ = $1; }
-		| tigcode statement				{ $$ = tigC->branchNode($1,$2); }
+		| tigcode statement				{ $$ = new CJointNode($1,$2); }
         ;
 
 statement:
-        PRINT expression ';'			{ $$ = new COpNode(opPrint,$2); }   //         printf("%s\n", tigC->getString($2->getStrIndex())); }	
+        PRINT expression ';'			{ $$ = new COpNode(opPrint,$2); }   	
         //| VARIABLE '=' expression		{ sym[$1] = $3; }
 		| event	';'					{ $$ = $1; }
         ;
 
 event:
-		EVENT IDENTIFIER STRING	',' option_list 	{ $$ = new CEventNode($2,$3,$5); }
+		EVENT event_identifier string_literal	',' option_list 	{ $$ = new CEventNode($2,$3,$5); }
+		;
+
+string_literal:
+		STRING							{ $$ = new CStrNode($1); } 
+		;
+
+event_identifier:
+		IDENTIFIER					   { $$ = new CEventIdentNode($1); }
 		;
 
 option_list:
 		option							{ $$ = $1; }
-		| option_list ',' option		{ $$ = tigC->branchNode($1,$3); }
+		| option_list ',' option		{ $$ = new CJointNode($1,$3); }
 		;
 
 option:								
-		OPTION STRING IDENTIFIER				{ $$ = new COptionNode($2,$3); }
+		OPTION string_literal event_identifier				{ $$ = new COptionNode($2,$3); }
 		;
 
 
 expression:
-      STRING 							{ $$ = tigC->stringNode($1); } 
+      STRING 							{ $$ = new CStrNode($1); } 
       | INTEGER							{ printf("%d\n", $1); }
         ;
 
@@ -86,5 +94,5 @@ expression:
 
 void yyerror(char *s) {
    // fprintf(stderr, "%s\n", s);
-	fprintf(stderr, "line %d: %s\n", lineNo, s);
+	fprintf(stdout, "line %d: %s\n", lineNo, s);
 }

@@ -16,7 +16,7 @@ extern CTigCompiler* tigC;
 
 
 CTigCompiler::CTigCompiler() {
-	CSyntaxNode::setStringList(&stringList);
+	
 }
 
 
@@ -35,25 +35,12 @@ void CTigCompiler::compile(std::string filename) {
 	fclose(yyin);
 }
 
-/** Create a string node for the given string and return a pointer to it. */
-CStrNode * CTigCompiler::stringNode(std::string * parsedString) {
-	int stringListIndex = stringList.size();
-	stringList.push_back(*parsedString);
-	return new CStrNode(stringListIndex);
-}
 
-/** Return the stringlist entry for the given index as C string. */
-char * CTigCompiler::getString(int index) {
-	return (char*)stringList[index].c_str();
-}
+
 
 /** Create an operator node for the given op code and return a pointer to it. */
 COpNode * CTigCompiler::opNode(TOpCode opCode, CSyntaxNode* operand) {
 	return new COpNode(opCode, operand);
-}
-
-CBranchNode * CTigCompiler::branchNode(CSyntaxNode * branch1, CSyntaxNode * branch2) {
-	return new CBranchNode(branch1, branch2);
 }
 
 /** Convert the given syntax tree into bytecode, and write it to a file. */
@@ -71,8 +58,6 @@ void CTigCompiler::encode(CSyntaxNode * node) {
 
 
 CTigCompiler::~CTigCompiler() {
-	for (auto i : stringList) {
-		i.clear();
-	}
+	
 
 }

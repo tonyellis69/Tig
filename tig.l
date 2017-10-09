@@ -63,7 +63,8 @@ EOL		'\n'
 "print"         		return PRINT;
 "event"					return EVENT;
 "option"				return OPTION;
-{IDENT}					{	stringBuf.assign(yytext,yyleng);
+{IDENT}					{	stringBuf.clear(); 
+							stringBuf.assign(yytext,yyleng);
 							yylval.str = &stringBuf;
 							return IDENTIFIER;
 						}
@@ -71,6 +72,9 @@ EOL		'\n'
 \"						{ 	BEGIN(STR); //We've started lexxing a string. 
 							stringBuf.clear(); 
 						}	
+<STR>\"\"				{
+							stringBuf.append("\"");	
+						}
 
 <STR>\"					{								//End of string. 
 							yylval.str = &stringBuf;
@@ -78,8 +82,7 @@ EOL		'\n'
 							return STRING;
 						}
 <STR>.					{
-								stringBuf.append( yytext,yyleng);
-									
+								stringBuf.append( yytext,yyleng);		
 						}			
 
 
