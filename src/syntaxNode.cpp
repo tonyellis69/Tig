@@ -9,9 +9,8 @@ std::map<std::string, int> CSyntaxNode::eventIDs;
 int CSyntaxNode::nextEventId = 1;
 std::map<int, int> CSyntaxNode::eventTable;
 std::vector<CSyntaxNode*> CSyntaxNode::stack;
+int CSyntaxNode::eventTableAddr = 0;
 
-
-//using  strList_t = std::vector<std::string>*;
 
 CSyntaxNode::CSyntaxNode() {
 }
@@ -31,6 +30,19 @@ void CSyntaxNode::writeWord(unsigned int word) {
 
 void CSyntaxNode::writeString(std::string & text) {
 	*outputFile << text.c_str();
+}
+
+void CSyntaxNode::writeEventTable() {
+	eventTableAddr = outputFile->tellp();
+	for (auto event : eventTable) {
+		writeWord(event.first);
+		writeWord(event.second);
+	}
+}
+
+void CSyntaxNode::writeHeader() {
+	int headerSize = 4;
+	writeWord(eventTableAddr + headerSize);
 }
 
 /** Return the unique id number for this event identifier. */

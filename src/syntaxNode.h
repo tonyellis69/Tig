@@ -11,10 +11,7 @@
 
 #include "sharedTypes.h"
 
-struct TEventRec {
-	int eventId;
-	int address;
-};
+
 
 /** Basic syntax node. */
 class CSyntaxNode {
@@ -24,11 +21,13 @@ public:
 	virtual void encode() {};
 	virtual int getId() { return NULL; }
 	virtual std::string& getText() { std::string nul;  return nul; };
+	int getEventId(std::string& identifier); //TO DO still needed?
 	static void setOutputFile(std::ofstream& file);
 	void writeByte(char byte);
 	void writeWord(unsigned int word);
 	void writeString(std::string& text);
-	int getEventId(std::string& identifier);
+	void writeEventTable();
+	void writeHeader();
 
 	static std::vector<std::string> stringList;
 	static std::ofstream* outputFile;
@@ -36,6 +35,8 @@ public:
 	static int nextEventId;
 	static std::map<int, int> eventTable; ///<Tables event IDs and addresses.
 	static std::vector<CSyntaxNode*> stack; ///<A handy, temporary container of nodes.
+
+	static int eventTableAddr; ///<Where the event table starts
 };
 
 

@@ -46,12 +46,30 @@ COpNode * CTigCompiler::opNode(TOpCode opCode, CSyntaxNode* operand) {
 /** Convert the given syntax tree into bytecode, and write it to a file. */
 void CTigCompiler::encode(CSyntaxNode * node) {
 	//open an output file
-	ofstream byteCode("output.tig", ofstream::binary);
+	ofstream byteCode("tempFile.tig", ios::binary | ios::out);
 	node->setOutputFile(byteCode);
 
 	node->encode();
 	cout << "\nend of encoding run";
+
+	//add events table
+	node->writeEventTable();
 	byteCode.close();
+
+	//write header
+	ofstream header("output.tig", ios::binary | ios::out);
+	node->setOutputFile(header);
+	node->writeHeader();
+	header.close();
+
+	//stitch together
+	ofstream final("output.tig", ios::binary | ios::out | ios::app);
+	ifstream tempFile("tempFile.tig", ios::binary | ios::in);
+
+	final << tempFile.rdbuf();
+	final.close();
+	tempFile.close();
+	remove("tempFile.tig");
 }
 
 
