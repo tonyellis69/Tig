@@ -57,7 +57,7 @@ void CTigCompiler::encode(CSyntaxNode * node) {
 	byteCode.close();
 
 	//write header
-	ofstream header("output.tig", ios::binary | ios::out);
+	ofstream header("output.tig", ios::ate | ios::binary | ios::out);
 	node->setOutputFile(header);
 	node->writeHeader();
 	header.close();

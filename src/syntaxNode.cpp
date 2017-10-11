@@ -15,7 +15,7 @@ int CSyntaxNode::eventTableAddr = 0;
 CSyntaxNode::CSyntaxNode() {
 }
 
-
+/** Set the file the syntax tree writes to. */
 void CSyntaxNode::setOutputFile(std::ofstream& file) {
 	outputFile = &file;
 }
@@ -29,11 +29,13 @@ void CSyntaxNode::writeWord(unsigned int word) {
 }
 
 void CSyntaxNode::writeString(std::string & text) {
+	writeWord(text.size());
 	*outputFile << text.c_str();
 }
 
 void CSyntaxNode::writeEventTable() {
 	eventTableAddr = outputFile->tellp();
+	writeWord(eventTable.size());
 	for (auto event : eventTable) {
 		writeWord(event.first);
 		writeWord(event.second);
@@ -68,8 +70,6 @@ int CStrNode::getStrIndex() {
 
 /** Write the byte code for this string literal. */
 void CStrNode::encode() {
-	int stringSize = stringList[stringListIndex].size();
-	writeWord(stringSize);
 	writeString(stringList[stringListIndex]);
 }
 
@@ -152,7 +152,6 @@ void CEventNode::encode() {
 	writeByte(stack.size());
 	for (int option = 0; option < stack.size(); option++) {
 		string optionStr = stack[option]->getText();
-		writeWord(optionStr.size());
 		writeString(optionStr);
 		int eventID = stack[option]->getId();
 		writeWord(eventID);
