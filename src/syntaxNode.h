@@ -22,21 +22,27 @@ public:
 	virtual int getId() { return NULL; }
 	virtual std::string& getText() { std::string nul;  return nul; };
 	int getEventId(std::string& identifier); //TO DO still needed?
+	int getGlobalVarId(std::string & identifier);
 	static void setOutputFile(std::ofstream& file);
 	void writeByte(char byte);
 	void writeWord(unsigned int word);
-	void writeString(std::string& text);
+	void writeString(const std::string& text);
+	void writeCString(const std::string & text);
 	void writeEventTable();
+	void writeGlobalVarTable();
 	void writeHeader();
 
 	static std::vector<std::string> stringList;
 	static std::ofstream* outputFile;
-	static std::map<std::string, int> eventIDs;
+	static std::map<std::string, int> eventIds;
 	static int nextEventId;
 	static std::map<int, int> eventTable; ///<Tables event IDs and addresses.
+	static std::map<std::string, int> globalVarIds;
+	static int nextGlobalVarId;
 	static std::vector<CSyntaxNode*> stack; ///<A handy, temporary container of nodes.
 
 	static int eventTableAddr; ///<Where the event table starts
+	static int globalVarTableAddr; ///<Where the global variable table starts
 };
 
 
@@ -54,6 +60,8 @@ public:
 class COpNode : public CSyntaxNode {
 public:
 	COpNode(TOpCode code, CSyntaxNode* operand);
+	COpNode(TOpCode code);
+	COpNode(TOpCode code, CSyntaxNode* operand1, CSyntaxNode* operand2);
 	void encode();
 
 	TOpCode opCode;
@@ -75,7 +83,7 @@ public:
 	int getId();
 	std::string& getText();
 
-	int eventID;
+	int eventId;
 	std::string text;
 };
 
@@ -97,7 +105,18 @@ public:
 	void encode();
 	
 	std::string eventText;
-	int eventID;
+	int eventId;
 	std::vector<CSyntaxNode*> optionList;
+};
+
+
+class CGlobalVarNode : public CSyntaxNode {
+public:
+	CGlobalVarNode(std::string* parsedString);
+
+	void encode();
+
+	int varId;
+	std::string name;
 };
 

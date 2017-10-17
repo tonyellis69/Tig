@@ -54,7 +54,11 @@ void CTigCompiler::encode(CSyntaxNode * node) {
 
 	//add events table
 	node->writeEventTable();
+	node->writeGlobalVarTable();
+
 	byteCode.close();
+
+	
 
 	//write header
 	ofstream header("output.tig", ios::ate | ios::binary | ios::out);

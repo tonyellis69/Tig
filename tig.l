@@ -15,20 +15,21 @@
 	  #include "tigParse.hpp"
 
     void yyerror(char *);
+	void trackLine();
 	//extern "C" YYSTYPE yylval;
 	
 	int lineNo = 1; ///<Keeps track of line numbers for error messages.
+	fpos_t lastLinePos = 0; 
+	fpos_t linePos; 
 	//char buf[10000]; //for temporarily storing string constants
 	char* bufptr;
 	std::string stringBuf;
 %}
 
 	/* Substitutions simplify pattern-matching rules, eg, letter [A-Za-z] or digit [0-9] */
-	//TO DO: am I using these?
 LETTER   [a-zA-Z_]
 DIGIT    [0-9]
 IDENT    {LETTER}({LETTER}|{DIGIT})*
-EOL		'\n'
 
 
 	//Excusive states are useful for sequences where the usual rules change.
@@ -48,7 +49,7 @@ EOL		'\n'
 
 "//"					{	char c;  /*eat //comments */
 							while ((c = yyinput()) != '\n' && c != 0);
-							lineNo++;
+							trackLine();
 						}
 
 [1-9][0-9]*				{
@@ -61,6 +62,7 @@ EOL		'\n'
 						}
 					
 "print"         		return PRINT;
+"end"					return END;
 "event"					return EVENT;
 "option"				return OPTION;
 {IDENT}					{	stringBuf.clear(); 
@@ -73,13 +75,16 @@ EOL		'\n'
 							stringBuf.clear(); 
 						}	
 <STR>\"\"				{
-							stringBuf.append("\"");	
+							stringBuf.append("\"");	//Two double quotes, replace with one.
 						}
 
 <STR>\"					{								//End of string. 
 							yylval.str = &stringBuf;
 							BEGIN INITIAL;			/*The string ended normally with a quote, so no more to be done. */
 							return STRING;
+						}
+<STR>\n					{
+								stringBuf.append("\n"); trackLine();
 						}
 <STR>.					{
 								stringBuf.append( yytext,yyleng);		
@@ -89,7 +94,7 @@ EOL		'\n'
 
 [ \t]   ;				/* skip whitespace */
 
-\n						{ lineNo++;}   //keep track of line number
+\n						{ trackLine(); }   //keep track of line number
 
 .						 yyerror("Unknown character");
 
@@ -97,4 +102,10 @@ EOL		'\n'
 
 int yywrap(void) { //Called when input exhausted. Reset yyin and return 0 to process another file.
     return 1;
+}
+
+void trackLine() {
+	lastLinePos = linePos;
+	lineNo++; 
+	fgetpos(yyin,&linePos);
 }
