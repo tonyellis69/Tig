@@ -34,7 +34,7 @@
 %type <nPtr> program tigcode statement expression statement_list
 %type <nPtr> event option_list option string_literal event_identifier optional_option_list 
 %type <nPtr> optional_code_block code_block
-%type <nPtr> variable
+%type <nPtr> variable_assign variable_expr
 
 %token PRINT END
 %token EVENT OPTION
@@ -61,14 +61,14 @@ tigcode:
 
 statement:
         PRINT expression ';'			{ $$ = new COpNode(opPrint,$2); }   	
-        | variable '=' expression ';'	{ $$ = new COpNode(opAssign,$1,$3); }
+        | variable_assign '=' expression ';'	{ $$ = new COpNode(opAssign,$1,$3); }
 		| event	';'						{ $$ = $1; }  //TO DO: maybe move to 'declaritive statements'
 		| '{' statement_list '}'		{ $$ = $2; }
 		| END ';'						{ $$ = new COpNode(opEnd);}
         ;
 
-variable:
-		IDENTIFIER						{ $$ = new CGlobalVarNode($1); }
+variable_assign:
+		IDENTIFIER						{ $$ = new CGlobalVarAssignNode($1); }
 	;
 
 statement_list:
@@ -113,9 +113,13 @@ code_block:
 
 expression:
       STRING 							{ $$ = new CStrNode($1); } 
-	  | variable						{ $$ = $1; }
+	  | variable_expr					{ $$ = $1; }
       | INTEGER							{ printf("%d\n", $1); }
-        ;
+      ;
+
+variable_expr:
+	IDENTIFIER						{ $$ = new CGlobalVarExprNode($1); }
+	;
 
 %%
 

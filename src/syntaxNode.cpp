@@ -124,7 +124,7 @@ void COpNode::encode() {
 	switch(opCode) {
 		case opPrint: operands[0]->encode(); writeByte(opCode); break;
 		case opEnd: writeByte(opCode); break;
-		case opAssign: operands[1]->encode(); writeByte(opCode); operands[0]->encode(); break;
+		case opAssign: operands[0]->encode(); operands[1]->encode(); writeByte(opCode);  break;
 	}
 }
 
@@ -221,13 +221,26 @@ std::string & CEventIdentNode::getText() {
 	return text;
 }
 
-/** Create a global variable node for the named variable. */
-CGlobalVarNode::CGlobalVarNode(std::string * parsedString) {
+/** Create a global variable assignment node for the named variable. */
+CGlobalVarAssignNode::CGlobalVarAssignNode(std::string * parsedString) {
 	varId = getGlobalVarId(*parsedString);
 	name = *parsedString;
 }
 
 /** Write this variable's identifier for the VM to pick up. */
-void CGlobalVarNode::encode() {
-	writeWord(varId); //change to push id to stack. Change assign op to expect var on stack
+void CGlobalVarAssignNode::encode() {
+	writeByte(opPushInt);
+	writeWord(varId); 
+}
+
+/** Create a global variable expression node for the named variable. */
+CGlobalVarExprNode::CGlobalVarExprNode(std::string * parsedString) {
+	varId = getGlobalVarId(*parsedString);
+	name = *parsedString;
+}
+
+/** Push this variable's contents onto the stack for the VM to pick up. */
+void CGlobalVarExprNode::encode() {
+	writeByte(opPushVar);
+	writeWord(varId);
 }

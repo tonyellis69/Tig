@@ -110,13 +110,21 @@ public:
 };
 
 
-class CGlobalVarNode : public CSyntaxNode {
+class CGlobalVarAssignNode : public CSyntaxNode {
 public:
-	CGlobalVarNode(std::string* parsedString);
-
+	CGlobalVarAssignNode(std::string* parsedString);
 	void encode();
 
 	int varId;
 	std::string name;
+};
+
+class CGlobalVarExprNode : public CSyntaxNode {
+public:
+	CGlobalVarExprNode(std::string* parsedString);
+	void encode();
+
+	int varId;
+	std::string name; ///TO DO: can probably do without
 };
 

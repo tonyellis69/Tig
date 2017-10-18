@@ -1,3 +1,3 @@
 #pragma once
 
-enum TOpCode { opNop, opPrint, opOption, opEnd, opAssign, opPushStr };
+enum TOpCode { opNop, opPrint, opOption, opEnd, opAssign, opPushStr, opPushInt, opPushVar };
