@@ -49,10 +49,11 @@ extern int yydebug;
     END = 259,
     EVENT = 260,
     OPTION = 261,
-    INTEGER = 262,
-    IDENTIFIER = 263,
-    STRING = 264,
-    ENDL = 265
+    GETSTRING = 262,
+    INTEGER = 263,
+    IDENTIFIER = 264,
+    STRING = 265,
+    ENDL = 266
   };
 #endif
 
@@ -69,7 +70,7 @@ union YYSTYPE
 	 char sIndex;                /* symbol table index */
 	 std::string* str;
 
-#line 73 "tigParse.hpp" /* yacc.c:1909  */
+#line 74 "tigParse.hpp" /* yacc.c:1909  */
 };
 # define YYSTYPE_IS_TRIVIAL 1
 # define YYSTYPE_IS_DECLARED 1

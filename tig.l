@@ -1,8 +1,5 @@
     /* Tig lexer */
 %{	//Definitions section. Anything here is copied to the generated C file.
-  
-   // #include <stdlib.h>
-
    	#include "syntaxNode.h"
 
 	#include <io.h>       // isatty
@@ -16,13 +13,11 @@
 
     void yyerror(char *);
 	void trackLine();
-	//extern "C" YYSTYPE yylval;
 	
 	int lineNo = 1; ///<Keeps track of line numbers for error messages.
 	fpos_t lastLinePos = 0; 
 	fpos_t linePos; 
-	//char buf[10000]; //for temporarily storing string constants
-	char* bufptr;
+	//char* bufptr;
 	std::string stringBuf;
 %}
 
@@ -65,6 +60,7 @@ IDENT    {LETTER}({LETTER}|{DIGIT})*
 "end"					return END;
 "event"					return EVENT;
 "option"				return OPTION;
+"getString"				return GETSTRING;
 {IDENT}					{	stringBuf.clear(); 
 							stringBuf.assign(yytext,yyleng);
 							yylval.str = &stringBuf;
@@ -83,9 +79,12 @@ IDENT    {LETTER}({LETTER}|{DIGIT})*
 							BEGIN INITIAL;			/*The string ended normally with a quote, so no more to be done. */
 							return STRING;
 						}
-<STR>\n					{
-								stringBuf.append("\n"); trackLine();
+<STR>\\n				{		stringBuf.append("\n"); /* user-supplied line break. */ 
 						}
+<STR>\n					{
+								stringBuf.append("\n"); trackLine(); //An actual line break
+						}
+
 <STR>.					{
 								stringBuf.append( yytext,yyleng);		
 						}			

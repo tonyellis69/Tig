@@ -36,8 +36,10 @@
 %type <nPtr> optional_code_block code_block
 %type <nPtr> variable_assign variable_expr
 
+
 %token PRINT END
 %token EVENT OPTION
+%token GETSTRING
 %token <iValue> INTEGER
 %token <str> IDENTIFIER STRING
 %token ENDL
@@ -77,7 +79,7 @@ statement_list:
 		;
 
 event:
-		EVENT event_identifier string_literal optional_code_block optional_option_list 	{ $$ = new CEventNode($2,$3,$5); }
+		EVENT event_identifier string_literal optional_code_block optional_option_list 	{ $$ = new CEventNode($2,$3,$4,$5); }
 		;
 
 string_literal:
@@ -115,6 +117,7 @@ expression:
       STRING 							{ $$ = new CStrNode($1); } 
 	  | variable_expr					{ $$ = $1; }
       | INTEGER							{ printf("%d\n", $1); }
+	  | GETSTRING						{ $$ = new COpNode(opGetString); }
       ;
 
 variable_expr:

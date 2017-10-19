@@ -24,7 +24,7 @@ public:
 	int getEventId(std::string& identifier); //TO DO still needed?
 	int getGlobalVarId(std::string & identifier);
 	static void setOutputFile(std::ofstream& file);
-	void writeByte(char byte);
+	void writeOp(char byte);
 	void writeWord(unsigned int word);
 	void writeString(const std::string& text);
 	void writeCString(const std::string & text);
@@ -101,12 +101,13 @@ public:
 
 class CEventNode : public CSyntaxNode {
 public:
-	CEventNode(CSyntaxNode* identNode, CSyntaxNode* textNode, CSyntaxNode* options);
+	CEventNode(CSyntaxNode* identNode, CSyntaxNode* textNode, CSyntaxNode* codeBlock, CSyntaxNode* options);
 	void encode();
 	
 	std::string eventText;
 	int eventId;
 	std::vector<CSyntaxNode*> optionList;
+	CSyntaxNode* code;
 };
 
 

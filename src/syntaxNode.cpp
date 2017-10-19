@@ -23,17 +23,20 @@ void CSyntaxNode::setOutputFile(std::ofstream& file) {
 	outputFile = &file;
 }
 
-void CSyntaxNode::writeByte(char byte) {
+void CSyntaxNode::writeOp(char byte) {
 	outputFile->write(&byte, 1);
+	//cout << "\n" << opCode[byte];
 }
 
 void CSyntaxNode::writeWord(unsigned int word) {
 	outputFile->write((char*)&word, 4);
+	//cout << " " << word;
 }
 
 void CSyntaxNode::writeString(const std::string & text) {
 	writeWord(text.size());
 	*outputFile << text.c_str();
+	//cout << " " << text.substr(0, 20);
 }
 
 void CSyntaxNode::writeCString(const std::string & text) {
@@ -98,7 +101,7 @@ int CStrNode::getStrIndex() {
 
 /** Write the byte code to push this string literal onto the stack. */
 void CStrNode::encode() {
-	writeByte(opPushStr);
+	writeOp(opPushStr);
 	writeString(stringList[stringListIndex]);
 }
 
@@ -121,11 +124,15 @@ COpNode::COpNode(TOpCode code, CSyntaxNode * operand1, CSyntaxNode * operand2) {
 
 /** Write the bytecode for this operator and its operands. */
 void COpNode::encode() {
-	switch(opCode) {
-		case opPrint: operands[0]->encode(); writeByte(opCode); break;
-		case opEnd: writeByte(opCode); break;
-		case opAssign: operands[0]->encode(); operands[1]->encode(); writeByte(opCode);  break;
+/*	switch(opCode) {
+		case opPrint: operands[0]->encode(); writeOp(opCode); break;
+		case opEnd: writeOp(opCode); break;
+		case opAssign: operands[0]->encode(); operands[1]->encode(); writeOp(opCode);  break;
+	}*/
+	for (auto operand : operands) {
+		operand->encode();
 	}
+	writeOp(opCode);
 }
 
 /** Create a joint node connecting these two syntax nodes. */
@@ -167,23 +174,25 @@ int COptionNode::getId() {
 
 
 /** Create a node storing the text of this event, its ID and pointer to its options. */
-CEventNode::CEventNode(CSyntaxNode* identNode, CSyntaxNode* textNode, CSyntaxNode* options) {
+CEventNode::CEventNode(CSyntaxNode* identNode, CSyntaxNode* textNode, CSyntaxNode* codeBlock, CSyntaxNode* options) {
 	eventText = stringList[textNode->getStrIndex()]; 
 	eventId = identNode->getId();
+	code = codeBlock;
 	if (options)
 		optionList.push_back(options);
 }
 
 /** Write the bytecode for this event. */
 void CEventNode::encode() {
-	cout << "\nEvent node " << eventId << " with text: \n" << eventText;
-	cout << "\noptions: ";
-	//write the event's in-code position to the event list.
 	int currentAddress = outputFile->tellp();
 	eventTable[eventId] = currentAddress;
-	//write code to display the event text.
-	writeByte(opPrint);
+
+	writeOp(opPushStr);
 	writeString(eventText);
+	writeOp(opPrint);
+
+	if (code)
+		code->encode();
 
 	//collect the options
 	int count = 0;
@@ -192,8 +201,8 @@ void CEventNode::encode() {
 			option->encode();
 		}
 		//write code passing the option texts to the user
-		writeByte(opOption);
-		writeByte(stack.size());
+		writeOp(opOption);
+		writeOp(stack.size());
 		for (int option = 0; option < stack.size(); option++) {
 			string optionStr = stack[option]->getText();
 			writeString(optionStr);
@@ -229,7 +238,7 @@ CGlobalVarAssignNode::CGlobalVarAssignNode(std::string * parsedString) {
 
 /** Write this variable's identifier for the VM to pick up. */
 void CGlobalVarAssignNode::encode() {
-	writeByte(opPushInt);
+	writeOp(opPushInt);
 	writeWord(varId); 
 }
 
@@ -241,6 +250,6 @@ CGlobalVarExprNode::CGlobalVarExprNode(std::string * parsedString) {
 
 /** Push this variable's contents onto the stack for the VM to pick up. */
 void CGlobalVarExprNode::encode() {
-	writeByte(opPushVar);
+	writeOp(opPushVar);
 	writeWord(varId);
 }
