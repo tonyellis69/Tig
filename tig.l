@@ -9,15 +9,12 @@
 	#pragma warning (pop)
 	#define  isatty _isatty
 	
-	  #include "tigParse.hpp"
+	#include "tigParse.hpp"
 
     void yyerror(char *);
 	void trackLine();
 	
 	int lineNo = 1; ///<Keeps track of line numbers for error messages.
-	fpos_t lastLinePos = 0; 
-	fpos_t linePos; 
-	//char* bufptr;
 	std::string stringBuf;
 %}
 
@@ -39,7 +36,7 @@ IDENT    {LETTER}({LETTER}|{DIGIT})*
 "/*"					BEGIN(COMMENT);
 <COMMENT>[^*\n]*        /* eat anything that's not a '*'  */
 <COMMENT>"*"+[^*/\n]*   /* eat up '*'s not followed by '/'s */
-<COMMENT>\n             ++lineNo;
+<COMMENT>\n             trackLine();
 <COMMENT>"*"+"/"        BEGIN(INITIAL);
 
 "//"					{	char c;  /*eat //comments */
@@ -47,14 +44,11 @@ IDENT    {LETTER}({LETTER}|{DIGIT})*
 							trackLine();
 						}
 
-[1-9][0-9]*				{
-							yylval.iValue = atoi(yytext);
-							 return INTEGER;
-						 }
-						
-[-()<>=+*/%;{}.,] 		{	// Matches any one of these nonalphanumeric characters amd returns the Ascii code.
-							return *yytext;    // yytext is a pointer to whatever string lex has matched.
+[1-9][0-9]*				{	yylval.iValue = atoi(yytext);
+							return INTEGER;
 						}
+						
+[-()<>=+*/%;{}.,] 		return *yytext;    // Match any one of these nonalphanumeric characters amd returns the Ascii code.
 					
 "print"         		return PRINT;
 "end"					return END;
@@ -70,32 +64,19 @@ IDENT    {LETTER}({LETTER}|{DIGIT})*
 \"						{ 	BEGIN(STR); //We've started lexxing a string. 
 							stringBuf.clear(); 
 						}	
-<STR>\"\"				{
-							stringBuf.append("\"");	//Two double quotes, replace with one.
-						}
-
-<STR>\"					{								//End of string. 
+<STR>\"\"				stringBuf.append("\"");	//Two double quotes, replace with one.
+<STR>\"					{	//End of string. 
 							yylval.str = &stringBuf;
 							BEGIN INITIAL;			/*The string ended normally with a quote, so no more to be done. */
 							return STRING;
 						}
-<STR>\\n				{		stringBuf.append("\n"); /* user-supplied line break. */ 
-						}
-<STR>\n					{
-								stringBuf.append("\n"); trackLine(); //An actual line break
-						}
-
-<STR>.					{
-								stringBuf.append( yytext,yyleng);		
-						}			
-
-
-
-[ \t]   ;				/* skip whitespace */
-
-\n						{ trackLine(); }   //keep track of line number
-
-.						 yyerror("Unknown character");
+<STR>\\n				stringBuf.append("\n"); /* user-supplied line break. */ 
+<STR>\n					stringBuf.append("\n"); trackLine(); //An actual line break
+<STR>.					stringBuf.append( yytext,yyleng);		
+									
+[ \t]					;	/* skip whitespace */
+\n						trackLine();    //keep track of line number
+.						yyerror("Unknown character");
 
 %%
 
@@ -104,7 +85,5 @@ int yywrap(void) { //Called when input exhausted. Reset yyin and return 0 to pro
 }
 
 void trackLine() {
-	lastLinePos = linePos;
 	lineNo++; 
-	fgetpos(yyin,&linePos);
 }

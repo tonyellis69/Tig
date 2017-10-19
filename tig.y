@@ -18,6 +18,7 @@
 	extern int lineNo;
 	extern char* yytext;
 	extern fpos_t lastLinePos;
+	extern fpos_t linePos;
 	extern FILE* yyin;
 %}
 
@@ -118,19 +119,20 @@ expression:
 	  | variable_expr					{ $$ = $1; }
       | INTEGER							{ printf("%d\n", $1); }
 	  | GETSTRING						{ $$ = new COpNode(opGetString); }
+	  | expression '+' expression		{ $$ = new COpNode(opAdd, $1, $3); }
       ;
 
 variable_expr:
-	IDENTIFIER						{ $$ = new CGlobalVarExprNode($1); }
+	IDENTIFIER							{ $$ = new CGlobalVarExprNode($1); }
 	;
 
 %%
 
 void yyerror(char *s) {
 	fprintf(stdout, "\n%s, '%s' on line %d:", s, yytext,lineNo);
-	fsetpos(yyin,&lastLinePos);
+	rewind(yyin);
 	char buf[500];
-	fgets(buf,500,yyin);
-	fgets(buf,500,yyin);
+	for (int line=0; line < lineNo;line++)
+		fgets(buf,500,yyin);
 	fprintf(stdout, "\n%s", buf);
 }

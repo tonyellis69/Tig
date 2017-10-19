@@ -62,7 +62,7 @@ extern int yydebug;
 typedef union YYSTYPE YYSTYPE;
 union YYSTYPE
 {
-#line 26 "tig.y" /* yacc.c:1909  */
+#line 27 "tig.y" /* yacc.c:1909  */
 				 						
     int iValue;                 // integer value - for numeric constants etc 
 	float fValue;				//float value - for floating-point constants
