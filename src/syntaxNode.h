@@ -25,6 +25,7 @@ public:
 	int getGlobalVarId(std::string & identifier);
 	static void setOutputFile(std::ofstream& file);
 	void writeOp(char byte);
+	void writeByte(char byte);
 	void writeWord(unsigned int word);
 	void writeString(const std::string& text);
 	void writeCString(const std::string & text);
@@ -39,7 +40,7 @@ public:
 	static std::map<int, int> eventTable; ///<Tables event IDs and addresses.
 	static std::map<std::string, int> globalVarIds;
 	static int nextGlobalVarId;
-	static std::vector<CSyntaxNode*> stack; ///<A handy, temporary container of nodes.
+	static std::vector<CSyntaxNode*> optionStack; ///<A handy, temporary container of nodes.
 
 	static int eventTableAddr; ///<Where the event table starts
 	static int globalVarTableAddr; ///<Where the global variable table starts
@@ -101,7 +102,7 @@ public:
 
 class CEventNode : public CSyntaxNode {
 public:
-	CEventNode(CSyntaxNode* identNode, CSyntaxNode* textNode, CSyntaxNode* codeBlock, CSyntaxNode* options);
+	CEventNode(CSyntaxNode* identNode, CSyntaxNode* codeBlock);
 	void encode();
 	
 	std::string eventText;

@@ -33,8 +33,8 @@
 };	
 
 %type <nPtr> program tigcode statement expression statement_list
-%type <nPtr> event option_list option string_literal event_identifier optional_option_list 
-%type <nPtr> optional_code_block code_block
+%type <nPtr> event option string_literal event_identifier 
+%type <nPtr> code_block
 %type <nPtr> variable_assign variable_expr
 
 
@@ -68,6 +68,7 @@ statement:
 		| event	';'						{ $$ = $1; }  //TO DO: maybe move to 'declaritive statements'
 		| '{' statement_list '}'		{ $$ = $2; }
 		| END ';'						{ $$ = new COpNode(opEnd);}
+		|  option ';'					{ $$ = $1; }
         ;
 
 variable_assign:
@@ -80,7 +81,7 @@ statement_list:
 		;
 
 event:
-		EVENT event_identifier string_literal optional_code_block optional_option_list 	{ $$ = new CEventNode($2,$3,$4,$5); }
+		EVENT event_identifier code_block 	{ $$ = new CEventNode($2,$3); }
 		;
 
 string_literal:
@@ -91,24 +92,10 @@ event_identifier:
 		IDENTIFIER					   { $$ = new CEventIdentNode($1); }
 		;
 
-optional_option_list:
-		option_list						{$$ = $1; }
-		|								{ $$ = NULL; }
-		;
-
-option_list:
-		',' option							{ $$ = $2; }
-		| option_list ',' option		{ $$ = new CJointNode($1,$3); }
-		;
-
 option:								
 		OPTION string_literal event_identifier				{ $$ = new COptionNode($2,$3); }
 		;
 
-optional_code_block:
-		code_block						{ $$ = $1; }
-		|								{ $$ = NULL; }
-		;
 
 code_block:
 		statement_list					{ $$ = $1; }

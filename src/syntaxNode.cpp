@@ -10,7 +10,7 @@ int CSyntaxNode::nextEventId = 1;
 std::map<int, int> CSyntaxNode::eventTable;
 std::map<std::string, int> CSyntaxNode::globalVarIds;
 int CSyntaxNode::nextGlobalVarId = 0;
-std::vector<CSyntaxNode*> CSyntaxNode::stack;
+std::vector<CSyntaxNode*> CSyntaxNode::optionStack;
 int CSyntaxNode::eventTableAddr = 0;
 int CSyntaxNode::globalVarTableAddr = 0;
 
@@ -26,6 +26,10 @@ void CSyntaxNode::setOutputFile(std::ofstream& file) {
 void CSyntaxNode::writeOp(char byte) {
 	outputFile->write(&byte, 1);
 	//cout << "\n" << opCode[byte];
+}
+
+void CSyntaxNode::writeByte(char byte) {
+	outputFile->write(&byte, 1);
 }
 
 void CSyntaxNode::writeWord(unsigned int word) {
@@ -65,7 +69,6 @@ void CSyntaxNode::writeGlobalVarTable() {
 void CSyntaxNode::writeHeader() {
 	int headerSize = 4;
 	writeWord(eventTableAddr + headerSize);
-	//writeWord(globalVarTableAddr + headerSize);
 }
 
 /** Return the unique id number for this event identifier. */
@@ -157,10 +160,14 @@ COptionNode::COptionNode(CSyntaxNode* text, CSyntaxNode* branchEvent) {
 	branchID = branchEvent->getId();
 }
 
-/** Temporarily put the details of this option on the stack. */
+/** Write an option declaration for the VM to pick up, and temporarily put details  on the stack. */
 void COptionNode::encode() {
-	stack.push_back(this);
-
+	char optionIndex = (char)optionStack.size();
+	optionStack.push_back(this);
+	writeOp(opOption);
+	writeByte(optionIndex);
+	writeString(choiceText);
+	writeWord(branchID);
 }
 
 /** Return this options's main text.*/
@@ -174,12 +181,9 @@ int COptionNode::getId() {
 
 
 /** Create a node storing the text of this event, its ID and pointer to its options. */
-CEventNode::CEventNode(CSyntaxNode* identNode, CSyntaxNode* textNode, CSyntaxNode* codeBlock, CSyntaxNode* options) {
-	eventText = stringList[textNode->getStrIndex()]; 
+CEventNode::CEventNode(CSyntaxNode* identNode,  CSyntaxNode* codeBlock) {
 	eventId = identNode->getId();
 	code = codeBlock;
-	if (options)
-		optionList.push_back(options);
 }
 
 /** Write the bytecode for this event. */
@@ -187,31 +191,45 @@ void CEventNode::encode() {
 	int currentAddress = outputFile->tellp();
 	eventTable[eventId] = currentAddress;
 
-	writeOp(opPushStr);
-	writeString(eventText);
-	writeOp(opPrint);
-
-	if (code)
+	if (code) 
 		code->encode();
 
-	//collect the options
-	int count = 0;
-	if (optionList.size() > 0) {
-		for (auto option : optionList) {
-			option->encode();
-		}
-		//write code passing the option texts to the user
-		writeOp(opOption);
-		writeOp(stack.size());
-		for (int option = 0; option < stack.size(); option++) {
-			string optionStr = stack[option]->getText();
-			writeString(optionStr);
-			int eventId = stack[option]->getId();
-			writeWord(eventId);
-		}
-		stack.clear();
+	writeOp(opGiveOptions);
+
+	/*
+	//write the options table.
+	writeByte(optionStack.size());
+	int optionTableAddr = outputFile->tellp();
+	for (auto option : optionStack) {
+		writeWord(0xFFFFFFFF);
+	}
+	int optionStartAddr = outputFile->tellp();
+
+
+
+	//write the code for each option
+	std::vector<int> offsetList; 
+	for (auto option : optionStack) {
+		int offset = (int)outputFile->tellp() - optionStartAddr;
+		offsetList.push_back(offset);
+
+		string optionStr = option->getText();
+		writeString(optionStr);
+		int eventId = option->getId();
+		writeWord(eventId);
+	}
+	int resume = outputFile->tellp();
+
+	//go back and fill in the table
+	outputFile->seekp(optionTableAddr);
+	for (auto offset : offsetList) {
+		writeWord(offset);
 	}
 
+	outputFile->seekp(resume);
+	*/
+	optionStack.clear();
+	
 }
 
 /** Create an identifier node for the given identifier string. */
