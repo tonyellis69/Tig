@@ -32,9 +32,9 @@
 	 std::string* str;
 };	
 
-%type <nPtr> program tigcode statement expression statement_list
+%type <nPtr> program tigcode statement expression statement_list dec_statement
 %type <nPtr> event option string_literal event_identifier 
-%type <nPtr> code_block
+%type <nPtr> code_block optional_code_block
 %type <nPtr> variable_assign variable_expr
 
 
@@ -60,16 +60,22 @@ program:
 tigcode:
 		statement						{ $$ = $1; }
 		| tigcode statement				{ $$ = new CJointNode($1,$2); }
+		| dec_statement					{ $$ = $1; }
+		| tigcode dec_statement				{ $$ = new CJointNode($1,$2); }
         ;
 
 statement:
         PRINT expression ';'			{ $$ = new COpNode(opPrint,$2); }   	
         | variable_assign '=' expression ';'	{ $$ = new COpNode(opAssign,$1,$3); }
-		| event	';'						{ $$ = $1; }  //TO DO: maybe move to 'declaritive statements'
+		//| event	';'						{ $$ = $1; }  //TO DO: maybe move to 'declaritive statements'
 		| '{' statement_list '}'		{ $$ = $2; }
 		| END ';'						{ $$ = new COpNode(opEnd);}
 		|  option ';'					{ $$ = $1; }
         ;
+
+dec_statement:
+		event	';'						{ $$ = $1; }  //TO DO: maybe move to 'declaritive statements'
+		;
 
 variable_assign:
 		IDENTIFIER						{ $$ = new CGlobalVarAssignNode($1); }
@@ -93,12 +99,16 @@ event_identifier:
 		;
 
 option:								
-		OPTION string_literal event_identifier				{ $$ = new COptionNode($2,$3); }
+		OPTION string_literal optional_code_block event_identifier	{ $$ = new COptionNode($2,$3,$4); }
 		;
 
+optional_code_block:
+		code_block						{ $$ = $1; }
+		|								{ $$ = NULL; }
+		;
 
 code_block:
-		statement_list					{ $$ = $1; }
+		'{' statement_list	'}'			{ $$ = $2; }
 		;
 
 expression:

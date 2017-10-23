@@ -14,6 +14,7 @@
 
 
 /** Basic syntax node. */
+class COptionNode;
 class CSyntaxNode {
 public:
 	CSyntaxNode();
@@ -40,7 +41,7 @@ public:
 	static std::map<int, int> eventTable; ///<Tables event IDs and addresses.
 	static std::map<std::string, int> globalVarIds;
 	static int nextGlobalVarId;
-	static std::vector<CSyntaxNode*> optionStack; ///<A handy, temporary container of nodes.
+	static std::vector<COptionNode*> optionStack; ///<A handy, temporary container of nodes.
 
 	static int eventTableAddr; ///<Where the event table starts
 	static int globalVarTableAddr; ///<Where the global variable table starts
@@ -90,7 +91,7 @@ public:
 
 class COptionNode : public CSyntaxNode {
 public:
-	COptionNode(CSyntaxNode* text, CSyntaxNode* branchEvent);
+	COptionNode(CSyntaxNode* text, CSyntaxNode* optionalCode, CSyntaxNode* branchEvent);
 	void encode();
 
 	std::string & getText();
@@ -98,6 +99,7 @@ public:
 
 	std::string choiceText;
 	int branchID;
+	CSyntaxNode* code;
 };
 
 class CEventNode : public CSyntaxNode {

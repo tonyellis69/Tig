@@ -10,7 +10,7 @@ int CSyntaxNode::nextEventId = 1;
 std::map<int, int> CSyntaxNode::eventTable;
 std::map<std::string, int> CSyntaxNode::globalVarIds;
 int CSyntaxNode::nextGlobalVarId = 0;
-std::vector<CSyntaxNode*> CSyntaxNode::optionStack;
+std::vector<COptionNode*> CSyntaxNode::optionStack;
 int CSyntaxNode::eventTableAddr = 0;
 int CSyntaxNode::globalVarTableAddr = 0;
 
@@ -155,9 +155,10 @@ void CJointNode::encode() {
 }
 
 /** Create a node storing the text of this event option and its associated ID. */
-COptionNode::COptionNode(CSyntaxNode* text, CSyntaxNode* branchEvent) {
+COptionNode::COptionNode(CSyntaxNode* text, CSyntaxNode* optionalCode, CSyntaxNode* branchEvent) {
 	choiceText = stringList[text->getStrIndex()];
 	branchID = branchEvent->getId();
+	code = optionalCode;
 }
 
 /** Write an option declaration for the VM to pick up, and temporarily put details  on the stack. */
@@ -167,7 +168,6 @@ void COptionNode::encode() {
 	writeOp(opOption);
 	writeByte(optionIndex);
 	writeString(choiceText);
-	writeWord(branchID);
 }
 
 /** Return this options's main text.*/
@@ -196,9 +196,8 @@ void CEventNode::encode() {
 
 	writeOp(opGiveOptions);
 
-	/*
-	//write the options table.
-	writeByte(optionStack.size());
+
+	//write a table of pointers to any code any options contained
 	int optionTableAddr = outputFile->tellp();
 	for (auto option : optionStack) {
 		writeWord(0xFFFFFFFF);
@@ -207,16 +206,15 @@ void CEventNode::encode() {
 
 
 
-	//write the code for each option
+	//write the code for each option, if any
 	std::vector<int> offsetList; 
 	for (auto option : optionStack) {
-		int offset = (int)outputFile->tellp() - optionStartAddr;
+		int offset = (int)outputFile->tellp() - optionTableAddr;
+		if (option->code)
+			option->code->encode();
+		writeOp(opJumpEvent);
+		writeWord(option->getId());
 		offsetList.push_back(offset);
-
-		string optionStr = option->getText();
-		writeString(optionStr);
-		int eventId = option->getId();
-		writeWord(eventId);
 	}
 	int resume = outputFile->tellp();
 
@@ -227,7 +225,7 @@ void CEventNode::encode() {
 	}
 
 	outputFile->seekp(resume);
-	*/
+	
 	optionStack.clear();
 	
 }
