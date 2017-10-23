@@ -36,7 +36,7 @@
 %type <nPtr> event option string_literal event_identifier 
 %type <nPtr> code_block optional_code_block
 %type <nPtr> variable_assign variable_expr
-
+%type <nPtr> string_statement
 
 %token PRINT END
 %token EVENT OPTION
@@ -67,11 +67,16 @@ tigcode:
 statement:
         PRINT expression ';'			{ $$ = new COpNode(opPrint,$2); }   	
         | variable_assign '=' expression ';'	{ $$ = new COpNode(opAssign,$1,$3); }
-		//| event	';'						{ $$ = $1; }  //TO DO: maybe move to 'declaritive statements'
 		| '{' statement_list '}'		{ $$ = $2; }
 		| END ';'						{ $$ = new COpNode(opEnd);}
 		|  option ';'					{ $$ = $1; }
+		| string_statement	';'			{ $$ = new CStrStatement($1);}
         ;
+
+string_statement:
+		string_literal							{ $$ = $1; }
+		| string_literal '+' expression			{ $$ = new COpNode(opAdd, $1, $3); }
+		;
 
 dec_statement:
 		event	';'						{ $$ = $1; }  //TO DO: maybe move to 'declaritive statements'

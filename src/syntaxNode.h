@@ -132,3 +132,11 @@ public:
 	std::string name; ///TO DO: can probably do without
 };
 
+class CStrStatement : public CSyntaxNode {
+public:
+	CStrStatement(CSyntaxNode* stringExpr);
+	void encode();
+
+	CSyntaxNode* mStringExpr;
+};
+

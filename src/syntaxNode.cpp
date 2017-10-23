@@ -269,3 +269,14 @@ void CGlobalVarExprNode::encode() {
 	writeOp(opPushVar);
 	writeWord(varId);
 }
+
+/** Create a string statement node for the given string-based expression. */
+CStrStatement::CStrStatement(CSyntaxNode* stringExpr) {
+	mStringExpr = stringExpr;
+}
+
+/** Write the code for the string expression, then tell the VM to print the result. */
+void CStrStatement::encode() {
+	mStringExpr->encode();
+	writeOp(opPrint);
+}
