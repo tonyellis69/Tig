@@ -49,11 +49,16 @@ extern int yydebug;
     END = 259,
     EVENT = 260,
     OPTION = 261,
-    GETSTRING = 262,
-    INTEGER = 263,
-    IDENTIFIER = 264,
-    STRING = 265,
-    ENDL = 266
+    OBJECT = 262,
+    HAS = 263,
+    GETSTRING = 264,
+    START_TIMER = 265,
+    START_EVENT = 266,
+    AT = 267,
+    INTEGER = 268,
+    IDENTIFIER = 269,
+    STRING = 270,
+    ENDL = 271
   };
 #endif
 
@@ -67,10 +72,9 @@ union YYSTYPE
     int iValue;                 // integer value - for numeric constants etc 
 	float fValue;				//float value - for floating-point constants
     CSyntaxNode *nPtr;          // node pointer - enables symbols to point to syntax nodes
-	 char sIndex;                /* symbol table index */
 	 std::string* str;
 
-#line 74 "tigParse.hpp" /* yacc.c:1909  */
+#line 78 "tigParse.hpp" /* yacc.c:1909  */
 };
 # define YYSTYPE_IS_TRIVIAL 1
 # define YYSTYPE_IS_DECLARED 1

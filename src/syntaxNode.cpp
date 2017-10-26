@@ -3,16 +3,20 @@
 #include <iostream>
 using namespace std;
 
-std::vector<std::string> CSyntaxNode::stringList;
 std::ofstream* CSyntaxNode::outputFile = NULL;
 std::map<std::string, int> CSyntaxNode::eventIds;
-int CSyntaxNode::nextEventId = 1;
+int CSyntaxNode::nextEventId = 0;
 std::map<int, int> CSyntaxNode::eventTable;
 std::map<std::string, int> CSyntaxNode::globalVarIds;
 int CSyntaxNode::nextGlobalVarId = 0;
 std::vector<COptionNode*> CSyntaxNode::optionStack;
 int CSyntaxNode::eventTableAddr = 0;
 int CSyntaxNode::globalVarTableAddr = 0;
+std::map<std::string, int> CSyntaxNode::memberIds;
+int CSyntaxNode::nextMemberId = 0;
+std::map<std::string, CObject> CSyntaxNode::objects; 
+int CSyntaxNode::nextObjectId = 0;
+std::vector<CMemberNode*> CSyntaxNode::memberStack; 
 
 
 CSyntaxNode::CSyntaxNode() {
@@ -47,6 +51,8 @@ void CSyntaxNode::writeCString(const std::string & text) {
 	*outputFile << text.c_str() << '\0';
 }
 
+/** TO DO: since ids are sequential from 0, can probably just store the addresses. */
+/** Event ids and addresses. */
 void CSyntaxNode::writeEventTable() {
 	eventTableAddr = outputFile->tellp();
 	writeWord(eventTable.size());
@@ -56,13 +62,25 @@ void CSyntaxNode::writeEventTable() {
 	}
 }
 
-/** Write a list of global variable names and their associated ids. */
+/** Writes a list of global variable names and their associated ids. */
 void CSyntaxNode::writeGlobalVarTable() {
 	globalVarTableAddr = outputFile->tellp();
 	writeWord(globalVarIds.size());
 	for (auto globalVar : globalVarIds) {
 		writeCString(globalVar.first);
 		writeWord(globalVar.second);
+	}
+}
+
+/** Write the class definitions of all defined objects. */
+void CSyntaxNode::writeObjectDefTable() {
+	writeWord(objects.size());
+	for (auto object : objects) {
+		writeWord(object.second.objectId);
+		writeByte(object.second.members.size());
+		for (auto member : object.second.members) {
+			writeWord(member);
+		}
 	}
 }
 
@@ -91,33 +109,60 @@ int CSyntaxNode::getGlobalVarId(std::string & identifier) {
 	return iter->second;
 }
 
-/** Create a string node for the given string. */
-CStrNode::CStrNode(std::string* parsedString) {
-	stringListIndex = stringList.size();
-	stringList.push_back(*parsedString);
+/** Return the unique id number for this object member identifier. */
+int CSyntaxNode::getMemberId(std::string & identifier) {
+	auto iter = memberIds.find(identifier);
+	if (iter == memberIds.end()) {
+		memberIds[identifier] = nextMemberId++;
+		return memberIds[identifier];
+	}
+	return iter->second;
 }
 
-/** Return the index position in the stringlist of this node's string. */
-int CStrNode::getStrIndex() {
-	return stringListIndex;
+/** Return the unique id number for this object identifier. */
+int CSyntaxNode::getObjectId(std::string & identifier) {
+	auto iter = objects.find(identifier);
+	if (iter == objects.end()) {
+		CObject newObject;
+		newObject.objectId = nextObjectId++;
+		objects[identifier] = newObject;
+		return newObject.objectId;
+	}
+	return iter->second.objectId;
 }
+
+
+
+/** Create a string node for the given string. */
+CStrNode::CStrNode(std::string* parsedString) {
+	text = *parsedString;
+}
+
+
+std::string & CStrNode::getText() {
+	return text;
+}
+
+
 
 /** Write the byte code to push this string literal onto the stack. */
 void CStrNode::encode() {
 	writeOp(opPushStr);
-	writeString(stringList[stringListIndex]);
+	writeString(text);
 }
 
-/** Create a operator node for the given and its operands. */
+/** Create a operator node for the given instruction and its operand. */
 COpNode::COpNode(TOpCode code, CSyntaxNode* operand) {
 	opCode = code;
 	operands.push_back(operand);
 }
 
+/** Create an operator node for an instruction with no operands. */
 COpNode::COpNode(TOpCode code) {
 	opCode = code;
 }
 
+/** Create a operator node for the given instruction and its operands. */
 COpNode::COpNode(TOpCode code, CSyntaxNode * operand1, CSyntaxNode * operand2) {
 	opCode = code;
 	operands.push_back(operand1);
@@ -127,11 +172,7 @@ COpNode::COpNode(TOpCode code, CSyntaxNode * operand1, CSyntaxNode * operand2) {
 
 /** Write the bytecode for this operator and its operands. */
 void COpNode::encode() {
-/*	switch(opCode) {
-		case opPrint: operands[0]->encode(); writeOp(opCode); break;
-		case opEnd: writeOp(opCode); break;
-		case opAssign: operands[0]->encode(); operands[1]->encode(); writeOp(opCode);  break;
-	}*/
+	//TO DO: make this the default action for syntaxnodes?
 	for (auto operand : operands) {
 		operand->encode();
 	}
@@ -140,25 +181,25 @@ void COpNode::encode() {
 
 /** Create a joint node connecting these two syntax nodes. */
 CJointNode::CJointNode(CSyntaxNode * branch1, CSyntaxNode * branch2) {
-	b1 = branch1;
-	b2 = branch2;
+	operands.push_back(branch1);
+	if (branch2)
+		operands.push_back(branch2);
 }
 
 /** Recursively encode the branches of this joint node. */
 void CJointNode::encode() {
-	if (b1) {
-		b1->encode();
-	}
-	if (b2) {
-		b2->encode();
+	for (auto operand : operands) {
+		operand->encode();
 	}
 }
 
 /** Create a node storing the text of this event option and its associated ID. */
 COptionNode::COptionNode(CSyntaxNode* text, CSyntaxNode* optionalCode, CSyntaxNode* branchEvent) {
-	choiceText = stringList[text->getStrIndex()];
+	choiceText = text->getText();
 	branchID = branchEvent->getId();
-	code = optionalCode;
+	if (optionalCode)
+		operands.push_back(optionalCode);
+	
 }
 
 /** Write an option declaration for the VM to pick up, and temporarily put details  on the stack. */
@@ -183,7 +224,7 @@ int COptionNode::getId() {
 /** Create a node storing the text of this event, its ID and pointer to its options. */
 CEventNode::CEventNode(CSyntaxNode* identNode,  CSyntaxNode* codeBlock) {
 	eventId = identNode->getId();
-	code = codeBlock;
+	operands.push_back(codeBlock);
 }
 
 /** Write the bytecode for this event. */
@@ -191,12 +232,14 @@ void CEventNode::encode() {
 	int currentAddress = outputFile->tellp();
 	eventTable[eventId] = currentAddress;
 
-	if (code) 
-		code->encode();
+	operands[0]->encode();
+
+	if (optionStack.size() == 0) {
+		writeOp(opEnd);
+		return;
+	}
 
 	writeOp(opGiveOptions);
-
-
 	//write a table of pointers to any code any options contained
 	int optionTableAddr = outputFile->tellp();
 	for (auto option : optionStack) {
@@ -204,14 +247,12 @@ void CEventNode::encode() {
 	}
 	int optionStartAddr = outputFile->tellp();
 
-
-
-	//write the code for each option, if any
+	//write the code for each option
 	std::vector<int> offsetList; 
 	for (auto option : optionStack) {
 		int offset = (int)outputFile->tellp() - optionTableAddr;
-		if (option->code)
-			option->code->encode();
+		for (auto operand : operands) 
+			operand->encode();
 		writeOp(opJumpEvent);
 		writeWord(option->getId());
 		offsetList.push_back(offset);
@@ -227,7 +268,6 @@ void CEventNode::encode() {
 	outputFile->seekp(resume);
 	
 	optionStack.clear();
-	
 }
 
 /** Create an identifier node for the given identifier string. */
@@ -241,7 +281,7 @@ int CEventIdentNode::getId() {
 	return eventId;
 }
 
-/** Return this event's main text.*/
+/** Return this event identifier's name text.*/
 std::string & CEventIdentNode::getText() {
 	return text;
 }
@@ -279,4 +319,76 @@ CStrStatement::CStrStatement(CSyntaxNode* stringExpr) {
 void CStrStatement::encode() {
 	mStringExpr->encode();
 	writeOp(opPrint);
+}
+
+/** Create a node representing the given integer. */
+CIntNode::CIntNode(int parsedInteger) {
+	integer = parsedInteger;
+}
+
+/** Push this integer onto the stack for the VM to pick up.*/
+void CIntNode::encode() {
+	writeOp(opPushInt);
+	writeWord(integer);
+}
+
+/** Create a node representing a timed event declaration. */
+CTimedEventNode::CTimedEventNode(CSyntaxNode * event, int parsedInt) {
+	eventId = event->getId();
+	delay = parsedInt;
+}
+
+/** Tell the VM to register this timed event. */
+void CTimedEventNode::encode() {
+	writeOp(opTimedEvent);
+	writeWord(eventId);
+	writeWord(delay);
+}
+
+/** Create a node representing the named object member. */
+CMemberNode::CMemberNode(std::string * parsedString) {
+	name = *parsedString;
+	memberId = getMemberId(*parsedString);
+}
+
+int CMemberNode::getId() {
+	return memberId;
+}
+
+/** Add this member to a list of members for the object currently being defined. */
+void CMemberNode::encode() {
+	memberStack.push_back(this);
+}
+
+/** Create a node representing an object identifier. */
+CObjIdentNode::CObjIdentNode(std::string* parsedString) {
+	name = *parsedString;
+	objectId = getObjectId(*parsedString);
+}
+
+/** Return the unique id for this object identifier. */
+int CObjIdentNode::getId() {
+	return objectId;
+}
+
+std::string & CObjIdentNode::getText() {
+	return name;
+}
+
+/** Create a node representing an object declaration. */
+CObjDeclNode::CObjDeclNode(CSyntaxNode * identifier, CSyntaxNode * memberList) {
+	identNode = identifier;
+	members = memberList;
+}
+
+/** Create an object definition for the VM to pick up. */
+void CObjDeclNode::encode() {
+	std::string name = identNode->getText();
+	//run through the member nodes and add these to the object's definition
+	memberStack.clear();
+	members->encode();
+	for (auto member : memberStack) {
+		objects[name].members.push_back(member->getId());
+	}
+	memberStack.clear();
 }

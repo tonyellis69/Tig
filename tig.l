@@ -55,6 +55,11 @@ IDENT    {LETTER}({LETTER}|{DIGIT})*
 "event"					return EVENT;
 "option"				return OPTION;
 "getString"				return GETSTRING;
+"startTimer"			return START_TIMER;
+"start"					return START_EVENT;
+"at"					return AT;
+"object"				return OBJECT;
+"has"					return HAS;
 {IDENT}					{	stringBuf.clear(); 
 							stringBuf.assign(yytext,yyleng);
 							yylval.str = &stringBuf;

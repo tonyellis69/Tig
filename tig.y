@@ -28,19 +28,22 @@
     int iValue;                 // integer value - for numeric constants etc 
 	float fValue;				//float value - for floating-point constants
     CSyntaxNode *nPtr;          // node pointer - enables symbols to point to syntax nodes
-	 char sIndex;                /* symbol table index */
 	 std::string* str;
 };	
 
 %type <nPtr> program tigcode statement expression statement_list dec_statement
+%type <nPtr> integer_constant
 %type <nPtr> event option string_literal event_identifier 
 %type <nPtr> code_block optional_code_block
 %type <nPtr> variable_assign variable_expr
 %type <nPtr> string_statement
+%type <nPtr> obj_identifier member_list member
 
 %token PRINT END
 %token EVENT OPTION
+%token OBJECT HAS
 %token GETSTRING
+%token START_TIMER START_EVENT AT
 %token <iValue> INTEGER
 %token <str> IDENTIFIER STRING
 %token ENDL
@@ -61,7 +64,7 @@ tigcode:
 		statement						{ $$ = $1; }
 		| tigcode statement				{ $$ = new CJointNode($1,$2); }
 		| dec_statement					{ $$ = $1; }
-		| tigcode dec_statement				{ $$ = new CJointNode($1,$2); }
+		| tigcode dec_statement			{ $$ = new CJointNode($1,$2); }
         ;
 
 statement:
@@ -71,6 +74,8 @@ statement:
 		| END ';'						{ $$ = new COpNode(opEnd);}
 		|  option ';'					{ $$ = $1; }
 		| string_statement	';'			{ $$ = new CStrStatement($1);}
+		| START_TIMER	';'				{ $$ = new COpNode(opStartTimer); }
+		| START_EVENT event_identifier AT INTEGER ';' { $$ = new CTimedEventNode($2,$4); }
         ;
 
 string_statement:
@@ -79,12 +84,26 @@ string_statement:
 		;
 
 dec_statement:
-		event	';'						{ $$ = $1; }  //TO DO: maybe move to 'declaritive statements'
+		event	';'						{ $$ = $1; }  
+		| OBJECT obj_identifier HAS member_list ';' { $$ = new CObjDeclNode($2,$4); }
+		;
+
+obj_identifier:
+		IDENTIFIER					   { $$ = new CObjIdentNode($1); }
+		;
+
+member_list:
+		member							{ $$ = $1; }
+		| member_list ',' member		{ $$ = new CJointNode($1,$3); }
+		;
+
+member:
+		IDENTIFIER						{ $$ = new CMemberNode($1); }
 		;
 
 variable_assign:
 		IDENTIFIER						{ $$ = new CGlobalVarAssignNode($1); }
-	;
+		;
 
 statement_list:
 		statement						{ $$ = $1; }
@@ -119,13 +138,17 @@ code_block:
 expression:
       STRING 							{ $$ = new CStrNode($1); } 
 	  | variable_expr					{ $$ = $1; }
-      | INTEGER							{ printf("%d\n", $1); }
+      | integer_constant				{ $$ = $1; }
 	  | GETSTRING						{ $$ = new COpNode(opGetString); }
 	  | expression '+' expression		{ $$ = new COpNode(opAdd, $1, $3); }
       ;
 
 variable_expr:
 	IDENTIFIER							{ $$ = new CGlobalVarExprNode($1); }
+	;
+
+integer_constant:
+	INTEGER								{ $$ = new CIntNode($1); }
 	;
 
 %%
