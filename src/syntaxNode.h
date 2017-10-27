@@ -20,7 +20,7 @@ public:
 
 /** Basic syntax node. */
 class COptionNode;
-class CMemberNode;
+class CMemberDeclNode;
 class CSyntaxNode {
 public:
 	CSyntaxNode();
@@ -61,7 +61,7 @@ public:
 	static int eventTableAddr; ///<Where the event table starts
 	static int globalVarTableAddr; ///<Where the global variable table starts
 
-	static std::vector<CMemberNode*> memberStack; ///<Temporary tracker of all the members of an object.
+	static std::vector<CMemberDeclNode*> memberStack; ///<Temporary tracker of all the members of an object.
 };
 
 
@@ -172,9 +172,9 @@ public:
 	int delay;
 };
 
-class CMemberNode : public CSyntaxNode {
+class CMemberDeclNode : public CSyntaxNode {
 public:
-	CMemberNode(std::string* parsedString);
+	CMemberDeclNode(std::string* parsedString);
 	int getId();
 	void encode();
 
@@ -201,3 +201,27 @@ public:
 	CSyntaxNode* members;
 };
 
+class CReferenceNode : public CSyntaxNode {
+public:
+	CReferenceNode(CSyntaxNode* parent, std::string* parsedString);
+	void encode();
+
+	int memberId;
+
+};
+
+class CObjNode : public CSyntaxNode {
+public:
+	CObjNode(std::string* parsedString);
+	void encode();
+
+	int objectId;
+};
+
+class CMemberNode : public CSyntaxNode {
+public:
+	CMemberNode(CSyntaxNode* parent, std::string* parsedString);
+	void encode();
+
+	int memberId;
+};

@@ -13,10 +13,10 @@ std::vector<COptionNode*> CSyntaxNode::optionStack;
 int CSyntaxNode::eventTableAddr = 0;
 int CSyntaxNode::globalVarTableAddr = 0;
 std::map<std::string, int> CSyntaxNode::memberIds;
-int CSyntaxNode::nextMemberId = 0;
+int CSyntaxNode::nextMemberId = memberIdStart;
 std::map<std::string, CObject> CSyntaxNode::objects; 
 int CSyntaxNode::nextObjectId = 0;
-std::vector<CMemberNode*> CSyntaxNode::memberStack; 
+std::vector<CMemberDeclNode*> CSyntaxNode::memberStack; 
 
 
 CSyntaxNode::CSyntaxNode() {
@@ -345,18 +345,18 @@ void CTimedEventNode::encode() {
 	writeWord(delay);
 }
 
-/** Create a node representing the named object member. */
-CMemberNode::CMemberNode(std::string * parsedString) {
+/** Create a node representing the declaration of the named object member. */
+CMemberDeclNode::CMemberDeclNode(std::string * parsedString) {
 	name = *parsedString;
 	memberId = getMemberId(*parsedString);
 }
 
-int CMemberNode::getId() {
+int CMemberDeclNode::getId() {
 	return memberId;
 }
 
 /** Add this member to a list of members for the object currently being defined. */
-void CMemberNode::encode() {
+void CMemberDeclNode::encode() {
 	memberStack.push_back(this);
 }
 
@@ -391,4 +391,63 @@ void CObjDeclNode::encode() {
 		objects[name].members.push_back(member->getId());
 	}
 	memberStack.clear();
+}
+
+/** Create a node representing a member reference. */
+CReferenceNode::CReferenceNode(CSyntaxNode * parent, std::string* parsedString) {
+	//assume that parent will leave an object id on the stack
+	operands.push_back(parent);
+
+	//identify member
+	auto iter = memberIds.find(*parsedString);
+	if (iter == memberIds.end()) {
+		std::cout << "\nError! No member named " << *parsedString << " exists.";
+		exit(1);
+	}
+	memberId = iter->second;
+}
+
+/** Leave the member id of this reference for the VM to pick up. */
+void CReferenceNode::encode() {
+	operands[0]->encode();
+	writeOp(opPushInt);
+	writeWord(memberId);
+}
+
+
+
+/** Create a node representing an object. */
+CObjNode::CObjNode(std::string * parsedString) {
+	auto iter = objects.find(*parsedString);
+	if (iter == objects.end()) {
+		std::cout << "\nError! No object named " << *parsedString << " exists.";
+		exit(1);
+	}
+	objectId = iter->second.objectId;
+}
+
+/** Leave the object id on the stack for the VM to pick up. */
+void CObjNode::encode() {
+	writeOp(opPushInt);
+	writeWord(objectId);
+}
+
+//TO DO: identical to CReferenceNode - definitely room for refactoring.
+/** Create a node representing a member expression. */
+CMemberNode::CMemberNode(CSyntaxNode * parent, std::string * parsedString) {
+	operands.push_back(parent);
+	//identify member
+	auto iter = memberIds.find(*parsedString);
+	if (iter == memberIds.end()) {
+		std::cout << "\nError! No member named " << *parsedString << " exists.";
+		exit(1);
+	}
+	memberId = iter->second;
+}
+
+/** Get the value expressed by this member on the stack for the VM to pick up. */
+void CMemberNode::encode() {
+	operands[0]->encode();
+	writeOp(opPushVar);
+	writeWord(memberId);
 }

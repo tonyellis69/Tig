@@ -37,7 +37,7 @@
 %type <nPtr> code_block optional_code_block
 %type <nPtr> variable_assign variable_expr
 %type <nPtr> string_statement
-%type <nPtr> obj_identifier member_list member
+%type <nPtr> obj_identifier member_decl_list member_decl  object
 
 %token PRINT END
 %token EVENT OPTION
@@ -85,25 +85,31 @@ string_statement:
 
 dec_statement:
 		event	';'						{ $$ = $1; }  
-		| OBJECT obj_identifier HAS member_list ';' { $$ = new CObjDeclNode($2,$4); }
+		| OBJECT obj_identifier HAS member_decl_list ';' { $$ = new CObjDeclNode($2,$4); }
 		;
 
 obj_identifier:
 		IDENTIFIER					   { $$ = new CObjIdentNode($1); }
 		;
 
-member_list:
-		member							{ $$ = $1; }
-		| member_list ',' member		{ $$ = new CJointNode($1,$3); }
+member_decl_list:
+		member_decl							{ $$ = $1; }
+		| member_decl_list ',' member_decl	{ $$ = new CJointNode($1,$3); }
 		;
 
-member:
-		IDENTIFIER						{ $$ = new CMemberNode($1); }
+member_decl:
+		IDENTIFIER						{ $$ = new CMemberDeclNode($1); }
 		;
 
 variable_assign:
 		IDENTIFIER						{ $$ = new CGlobalVarAssignNode($1); }
+		| object '.' IDENTIFIER			{ $$ = new CReferenceNode($1,$3); }
+		; 
+
+object:
+		IDENTIFIER						{ $$ = new CObjNode($1); }
 		;
+
 
 statement_list:
 		statement						{ $$ = $1; }
@@ -141,6 +147,7 @@ expression:
       | integer_constant				{ $$ = $1; }
 	  | GETSTRING						{ $$ = new COpNode(opGetString); }
 	  | expression '+' expression		{ $$ = new COpNode(opAdd, $1, $3); }
+	  | object '.' IDENTIFIER	        { $$ = new CMemberNode($1, $3); }
       ;
 
 variable_expr:

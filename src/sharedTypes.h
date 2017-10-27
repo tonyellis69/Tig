@@ -1,7 +1,8 @@
 #pragma once
 
 enum TOpCode { opNop, opPrint, opGiveOptions, opOption, opJumpEvent, opEnd, opAssign, opPushStr, opPushInt, 
-	opPushVar, opGetString, opAdd,  opStartTimer, opTimedEvent
+	opPushVar, opGetString, opAdd,  opStartTimer, opTimedEvent,
+	opExpressVar
 };
 
 static char* opCode[] = { "opNop\0",
@@ -17,4 +18,7 @@ static char* opCode[] = { "opNop\0",
 	"opGetString\0",
 	"opAdd\0",
 	"opStartTimer\0",
-	"opTimedEvent\0"};
+	"opTimedEvent\0",
+	"opExpressVar\0"};
+
+const int memberIdStart = 1000;
