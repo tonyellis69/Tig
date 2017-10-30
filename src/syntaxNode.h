@@ -43,6 +43,9 @@ public:
 	void writeObjectDefTable();
 	void writeHeader();
 
+	void killNodes();
+
+
 	std::vector<CSyntaxNode*> operands;
 
 	static std::ofstream* outputFile;
@@ -62,16 +65,17 @@ public:
 	static int globalVarTableAddr; ///<Where the global variable table starts
 
 	static std::vector<CMemberDeclNode*> memberStack; ///<Temporary tracker of all the members of an object.
+
+	static std::vector<CSyntaxNode*> nodeList;
 };
 
-
+enum TIdentType { local, globalVar, object };
 
 class CStrNode : public CSyntaxNode {
 public:
 	CStrNode(std::string* parsedString);
 	std::string& getText();
 	void encode();
-
 	
 	int stringListIndex; ///<The position in the stringlist of the string represented by this node.
 	std::string text;
@@ -138,15 +142,6 @@ public:
 	std::string name;
 };
 
-class CGlobalVarExprNode : public CSyntaxNode {
-public:
-	CGlobalVarExprNode(std::string* parsedString);
-	void encode();
-
-	int varId;
-	std::string name; ///TO DO: can probably do without
-};
-
 class CStrStatement : public CSyntaxNode {
 public:
 	CStrStatement(CSyntaxNode* stringExpr);
@@ -210,12 +205,13 @@ public:
 
 };
 
-class CObjNode : public CSyntaxNode {
+class CObjRefNode : public CSyntaxNode {
 public:
-	CObjNode(std::string* parsedString);
+	CObjRefNode(std::string* parsedString);
 	void encode();
 
-	int objectId;
+	int refId;
+	TIdentType identType;
 };
 
 class CMemberNode : public CSyntaxNode {
@@ -224,4 +220,15 @@ public:
 	void encode();
 
 	int memberId;
+};
+
+
+class CIdentExprNode : public CSyntaxNode {
+public:
+	CIdentExprNode(std::string* parsedString);
+	void encode();
+
+	int varId;
+	std::string name; ///TO DO: can probably do without
+	TIdentType identType;
 };

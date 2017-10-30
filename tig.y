@@ -37,7 +37,7 @@
 %type <nPtr> code_block optional_code_block
 %type <nPtr> variable_assign variable_expr
 %type <nPtr> string_statement
-%type <nPtr> obj_identifier member_decl_list member_decl  object
+%type <nPtr> obj_identifier member_decl_list member_decl  object_ref
 
 %token PRINT END
 %token EVENT OPTION
@@ -103,11 +103,12 @@ member_decl:
 
 variable_assign:
 		IDENTIFIER						{ $$ = new CGlobalVarAssignNode($1); }
-		| object '.' IDENTIFIER			{ $$ = new CReferenceNode($1,$3); }
+		| object_ref '.' IDENTIFIER		{ $$ = new CReferenceNode($1,$3); }
 		; 
 
-object:
-		IDENTIFIER						{ $$ = new CObjNode($1); }
+object_ref:
+		IDENTIFIER						{ $$ = new CObjRefNode($1); }
+		| object_ref '.' IDENTIFIER		{ $$ = new CMemberNode($1, $3); }
 		;
 
 
@@ -147,11 +148,11 @@ expression:
       | integer_constant				{ $$ = $1; }
 	  | GETSTRING						{ $$ = new COpNode(opGetString); }
 	  | expression '+' expression		{ $$ = new COpNode(opAdd, $1, $3); }
-	  | object '.' IDENTIFIER	        { $$ = new CMemberNode($1, $3); }
+	  | object_ref '.' IDENTIFIER	        { $$ = new CMemberNode($1, $3); }
       ;
 
 variable_expr:
-	IDENTIFIER							{ $$ = new CGlobalVarExprNode($1); }
+	IDENTIFIER							{ $$ = new CIdentExprNode($1); }
 	;
 
 integer_constant:

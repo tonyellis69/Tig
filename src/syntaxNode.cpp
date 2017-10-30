@@ -1,6 +1,7 @@
 #include "syntaxNode.h"
 
 #include <iostream>
+#include <memory>
 using namespace std;
 
 std::ofstream* CSyntaxNode::outputFile = NULL;
@@ -18,8 +19,10 @@ std::map<std::string, CObject> CSyntaxNode::objects;
 int CSyntaxNode::nextObjectId = 0;
 std::vector<CMemberDeclNode*> CSyntaxNode::memberStack; 
 
+std::vector<CSyntaxNode*> CSyntaxNode::nodeList;
 
 CSyntaxNode::CSyntaxNode() {
+	nodeList.push_back(this);
 }
 
 /** Set the file the syntax tree writes to. */
@@ -89,6 +92,12 @@ void CSyntaxNode::writeHeader() {
 	writeWord(eventTableAddr + headerSize);
 }
 
+void CSyntaxNode::killNodes() {
+	for (auto node : nodeList)
+		delete node;
+}
+
+
 /** Return the unique id number for this event identifier. */
 int CSyntaxNode::getEventId(std::string & identifier) {
 	auto iter = eventIds.find(identifier);
@@ -150,6 +159,7 @@ void CStrNode::encode() {
 	writeOp(opPushStr);
 	writeString(text);
 }
+
 
 /** Create a operator node for the given instruction and its operand. */
 COpNode::COpNode(TOpCode code, CSyntaxNode* operand) {
@@ -251,7 +261,7 @@ void CEventNode::encode() {
 	std::vector<int> offsetList; 
 	for (auto option : optionStack) {
 		int offset = (int)outputFile->tellp() - optionTableAddr;
-		for (auto operand : operands) 
+		for (auto operand : option->operands) 
 			operand->encode();
 		writeOp(opJumpEvent);
 		writeWord(option->getId());
@@ -298,17 +308,7 @@ void CGlobalVarAssignNode::encode() {
 	writeWord(varId); 
 }
 
-/** Create a global variable expression node for the named variable. */
-CGlobalVarExprNode::CGlobalVarExprNode(std::string * parsedString) {
-	varId = getGlobalVarId(*parsedString);
-	name = *parsedString;
-}
 
-/** Push this variable's contents onto the stack for the VM to pick up. */
-void CGlobalVarExprNode::encode() {
-	writeOp(opPushVar);
-	writeWord(varId);
-}
 
 /** Create a string statement node for the given string-based expression. */
 CStrStatement::CStrStatement(CSyntaxNode* stringExpr) {
@@ -416,20 +416,35 @@ void CReferenceNode::encode() {
 
 
 
-/** Create a node representing an object. */
-CObjNode::CObjNode(std::string * parsedString) {
+/** Create a node representing a reference to an object - either by name or variable. */
+CObjRefNode::CObjRefNode(std::string * parsedString) {
 	auto iter = objects.find(*parsedString);
-	if (iter == objects.end()) {
-		std::cout << "\nError! No object named " << *parsedString << " exists.";
-		exit(1);
+	if (iter != objects.end()) {
+		refId = iter->second.objectId;
+		identType = object;
+		return;
 	}
-	objectId = iter->second.objectId;
+	auto iter2 = globalVarIds.find(*parsedString);
+	if (iter2 != globalVarIds.end()) {
+		refId = iter2->second;
+		identType = globalVar;
+		return;
+	}
+
+	std::cout << "\nError! No object or variable named " << *parsedString << " exists.";
+	exit(1);
 }
 
 /** Leave the object id on the stack for the VM to pick up. */
-void CObjNode::encode() {
-	writeOp(opPushInt);
-	writeWord(objectId);
+void CObjRefNode::encode() {
+	if (identType == object) {
+		writeOp(opPushInt);
+		writeWord(refId);
+	}
+	else {
+		writeOp(opPushVar);
+		writeWord(refId);
+	}
 }
 
 //TO DO: identical to CReferenceNode - definitely room for refactoring.
@@ -447,7 +462,38 @@ CMemberNode::CMemberNode(CSyntaxNode * parent, std::string * parsedString) {
 
 /** Get the value expressed by this member on the stack for the VM to pick up. */
 void CMemberNode::encode() {
-	operands[0]->encode();
-	writeOp(opPushVar);
+	operands[0]->encode(); //eg push object id onto stack
+	writeOp(opPushVar); //pushvar expects either a var or member id, puts contents on stack
 	writeWord(memberId);
+}
+
+/** Create an  expression node for the named identifier. */
+CIdentExprNode::CIdentExprNode(std::string * parsedString) {
+	name = *parsedString;
+	//TO DO: check if this is a local variable
+
+	//is this a global variable?
+	auto iter = globalVarIds.find(*parsedString);
+	if (iter != globalVarIds.end()) {
+		varId = iter->second;
+		identType = globalVar;
+		return;
+	}
+	
+	auto iter2 = objects.find(*parsedString);
+	if (iter2 != objects.end()) {
+		varId = iter2->second.objectId;
+		identType = object;
+		return;
+	}
+}
+
+/** Tell VM to push this variable's contents onto the stack. */
+void CIdentExprNode::encode() {
+	if (identType == globalVar)
+		writeOp(opPushVar);
+	else
+		writeOp(opPushObj);
+	//TO DO: may be able to do this entirely with pushVar, if object ids start at 1000.
+	writeWord(varId);
 }

@@ -74,6 +74,7 @@ void CTigCompiler::encode(CSyntaxNode * node) {
 	final << tempFile.rdbuf();
 	final.close();
 	tempFile.close();
+	node->killNodes();
 	remove("tempFile.tig");
 }
 
