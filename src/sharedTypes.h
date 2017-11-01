@@ -23,3 +23,5 @@ static char* opCode[] = { "opNop\0",
 	"opPushObj\0"};
 
 const int memberIdStart = 1000;
+
+enum TigVarType { tigUndefined, tigString, tigInt, tigFloat, tigObj };

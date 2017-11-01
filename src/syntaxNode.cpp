@@ -82,7 +82,8 @@ void CSyntaxNode::writeObjectDefTable() {
 		writeWord(object.second.objectId);
 		writeByte(object.second.members.size());
 		for (auto member : object.second.members) {
-			writeWord(member);
+			writeWord(member.memberId);
+			member.initialiser->encode();
 		}
 	}
 }
@@ -346,9 +347,16 @@ void CTimedEventNode::encode() {
 }
 
 /** Create a node representing the declaration of the named object member. */
-CMemberDeclNode::CMemberDeclNode(std::string * parsedString) {
-	name = *parsedString;
-	memberId = getMemberId(*parsedString);
+CMemberDeclNode::CMemberDeclNode(CSyntaxNode* identNode, CSyntaxNode* initialiser) {
+	name = identNode->getText();
+	memberId = getMemberId(name);
+	if (initialiser)
+		operands.push_back(initialiser);
+	else {
+		CInitNode* blank = new CInitNode(0);
+		blank->type = tigUndefined;
+		operands.push_back(blank);
+	}
 }
 
 int CMemberDeclNode::getId() {
@@ -384,11 +392,14 @@ CObjDeclNode::CObjDeclNode(CSyntaxNode * identifier, CSyntaxNode * memberList) {
 /** Create an object definition for the VM to pick up. */
 void CObjDeclNode::encode() {
 	std::string name = identNode->getText();
-	//run through the member nodes and add these to the object's definition
+	//run through the member node declarations and add these to the object's definition
 	memberStack.clear();
 	members->encode();
 	for (auto member : memberStack) {
-		objects[name].members.push_back(member->getId());
+		TMemberRec memberRec;
+		memberRec.memberId = member->getId();
+		memberRec.initialiser = member->operands[0];
+		objects[name].members.push_back(memberRec);
 	}
 	memberStack.clear();
 }
@@ -402,7 +413,7 @@ CReferenceNode::CReferenceNode(CSyntaxNode * parent, std::string* parsedString) 
 	auto iter = memberIds.find(*parsedString);
 	if (iter == memberIds.end()) {
 		std::cout << "\nError! No member named " << *parsedString << " exists.";
-		exit(1);
+		//exit(1);
 	}
 	memberId = iter->second;
 }
@@ -432,7 +443,7 @@ CObjRefNode::CObjRefNode(std::string * parsedString) {
 	}
 
 	std::cout << "\nError! No object or variable named " << *parsedString << " exists.";
-	exit(1);
+	//exit(1);
 }
 
 /** Leave the object id on the stack for the VM to pick up. */
@@ -455,7 +466,7 @@ CMemberNode::CMemberNode(CSyntaxNode * parent, std::string * parsedString) {
 	auto iter = memberIds.find(*parsedString);
 	if (iter == memberIds.end()) {
 		std::cout << "\nError! No member named " << *parsedString << " exists.";
-		exit(1);
+		//exit(1);
 	}
 	memberId = iter->second;
 }
@@ -496,4 +507,33 @@ void CIdentExprNode::encode() {
 		writeOp(opPushObj);
 	//TO DO: may be able to do this entirely with pushVar, if object ids start at 1000.
 	writeWord(varId);
+}
+
+CInitNode::CInitNode(std::string * parsedString) {
+	text = *parsedString;
+	type = tigString;
+}
+
+CInitNode::CInitNode(int parsedInt) {
+	integer = parsedInt;
+	type = tigInt;
+}
+
+void CInitNode::encode() {
+	writeByte(type);
+	if (type == tigString)
+		writeString(text);
+	if (type == tigInt)
+		writeWord(integer);
+	if (type == tigUndefined)
+		writeWord(0);
+
+}
+
+CMemberIdentNode::CMemberIdentNode(std::string * parsedString) {
+	name = *parsedString;
+}
+
+std::string & CMemberIdentNode::getText() {
+	return name;
 }

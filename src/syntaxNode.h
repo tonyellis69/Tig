@@ -11,11 +11,17 @@
 
 #include "sharedTypes.h"
 
+class CSyntaxNode;
+struct TMemberRec {
+	int memberId;
+	CSyntaxNode* initialiser;
+};
+
 class CObject {
 public:
 	CObject() {};
 	int objectId;
-	std::vector<int> members;
+	std::vector<TMemberRec> members;
 };
 
 /** Basic syntax node. */
@@ -169,7 +175,7 @@ public:
 
 class CMemberDeclNode : public CSyntaxNode {
 public:
-	CMemberDeclNode(std::string* parsedString);
+	CMemberDeclNode(CSyntaxNode* identNode, CSyntaxNode* initialiser);
 	int getId();
 	void encode();
 
@@ -231,4 +237,24 @@ public:
 	int varId;
 	std::string name; ///TO DO: can probably do without
 	TIdentType identType;
+};
+
+
+class CInitNode : public CSyntaxNode {
+public:
+	CInitNode(std::string* parsedString);
+	CInitNode(int parsedInt);
+	void encode();
+
+	TigVarType type;
+	std::string text;
+	int integer;
+};
+
+class CMemberIdentNode : public CSyntaxNode {
+public:
+	CMemberIdentNode(std::string* parsedString);
+	std::string& getText();
+
+	std::string name;
 };

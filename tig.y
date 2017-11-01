@@ -31,13 +31,13 @@
 	 std::string* str;
 };	
 
-%type <nPtr> program tigcode statement expression statement_list dec_statement
+%type <nPtr> program tigcode statement expression constant_expr statement_list dec_statement
 %type <nPtr> integer_constant
-%type <nPtr> event option string_literal event_identifier 
+%type <nPtr> option string_literal event_identifier 
 %type <nPtr> code_block optional_code_block
 %type <nPtr> variable_assign variable_expr
 %type <nPtr> string_statement
-%type <nPtr> obj_identifier member_decl_list member_decl  object_ref
+%type <nPtr> obj_identifier member_decl_list member_decl member_identifier object_ref init_expr
 
 %token PRINT END
 %token EVENT OPTION
@@ -68,14 +68,14 @@ tigcode:
         ;
 
 statement:
-        PRINT expression ';'			{ $$ = new COpNode(opPrint,$2); }   	
-        | variable_assign '=' expression ';'	{ $$ = new COpNode(opAssign,$1,$3); }
-		| '{' statement_list '}'		{ $$ = $2; }
-		| END ';'						{ $$ = new COpNode(opEnd);}
-		|  option ';'					{ $$ = $1; }
-		| string_statement	';'			{ $$ = new CStrStatement($1);}
-		| START_TIMER	';'				{ $$ = new COpNode(opStartTimer); }
-		| START_EVENT event_identifier AT INTEGER ';' { $$ = new CTimedEventNode($2,$4); }
+        PRINT expression ';'							{ $$ = new COpNode(opPrint,$2); }   	
+        | variable_assign '=' expression ';'			{ $$ = new COpNode(opAssign,$1,$3); }
+		| '{' statement_list '}'						{ $$ = $2; }
+		| END ';'										{ $$ = new COpNode(opEnd);}
+		|  option ';'									{ $$ = $1; }
+		| string_statement	';'							{ $$ = new CStrStatement($1);}
+		| START_TIMER	';'								{ $$ = new COpNode(opStartTimer); }
+		| START_EVENT event_identifier AT INTEGER ';'	{ $$ = new CTimedEventNode($2,$4); }
         ;
 
 string_statement:
@@ -84,8 +84,8 @@ string_statement:
 		;
 
 dec_statement:
-		event	';'						{ $$ = $1; }  
-		| OBJECT obj_identifier HAS member_decl_list ';' { $$ = new CObjDeclNode($2,$4); }
+		EVENT event_identifier code_block ';'				{ $$ = new CEventNode($2,$3); }							
+		| OBJECT obj_identifier HAS member_decl_list ';'	{ $$ = new CObjDeclNode($2,$4); }
 		;
 
 obj_identifier:
@@ -98,7 +98,17 @@ member_decl_list:
 		;
 
 member_decl:
-		IDENTIFIER						{ $$ = new CMemberDeclNode($1); }
+		member_identifier						{ $$ = new CMemberDeclNode($1,NULL); }
+		| member_identifier '=' init_expr		{ $$ = new CMemberDeclNode($1,$3); }
+		;
+
+member_identifier:					
+		IDENTIFIER					{ $$ = new CMemberIdentNode($1); }
+		;
+
+init_expr:
+		STRING						{ $$ = new CInitNode($1); }
+		| INTEGER					{ $$ = new CInitNode($1); }
 		;
 
 variable_assign:
@@ -117,9 +127,7 @@ statement_list:
 		| statement_list statement		{ $$ = new CJointNode($1,$2); }
 		;
 
-event:
-		EVENT event_identifier code_block 	{ $$ = new CEventNode($2,$3); }
-		;
+
 
 string_literal:
 		STRING							{ $$ = new CStrNode($1); } 
@@ -143,17 +151,21 @@ code_block:
 		;
 
 expression:
-      STRING 							{ $$ = new CStrNode($1); } 
-	  | variable_expr					{ $$ = $1; }
-      | integer_constant				{ $$ = $1; }
+      variable_expr						{ $$ = $1; }
 	  | GETSTRING						{ $$ = new COpNode(opGetString); }
 	  | expression '+' expression		{ $$ = new COpNode(opAdd, $1, $3); }
-	  | object_ref '.' IDENTIFIER	        { $$ = new CMemberNode($1, $3); }
+	  | object_ref '.' IDENTIFIER	    { $$ = new CMemberNode($1, $3); }
+	  | constant_expr					{ $$ = $1; }
       ;
 
 variable_expr:
 	IDENTIFIER							{ $$ = new CIdentExprNode($1); }
 	;
+
+constant_expr:							//TO DO: float
+	integer_constant					{ $$ = $1; }
+	| STRING 							{ $$ = new CStrNode($1); } 
+	; 
 
 integer_constant:
 	INTEGER								{ $$ = new CIntNode($1); }

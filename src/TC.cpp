@@ -3,6 +3,9 @@
 
 #include <Windows.h>
 
+#include "vld.h"
+
+/*
 #if defined(_DEBUG)
 #define _CRTDBG_MAP_ALLOC
 #include <stdlib.h>
@@ -10,7 +13,7 @@
 #define DEBUG_NEW new(_NORMAL_BLOCK, __FILE__, __LINE__)
 #define new DEBUG_NEW 
 #endif
-
+*/
 
 #include "compiler.h"
 
@@ -40,5 +43,5 @@ int main(void) {
 
 	delete tig;
 	//_CrtSetBreakAlloc(120); // set breakpoint on a specific allocation number
-	_CrtDumpMemoryLeaks();
+//	_CrtDumpMemoryLeaks();
 }
