@@ -19,6 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\VMtest\src\var.cpp" />
     <ClCompile Include="src\syntaxNode.cpp" />
     <ClCompile Include="src\TC.cpp" />
     <ClCompile Include="src\compiler.cpp" />
@@ -26,6 +27,7 @@
     <ClCompile Include="src\tigParse.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\VMtest\src\var.h" />
     <ClInclude Include="src\compiler.h" />
     <ClInclude Include="src\sharedTypes.h" />
     <ClInclude Include="src\syntaxNode.h" />

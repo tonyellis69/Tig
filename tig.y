@@ -37,7 +37,7 @@
 %type <nPtr> code_block optional_code_block
 %type <nPtr> variable_assign variable_expr
 %type <nPtr> string_statement
-%type <nPtr> obj_identifier member_decl_list member_decl member_identifier object_ref init_expr
+%type <nPtr> obj_identifier member_decl_list member_decl member_identifier object_ref init_expr member_expr
 
 %token PRINT END
 %token EVENT OPTION
@@ -72,10 +72,11 @@ statement:
         | variable_assign '=' expression ';'			{ $$ = new COpNode(opAssign,$1,$3); }
 		| '{' statement_list '}'						{ $$ = $2; }
 		| END ';'										{ $$ = new COpNode(opEnd);}
-		|  option ';'									{ $$ = $1; }
+		| option ';'									{ $$ = $1; }
 		| string_statement	';'							{ $$ = new CStrStatement($1);}
 		| START_TIMER	';'								{ $$ = new COpNode(opStartTimer); }
 		| START_EVENT event_identifier AT INTEGER ';'	{ $$ = new CTimedEventNode($2,$4); }
+		| member_expr ';'								{ $$ = new COpNode(opCall,$1); }
         ;
 
 string_statement:
@@ -98,8 +99,9 @@ member_decl_list:
 		;
 
 member_decl:
-		member_identifier						{ $$ = new CMemberDeclNode($1,NULL); }
+		member_identifier						{ $$ = new CMemberDeclNode($1,new CInitNode()); } //
 		| member_identifier '=' init_expr		{ $$ = new CMemberDeclNode($1,$3); }
+		| member_identifier	init_expr			{ $$ = new CMemberDeclNode($1,$2); }
 		;
 
 member_identifier:					
@@ -109,6 +111,7 @@ member_identifier:
 init_expr:
 		STRING						{ $$ = new CInitNode($1); }
 		| INTEGER					{ $$ = new CInitNode($1); }
+		| code_block				{ $$ = new CInitNode($1); }
 		;
 
 variable_assign:
@@ -154,12 +157,16 @@ expression:
       variable_expr						{ $$ = $1; }
 	  | GETSTRING						{ $$ = new COpNode(opGetString); }
 	  | expression '+' expression		{ $$ = new COpNode(opAdd, $1, $3); }
-	  | object_ref '.' IDENTIFIER	    { $$ = new CMemberNode($1, $3); }
+	  | member_expr						{ $$ = $1; }
 	  | constant_expr					{ $$ = $1; }
       ;
 
 variable_expr:
 	IDENTIFIER							{ $$ = new CIdentExprNode($1); }
+	;
+
+member_expr:
+	object_ref '.' IDENTIFIER			{ $$ = new CMemberNode($1, $3); }
 	;
 
 constant_expr:							//TO DO: float

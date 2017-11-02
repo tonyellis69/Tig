@@ -10,11 +10,12 @@
 #include <map>
 
 #include "sharedTypes.h"
+#include "..\..\VMtest\src\var.h"
 
 class CSyntaxNode;
 struct TMemberRec {
 	int memberId;
-	CSyntaxNode* initialiser;
+	CTigVar value;
 };
 
 class CObject {
@@ -70,7 +71,7 @@ public:
 	static int eventTableAddr; ///<Where the event table starts
 	static int globalVarTableAddr; ///<Where the global variable table starts
 
-	static std::vector<CMemberDeclNode*> memberStack; ///<Temporary tracker of all the members of an object.
+	static std::vector<TMemberRec> memberStack2; ///<Temporary tracker of all the members of an object.
 
 	static std::vector<CSyntaxNode*> nodeList;
 };
@@ -244,11 +245,11 @@ class CInitNode : public CSyntaxNode {
 public:
 	CInitNode(std::string* parsedString);
 	CInitNode(int parsedInt);
+	CInitNode(CSyntaxNode* codeBlock);
+	CInitNode();
 	void encode();
 
-	TigVarType type;
-	std::string text;
-	int integer;
+	CTigVar value;
 };
 
 class CMemberIdentNode : public CSyntaxNode {

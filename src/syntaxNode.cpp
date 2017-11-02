@@ -17,7 +17,8 @@ std::map<std::string, int> CSyntaxNode::memberIds;
 int CSyntaxNode::nextMemberId = memberIdStart;
 std::map<std::string, CObject> CSyntaxNode::objects; 
 int CSyntaxNode::nextObjectId = 0;
-std::vector<CMemberDeclNode*> CSyntaxNode::memberStack; 
+std::vector<TMemberRec> CSyntaxNode::memberStack2;
+
 
 std::vector<CSyntaxNode*> CSyntaxNode::nodeList;
 
@@ -75,7 +76,7 @@ void CSyntaxNode::writeGlobalVarTable() {
 	}
 }
 
-/** Write the class definitions of all defined objects. */
+/** Write the definitions of all objects. */
 void CSyntaxNode::writeObjectDefTable() {
 	writeWord(objects.size());
 	for (auto object : objects) {
@@ -83,7 +84,15 @@ void CSyntaxNode::writeObjectDefTable() {
 		writeByte(object.second.members.size());
 		for (auto member : object.second.members) {
 			writeWord(member.memberId);
-			member.initialiser->encode();
+			writeByte(member.value.type);
+			if (member.value.type == tigString)
+				writeString(member.value.getStringValue());
+			if (member.value.type == tigInt)
+				writeWord(member.value.getIntValue());
+			if (member.value.type == tigFunc)
+				writeWord(member.value.getFuncAddress());
+			if (member.value.type == tigUndefined)
+				writeWord(0);
 		}
 	}
 }
@@ -352,20 +361,22 @@ CMemberDeclNode::CMemberDeclNode(CSyntaxNode* identNode, CSyntaxNode* initialise
 	memberId = getMemberId(name);
 	if (initialiser)
 		operands.push_back(initialiser);
-	else {
-		CInitNode* blank = new CInitNode(0);
-		blank->type = tigUndefined;
-		operands.push_back(blank);
-	}
+	//else {
+//		CInitNode* blank = new CInitNode(0);
+//		operands.push_back(blank);
+//	}
 }
 
 int CMemberDeclNode::getId() {
 	return memberId;
 }
 
-/** Add this member to a list of members for the object currently being defined. */
+/** Take care of any initialisation, then add this member to a list of members for the object currently being defined. */
 void CMemberDeclNode::encode() {
-	memberStack.push_back(this);
+	TMemberRec memberRec;
+	memberRec.memberId = getId();
+	memberStack2.push_back(memberRec);
+	operands[0]->encode();
 }
 
 /** Create a node representing an object identifier. */
@@ -393,15 +404,13 @@ CObjDeclNode::CObjDeclNode(CSyntaxNode * identifier, CSyntaxNode * memberList) {
 void CObjDeclNode::encode() {
 	std::string name = identNode->getText();
 	//run through the member node declarations and add these to the object's definition
-	memberStack.clear();
+	memberStack2.clear();
 	members->encode();
-	for (auto member : memberStack) {
-		TMemberRec memberRec;
-		memberRec.memberId = member->getId();
-		memberRec.initialiser = member->operands[0];
-		objects[name].members.push_back(memberRec);
+	for (auto memberRec2 : memberStack2) {
+		objects[name].members.push_back(memberRec2);
 	}
-	memberStack.clear();
+
+	memberStack2.clear();
 }
 
 /** Create a node representing a member reference. */
@@ -509,27 +518,38 @@ void CIdentExprNode::encode() {
 	writeWord(varId);
 }
 
+/** Create a member-initialisation node initialising with a string. */
 CInitNode::CInitNode(std::string * parsedString) {
-	text = *parsedString;
-	type = tigString;
+	value.setStringValue(*parsedString);
 }
 
+/** Create a member-initialisation node initialising with an int. */
 CInitNode::CInitNode(int parsedInt) {
-	integer = parsedInt;
-	type = tigInt;
+	value.setIntValue(parsedInt);
 }
 
+CInitNode::CInitNode(CSyntaxNode * codeBlock){
+	value.setFuncAddr(NULL);
+	operands.push_back(codeBlock);
+}
+
+CInitNode::CInitNode() {
+	
+}
+
+/** Throw the value of this initialiser on the stack to use when writing the object table. */
 void CInitNode::encode() {
-	writeByte(type);
-	if (type == tigString)
-		writeString(text);
-	if (type == tigInt)
-		writeWord(integer);
-	if (type == tigUndefined)
-		writeWord(0);
+	if (value.type == tigFunc) {
+		int codeStart = outputFile->tellp();
+		operands[0]->encode();
+		writeOp(opReturn);
+		value.setFuncAddr(codeStart);
+	}
 
+	memberStack2.back().value = value;
 }
 
+/** Create a node for this member identifier. */
 CMemberIdentNode::CMemberIdentNode(std::string * parsedString) {
 	name = *parsedString;
 }
