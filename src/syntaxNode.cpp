@@ -403,13 +403,16 @@ CObjDeclNode::CObjDeclNode(CSyntaxNode * identifier, CSyntaxNode * memberList) {
 /** Create an object definition for the VM to pick up. */
 void CObjDeclNode::encode() {
 	std::string name = identNode->getText();
+
+	if (!members)
+		return;
+
 	//run through the member node declarations and add these to the object's definition
 	memberStack2.clear();
 	members->encode();
 	for (auto memberRec2 : memberStack2) {
 		objects[name].members.push_back(memberRec2);
 	}
-
 	memberStack2.clear();
 }
 

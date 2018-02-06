@@ -10,7 +10,7 @@
     void yyerror(char *);
     int yylex(void);
 
-    int sym[26];
+    //int sym[26];
 
 	CTigCompiler* tigC;
 
@@ -37,7 +37,7 @@
 %type <nPtr> code_block optional_code_block
 %type <nPtr> variable_assign variable_expr
 %type <nPtr> string_statement
-%type <nPtr> obj_identifier member_decl_list member_decl member_identifier object_ref init_expr member_expr
+%type <nPtr> obj_identifier optional_member_list member_decl_list member_decl member_identifier object_ref init_expr member_expr
 
 %token PRINT END
 %token EVENT OPTION
@@ -85,12 +85,19 @@ string_statement:
 		;
 
 dec_statement:
-		EVENT event_identifier code_block ';'				{ $$ = new CEventNode($2,$3); }							
-		| OBJECT obj_identifier HAS member_decl_list ';'	{ $$ = new CObjDeclNode($2,$4); }
+		EVENT event_identifier code_block ';'				{ $$ = new CEventNode($2,$3); }	
+		| OBJECT obj_identifier optional_member_list ';'	{ $$ = new CObjDeclNode($2,$3); }
+		//| OBJECT obj_identifier HAS member_decl_list ';'	{ $$ = new CObjDeclNode($2,$4); }
+		//| IDENTIFIER obj_identifier HAS member_decl_list ';'	{ $$ = new CObjDeclNode($2,$4); }
 		;
 
 obj_identifier:
 		IDENTIFIER					   { $$ = new CObjIdentNode($1); }
+		;
+
+optional_member_list:
+		HAS member_decl_list			{ $$ = $2; }
+		|								{ $$ = NULL; }
 		;
 
 member_decl_list:
