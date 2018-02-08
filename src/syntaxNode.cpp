@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <memory>
+#include <algorithm>
 using namespace std;
 
 std::ofstream* CSyntaxNode::outputFile = NULL;
@@ -78,11 +79,20 @@ void CSyntaxNode::writeGlobalVarTable() {
 
 /** Write the definitions of all objects. */
 void CSyntaxNode::writeObjectDefTable() {
-	writeWord(objects.size());
+	//sort object table by objectId, which is also order of creation. This is useful for the VM.
+	std::vector<CObject> orderedObjects;
 	for (auto object : objects) {
-		writeWord(object.second.objectId);
-		writeByte(object.second.members.size());
-		for (auto member : object.second.members) {
+		orderedObjects.push_back(object.second);
+	}
+	sort(orderedObjects.begin(), orderedObjects.end(),
+		[&](CObject& obj1, CObject& obj2) {return obj1.objectId < obj2.objectId; } );
+
+	writeWord(objects.size());
+	for (auto object : orderedObjects) {
+		writeWord(object.objectId);
+		writeWord(object.classId);
+		writeByte(object.members.size());
+		for (auto member : object.members) {
 			writeWord(member.memberId);
 			writeByte(member.value.type);
 			if (member.value.type == tigString)
@@ -395,18 +405,20 @@ std::string & CObjIdentNode::getText() {
 }
 
 /** Create a node representing an object declaration. */
-CObjDeclNode::CObjDeclNode(CSyntaxNode * identifier, CSyntaxNode * memberList) {
+CObjDeclNode::CObjDeclNode(CSyntaxNode * identifier, CSyntaxNode * memberList, CSyntaxNode * classObject) {
 	identNode = identifier;
 	members = memberList;
+	classObj = classObject;
 }
 
 /** Create an object definition for the VM to pick up. */
 void CObjDeclNode::encode() {
 	std::string name = identNode->getText();
+	if (classObj)
+		objects[name].classId = classObj->getId();
 
 	if (!members)
 		return;
-
 	//run through the member node declarations and add these to the object's definition
 	memberStack2.clear();
 	members->encode();
@@ -559,4 +571,17 @@ CMemberIdentNode::CMemberIdentNode(std::string * parsedString) {
 
 std::string & CMemberIdentNode::getText() {
 	return name;
+}
+
+ClassIdentNode::ClassIdentNode(std::string * parsedString) {
+	auto iter = objects.find(*parsedString);
+	if (iter != objects.end()) {
+		classId = iter->second.objectId;
+		return;
+	}
+	std::cout << "\nError! No object named " << *parsedString << " exists.";
+}
+
+int ClassIdentNode::getId() {
+	return classId;
 }

@@ -20,8 +20,9 @@ struct TMemberRec {
 
 class CObject {
 public:
-	CObject() {};
+	CObject() : objectId(-1), classId(-1) {};
 	int objectId;
+	int classId;
 	std::vector<TMemberRec> members;
 };
 
@@ -196,11 +197,12 @@ public:
 
 class CObjDeclNode : public CSyntaxNode {
 public:
-	CObjDeclNode(CSyntaxNode* identifier, CSyntaxNode* memberList);
+	CObjDeclNode(CSyntaxNode* identifier, CSyntaxNode* memberList, CSyntaxNode * classObject);
 	void encode();
 
 	CSyntaxNode* identNode;
 	CSyntaxNode* members;
+	CSyntaxNode* classObj;
 };
 
 class CReferenceNode : public CSyntaxNode {
@@ -258,4 +260,14 @@ public:
 	std::string& getText();
 
 	std::string name;
+};
+
+class ClassIdentNode : public CSyntaxNode {
+public:
+	ClassIdentNode(std::string * parsedString);
+	int getId();
+
+
+	int classId;
+	TIdentType identType;
 };

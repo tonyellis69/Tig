@@ -16,6 +16,9 @@
 	
 	int lineNo = 1; ///<Keeps track of line numbers for error messages.
 	std::string stringBuf;
+	const int maxIdentBufs = 10;
+	std::string identBufs[maxIdentBufs];
+	int currentIdentBuf = 0;
 %}
 
 	/* Substitutions simplify pattern-matching rules, eg, letter [A-Za-z] or digit [0-9] */
@@ -60,9 +63,12 @@ IDENT    {LETTER}({LETTER}|{DIGIT})*
 "at"					return AT;
 "object"				return OBJECT;
 "has"					return HAS;
-{IDENT}					{	stringBuf.clear(); 
-							stringBuf.assign(yytext,yyleng);
-							yylval.str = &stringBuf;
+{IDENT}					{	identBufs[currentIdentBuf].clear(); 
+							identBufs[currentIdentBuf].assign(yytext,yyleng);
+							yylval.str = &identBufs[currentIdentBuf];
+							currentIdentBuf++;
+							if (currentIdentBuf == maxIdentBufs)
+								currentIdentBuf = 0;
 							return IDENTIFIER;
 						}
 						

@@ -37,7 +37,7 @@
 %type <nPtr> code_block optional_code_block
 %type <nPtr> variable_assign variable_expr
 %type <nPtr> string_statement
-%type <nPtr> obj_identifier optional_member_list member_decl_list member_decl member_identifier object_ref init_expr member_expr
+%type <nPtr> obj_identifier class_identifier optional_member_list member_decl_list member_decl member_identifier object_ref init_expr member_expr
 
 %token PRINT END
 %token EVENT OPTION
@@ -86,13 +86,17 @@ string_statement:
 
 dec_statement:
 		EVENT event_identifier code_block ';'				{ $$ = new CEventNode($2,$3); }	
-		| OBJECT obj_identifier optional_member_list ';'	{ $$ = new CObjDeclNode($2,$3); }
+		| OBJECT obj_identifier optional_member_list ';'	{ $$ = new CObjDeclNode($2,$3,NULL); }
 		//| OBJECT obj_identifier HAS member_decl_list ';'	{ $$ = new CObjDeclNode($2,$4); }
-		//| IDENTIFIER obj_identifier HAS member_decl_list ';'	{ $$ = new CObjDeclNode($2,$4); }
+		| class_identifier obj_identifier optional_member_list ';'	{ $$ = new CObjDeclNode($2,$3,$1); }
 		;
 
 obj_identifier:
 		IDENTIFIER					   { $$ = new CObjIdentNode($1); }
+		;
+
+class_identifier:
+		IDENTIFIER					   { $$ = new ClassIdentNode($1); }
 		;
 
 optional_member_list:
