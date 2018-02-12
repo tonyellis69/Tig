@@ -82,7 +82,8 @@ IDENT    {LETTER}({LETTER}|{DIGIT})*
 							return STRING;
 						}
 <STR>\\n				stringBuf.append("\n"); /* user-supplied line break. */ 
-<STR>\n					stringBuf.append("\n"); trackLine(); //An actual line break
+<STR>[ ]*\n[ ]*			stringBuf.append(" "); trackLine(); //An actual line break
+<STR>[ \t]+				stringBuf.append(" ");
 <STR>.					stringBuf.append( yytext,yyleng);		
 									
 [ \t]					;	/* skip whitespace */

@@ -96,7 +96,7 @@ obj_identifier:
 		;
 
 class_identifier:
-		IDENTIFIER					   { $$ = new ClassIdentNode($1); }
+		IDENTIFIER					   { $$ = new ClassIdentNode($1); } //TO DO: change to CObjIdentNode
 		;
 
 optional_member_list:
@@ -123,6 +123,7 @@ init_expr:
 		STRING						{ $$ = new CInitNode($1); }
 		| INTEGER					{ $$ = new CInitNode($1); }
 		| code_block				{ $$ = new CInitNode($1); }
+		| obj_identifier			{ $$ = new CInitNode((CObjIdentNode*)$1); }
 		;
 
 variable_assign:

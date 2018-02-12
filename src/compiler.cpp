@@ -56,6 +56,7 @@ void CTigCompiler::encode(CSyntaxNode * node) {
 	node->writeEventTable();
 	node->writeGlobalVarTable();
 	node->writeObjectDefTable();
+	node->writeMemberNameTable();
 
 	byteCode.close();
 

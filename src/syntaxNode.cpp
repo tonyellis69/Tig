@@ -101,9 +101,28 @@ void CSyntaxNode::writeObjectDefTable() {
 				writeWord(member.value.getIntValue());
 			if (member.value.type == tigFunc)
 				writeWord(member.value.getFuncAddress());
+			if (member.value.type == tigObj)
+				writeWord(member.value.getObjId());
 			if (member.value.type == tigUndefined)
 				writeWord(0);
 		}
+	}
+}
+
+/** Write the names of all object members, in id order. */
+void CSyntaxNode::writeMemberNameTable() {
+	std::vector<std::pair<std::string, int>> orderedMembers;
+	for (auto member : memberIds) {
+		orderedMembers.push_back(member);
+	}
+	sort(orderedMembers.begin(), orderedMembers.end(),
+		[&](std::pair<std::string, int>& memb1, std::pair<std::string, int>& memb2) {return memb1.second <  memb2.second; });
+
+	//now write it to file.
+	writeWord(orderedMembers.size());
+	for (auto member : orderedMembers) {
+		//probably no need to include memberId as they will be sequential starting with memberIdStart
+		writeCString(member.first);
 	}
 }
 
@@ -546,6 +565,10 @@ CInitNode::CInitNode(int parsedInt) {
 CInitNode::CInitNode(CSyntaxNode * codeBlock){
 	value.setFuncAddr(NULL);
 	operands.push_back(codeBlock);
+}
+
+CInitNode::CInitNode(CObjIdentNode * objIdent) {
+	value.setObjId(objIdent->getId());
 }
 
 CInitNode::CInitNode() {

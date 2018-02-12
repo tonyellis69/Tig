@@ -49,6 +49,7 @@ public:
 	void writeEventTable();
 	void writeGlobalVarTable();
 	void writeObjectDefTable();
+	void writeMemberNameTable();
 	void writeHeader();
 
 	void killNodes();
@@ -248,6 +249,7 @@ public:
 	CInitNode(std::string* parsedString);
 	CInitNode(int parsedInt);
 	CInitNode(CSyntaxNode* codeBlock);
+	CInitNode(CObjIdentNode* objIdent);
 	CInitNode();
 	void encode();
 
