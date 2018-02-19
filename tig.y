@@ -39,10 +39,12 @@
 %type <nPtr> string_statement
 %type <nPtr> obj_identifier class_identifier optional_member_list member_decl_list member_decl member_identifier object_ref init_expr member_expr
 
+
 %token PRINT END
 %token EVENT OPTION
 %token OBJECT HAS
 %token GETSTRING
+%token HOT
 %token START_TIMER START_EVENT AT
 %token <iValue> INTEGER
 %token <str> IDENTIFIER STRING
@@ -77,6 +79,7 @@ statement:
 		| START_TIMER	';'								{ $$ = new COpNode(opStartTimer); }
 		| START_EVENT event_identifier AT INTEGER ';'	{ $$ = new CTimedEventNode($2,$4); }
 		| member_expr ';'								{ $$ = new COpNode(opCall,$1); }
+		| HOT STRING member_identifier ';'				{ $$ = new CHotTextNode($2,$3); }
         ;
 
 string_statement:
@@ -116,7 +119,7 @@ member_decl:
 		;
 
 member_identifier:					
-		IDENTIFIER					{ $$ = new CMemberIdentNode($1); }
+		IDENTIFIER					{ $$ = new CMemberIdentNode($1); } //TO DO: just passes string, replace
 		;
 
 init_expr:
@@ -162,7 +165,7 @@ optional_code_block:
 		;
 
 code_block:
-		'{' statement_list	'}'			{ $$ = $2; }
+		'{' statement_list	'}'			{ $$ = new CodeBlockNode($2); }
 		;
 
 expression:
@@ -190,10 +193,12 @@ integer_constant:
 	INTEGER								{ $$ = new CIntNode($1); }
 	;
 
+
+
 %%
 
 void yyerror(char *s) {
-	fprintf(stdout, "\n%s, '%s' on line %d:", s, yytext,lineNo);
+	fprintf(stdout, "\n%s, unexpected '%s' on line %d:", s, yytext,lineNo);
 	rewind(yyin);
 	char buf[500];
 	for (int line=0; line < lineNo;line++)

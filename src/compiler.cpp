@@ -45,22 +45,41 @@ COpNode * CTigCompiler::opNode(TOpCode opCode, CSyntaxNode* operand) {
 
 /** Convert the given syntax tree into bytecode, and write it to a file. */
 void CTigCompiler::encode(CSyntaxNode * node) {
-	//open an output file
-	ofstream byteCode("tempFile.tig", ios::binary | ios::out);
-	node->setOutputFile(byteCode);
-
+	node->fnByteCode.open("fnCode.tmp", ios::binary | ios::out );
+	node->globalByteCode.open("globalCode.tmp", ios::binary | ios::out );
+	
+	node->setOutputFile(node->globalByteCode);
 	node->encode();
 	cout << "\nend of encoding run";
 
+	node->fnByteCode.close();
+	node->globalByteCode.close();
+
+	ofstream fullCode("fnCode.tmp", ios::ate | ios::binary | ios::out | ios::app);
+	node->globalCodeAddr = fullCode.tellp();
+	//node->globalCodeAddr++;
+
+	//append global code to function code
+	int tmp = fullCode.tellp();
+	ifstream globalCode("globalCode.tmp",  ios::binary | ios::in);
+	int tmp2 = globalCode.tellg();
+	fullCode << globalCode.rdbuf();
+	tmp = fullCode.tellp();
+	globalCode.close();
+
+	fullCode.close();
+	fullCode.open("fnCode.tmp", ios::ate | ios::binary | ios::out | ios::app);
+
+	//fullCode.seekp(0, ios::end);
+	tmp = fullCode.tellp();
+
 	//add events table
+	node->setOutputFile(fullCode);
 	node->writeEventTable();
 	node->writeGlobalVarTable();
 	node->writeObjectDefTable();
 	node->writeMemberNameTable();
-
-	byteCode.close();
-
-	
+	fullCode.close();
 
 	//write header
 	ofstream header("output.tig", ios::ate | ios::binary | ios::out);
@@ -70,13 +89,14 @@ void CTigCompiler::encode(CSyntaxNode * node) {
 
 	//stitch together
 	ofstream final("output.tig", ios::binary | ios::out | ios::app);
-	ifstream tempFile("tempFile.tig", ios::binary | ios::in);
+	ifstream tempFile("fnCode.tmp", ios::binary | ios::in);
 
 	final << tempFile.rdbuf();
 	final.close();
 	tempFile.close();
 	node->killNodes();
-	remove("tempFile.tig");
+	remove("fnCode.tmp");
+	remove("globalCode.tmp");
 }
 
 

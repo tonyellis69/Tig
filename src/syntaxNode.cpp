@@ -5,6 +5,8 @@
 #include <algorithm>
 using namespace std;
 
+std::ofstream CSyntaxNode::fnByteCode;
+std::ofstream CSyntaxNode::globalByteCode;
 std::ofstream* CSyntaxNode::outputFile = NULL;
 std::map<std::string, int> CSyntaxNode::eventIds;
 int CSyntaxNode::nextEventId = 0;
@@ -14,6 +16,7 @@ int CSyntaxNode::nextGlobalVarId = 0;
 std::vector<COptionNode*> CSyntaxNode::optionStack;
 int CSyntaxNode::eventTableAddr = 0;
 int CSyntaxNode::globalVarTableAddr = 0;
+int CSyntaxNode::globalCodeAddr = 0;
 std::map<std::string, int> CSyntaxNode::memberIds;
 int CSyntaxNode::nextMemberId = memberIdStart;
 std::map<std::string, CObject> CSyntaxNode::objects; 
@@ -33,23 +36,25 @@ void CSyntaxNode::setOutputFile(std::ofstream& file) {
 }
 
 void CSyntaxNode::writeOp(char byte) {
+	int addr = outputFile->tellp();
 	outputFile->write(&byte, 1);
-	//cout << "\n" << opCode[byte];
+	cout << "\n" << addr << " " << opCode[byte];
 }
 
 void CSyntaxNode::writeByte(char byte) {
 	outputFile->write(&byte, 1);
+	cout << " " << byte;
 }
 
 void CSyntaxNode::writeWord(unsigned int word) {
 	outputFile->write((char*)&word, 4);
-	//cout << " " << word;
+	cout << " " << word;
 }
 
 void CSyntaxNode::writeString(const std::string & text) {
 	writeWord(text.size());
 	*outputFile << text.c_str();
-	//cout << " " << text.substr(0, 20);
+	cout << " " << text.substr(0, 20);
 }
 
 void CSyntaxNode::writeCString(const std::string & text) {
@@ -127,8 +132,9 @@ void CSyntaxNode::writeMemberNameTable() {
 }
 
 void CSyntaxNode::writeHeader() {
-	int headerSize = 4;
-	writeWord(eventTableAddr + headerSize);
+	int headerSize = 8;
+	writeWord(eventTableAddr + headerSize); //event table start
+	writeWord(globalCodeAddr ); //global code start
 }
 
 void CSyntaxNode::killNodes() {
@@ -278,6 +284,7 @@ CEventNode::CEventNode(CSyntaxNode* identNode,  CSyntaxNode* codeBlock) {
 
 /** Write the bytecode for this event. */
 void CEventNode::encode() {
+	setOutputFile(fnByteCode);
 	int currentAddress = outputFile->tellp();
 	eventTable[eventId] = currentAddress;
 
@@ -386,14 +393,10 @@ void CTimedEventNode::encode() {
 
 /** Create a node representing the declaration of the named object member. */
 CMemberDeclNode::CMemberDeclNode(CSyntaxNode* identNode, CSyntaxNode* initialiser) {
-	name = identNode->getText();
-	memberId = getMemberId(name);
+	//name = identNode->getText(); //TO DO get rid of name member/.
+	memberId = identNode->getId();
 	if (initialiser)
 		operands.push_back(initialiser);
-	//else {
-//		CInitNode* blank = new CInitNode(0);
-//		operands.push_back(blank);
-//	}
 }
 
 int CMemberDeclNode::getId() {
@@ -578,23 +581,33 @@ CInitNode::CInitNode() {
 /** Throw the value of this initialiser on the stack to use when writing the object table. */
 void CInitNode::encode() {
 	if (value.type == tigFunc) {
+		setOutputFile(fnByteCode);
 		int codeStart = outputFile->tellp();
 		operands[0]->encode();
 		writeOp(opReturn);
 		value.setFuncAddr(codeStart);
+		setOutputFile(globalByteCode);
 	}
 
 	memberStack2.back().value = value;
 }
 
-/** Create a node for this member identifier. */
+/** Create a node for this member identifier, encapuslating its name and id. */
 CMemberIdentNode::CMemberIdentNode(std::string * parsedString) {
-	name = *parsedString;
+//	name = *parsedString;
+	//Either find existing id or create a new one. This member name exists as of
+	//this moment.
+	memberId = getMemberId(*parsedString);
+
+	//getId returns it
+	//change code currently using getText to use getId instead
 }
 
-std::string & CMemberIdentNode::getText() {
-	return name;
+int CMemberIdentNode::getId() {
+	return memberId;
 }
+
+
 
 ClassIdentNode::ClassIdentNode(std::string * parsedString) {
 	auto iter = objects.find(*parsedString);
@@ -607,4 +620,27 @@ ClassIdentNode::ClassIdentNode(std::string * parsedString) {
 
 int ClassIdentNode::getId() {
 	return classId;
+}
+
+/** Encapsulate functional, non-global code so that we can encode it separately. */
+CodeBlockNode::CodeBlockNode(CSyntaxNode * codeBlock) {
+	operands.push_back(codeBlock);
+}
+
+void CodeBlockNode::encode() {
+	setOutputFile(fnByteCode);
+	operands[0]->encode();
+	//setOutputFile(globalByteCode);
+}
+
+
+CHotTextNode::CHotTextNode(std::string * parsedString, CSyntaxNode* member) {
+	text = *parsedString;
+	memberId = member->getId();
+}
+
+void CHotTextNode::encode() {
+	writeOp(opHot);
+	writeString(text);
+	writeWord(memberId);
 }

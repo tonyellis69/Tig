@@ -52,13 +52,14 @@ extern int yydebug;
     OBJECT = 262,
     HAS = 263,
     GETSTRING = 264,
-    START_TIMER = 265,
-    START_EVENT = 266,
-    AT = 267,
-    INTEGER = 268,
-    IDENTIFIER = 269,
-    STRING = 270,
-    ENDL = 271
+    HOT = 265,
+    START_TIMER = 266,
+    START_EVENT = 267,
+    AT = 268,
+    INTEGER = 269,
+    IDENTIFIER = 270,
+    STRING = 271,
+    ENDL = 272
   };
 #endif
 
@@ -74,7 +75,7 @@ union YYSTYPE
     CSyntaxNode *nPtr;          // node pointer - enables symbols to point to syntax nodes
 	 std::string* str;
 
-#line 78 "tigParse.hpp" /* yacc.c:1909  */
+#line 79 "tigParse.hpp" /* yacc.c:1909  */
 };
 # define YYSTYPE_IS_TRIVIAL 1
 # define YYSTYPE_IS_DECLARED 1

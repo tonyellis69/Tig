@@ -63,6 +63,7 @@ IDENT    {LETTER}({LETTER}|{DIGIT})*
 "at"					return AT;
 "object"				return OBJECT;
 "has"					return HAS;
+"hot"					return HOT;
 {IDENT}					{	identBufs[currentIdentBuf].clear(); 
 							identBufs[currentIdentBuf].assign(yytext,yyleng);
 							yylval.str = &identBufs[currentIdentBuf];

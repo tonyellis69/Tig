@@ -57,7 +57,10 @@ public:
 
 	std::vector<CSyntaxNode*> operands;
 
+	static std::ofstream fnByteCode;
+	static std::ofstream globalByteCode;
 	static std::ofstream* outputFile;
+
 	static std::map<std::string, int> eventIds;
 	static int nextEventId;
 	static std::map<std::string, int> globalVarIds;
@@ -76,6 +79,8 @@ public:
 	static std::vector<TMemberRec> memberStack2; ///<Temporary tracker of all the members of an object.
 
 	static std::vector<CSyntaxNode*> nodeList;
+
+	static int globalCodeAddr; ///<Where the global code starts, if any.
 };
 
 enum TIdentType { local, globalVar, object };
@@ -259,9 +264,11 @@ public:
 class CMemberIdentNode : public CSyntaxNode {
 public:
 	CMemberIdentNode(std::string* parsedString);
-	std::string& getText();
+	int getId();
+	//std::string& getText();
 
-	std::string name;
+	//std::string name;
+	int memberId;
 };
 
 class ClassIdentNode : public CSyntaxNode {
@@ -272,4 +279,19 @@ public:
 
 	int classId;
 	TIdentType identType;
+};
+
+class CodeBlockNode : public CSyntaxNode {
+public:
+	CodeBlockNode(CSyntaxNode* codeBlock);
+	void encode();
+};
+
+class CHotTextNode : public CSyntaxNode {
+public:
+	CHotTextNode(std::string * parsedString, CSyntaxNode* action);
+	void encode();
+
+	std::string text;
+	int memberId;
 };
