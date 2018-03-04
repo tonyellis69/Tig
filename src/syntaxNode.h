@@ -16,6 +16,7 @@ class CSyntaxNode;
 struct TMemberRec {
 	int memberId;
 	CTigVar value;
+	std::vector<CTigVar> arrayInitList;
 };
 
 class CObject {
@@ -77,6 +78,7 @@ public:
 	static int globalVarTableAddr; ///<Where the global variable table starts
 
 	static std::vector<TMemberRec> memberStack2; ///<Temporary tracker of all the members of an object.
+	static std::vector<CTigVar> arrayStack; ///<Temporary tracker of values used to initialise an array.
 
 	static std::vector<CSyntaxNode*> nodeList;
 
@@ -147,9 +149,9 @@ public:
 };
 
 
-class CGlobalVarAssignNode : public CSyntaxNode {
+class CVarAssigneeNode : public CSyntaxNode {
 public:
-	CGlobalVarAssignNode(std::string* parsedString);
+	CVarAssigneeNode(std::string* parsedString);
 	void encode();
 
 	int varId;
@@ -183,7 +185,7 @@ public:
 
 class CMemberDeclNode : public CSyntaxNode {
 public:
-	CMemberDeclNode(CSyntaxNode* identNode, CSyntaxNode* initialiser);
+	CMemberDeclNode(CSyntaxNode* identifier, CSyntaxNode* initialiser);
 	int getId();
 	void encode();
 
@@ -211,9 +213,9 @@ public:
 	CSyntaxNode* classObj;
 };
 
-class CReferenceNode : public CSyntaxNode {
+class CObjMemberAssigneeNode : public CSyntaxNode {
 public:
-	CReferenceNode(CSyntaxNode* parent, std::string* parsedString);
+	CObjMemberAssigneeNode(CSyntaxNode* parent, std::string* parsedString);
 	void encode();
 
 	int memberId;
@@ -229,18 +231,18 @@ public:
 	TIdentType identType;
 };
 
-class CMemberNode : public CSyntaxNode {
+class CMemberExprNode : public CSyntaxNode {
 public:
-	CMemberNode(CSyntaxNode* parent, std::string* parsedString);
+	CMemberExprNode(CSyntaxNode* parent, std::string* parsedString);
 	void encode();
 
 	int memberId;
 };
 
 
-class CIdentExprNode : public CSyntaxNode {
+class CVarExprNode : public CSyntaxNode {
 public:
-	CIdentExprNode(std::string* parsedString);
+	CVarExprNode(std::string* parsedString);
 	void encode();
 
 	int varId;
@@ -249,27 +251,20 @@ public:
 };
 
 
+class CArrayInitListNode;
 class CInitNode : public CSyntaxNode {
 public:
 	CInitNode(std::string* parsedString);
 	CInitNode(int parsedInt);
 	CInitNode(CSyntaxNode* codeBlock);
 	CInitNode(CObjIdentNode* objIdent);
+	CInitNode(CArrayInitListNode * arrayInitList);
 	CInitNode();
 	void encode();
 
 	CTigVar value;
 };
 
-class CMemberIdentNode : public CSyntaxNode {
-public:
-	CMemberIdentNode(std::string* parsedString);
-	int getId();
-	//std::string& getText();
-
-	//std::string name;
-	int memberId;
-};
 
 class ClassIdentNode : public CSyntaxNode {
 public:
@@ -289,9 +284,47 @@ public:
 
 class CHotTextNode : public CSyntaxNode {
 public:
-	CHotTextNode(std::string * parsedString, CSyntaxNode* action);
+	CHotTextNode(std::string * hotText, std::string* action);
 	void encode();
 
 	std::string text;
 	int memberId;
+};
+
+class CArrayInitConstNode : public CInitNode {
+public:
+	using CInitNode::CInitNode;
+	void encode();
+};
+
+class CArrayInitNode : public CSyntaxNode {
+public:
+	CArrayInitNode(CSyntaxNode* initList);
+	void encode();
+};
+
+class CArrayInitListNode : public CSyntaxNode {
+public:
+	CArrayInitListNode(CSyntaxNode* initList);
+	void encode();
+};
+
+class CArrayElementExprNode : public CSyntaxNode {
+public:
+	CArrayElementExprNode(CSyntaxNode* array, CSyntaxNode* index);
+	void encode();
+};
+
+class CArrayAssignNode : public CSyntaxNode {
+public:
+	CArrayAssignNode(CSyntaxNode* array, CSyntaxNode* index);
+	void encode();
+};
+
+class CMembDeclIdentNode : public CSyntaxNode {
+public:
+	CMembDeclIdentNode(std::string* ident);
+	std::string& getText();
+
+	std::string text;
 };

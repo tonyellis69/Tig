@@ -2,7 +2,8 @@
 
 enum TOpCode { opNop, opPrint, opGiveOptions, opOption, opJumpEvent, opEnd, opAssign, opPushStr, opPushInt, 
 	opPushVar, opGetString, opAdd,  opStartTimer, opTimedEvent,
-	opExpressVar, opPushObj, opCall, opReturn, opHot
+	opExpressVar, opPushObj, opCall, opReturn, opHot, opInitArray,
+	opPushElem, opAssignElem
 };
 
 static char* opCode[] = { "opNop\0",
@@ -23,8 +24,11 @@ static char* opCode[] = { "opNop\0",
 	"opPushObj\0",
 	"opCall\0",
 	"opReturn\0",
-	"opHot\0"};
+	"opHot\0",
+	"opInitArray\0",
+	"opPushElem\0",
+	"opAssignElem\0"};
 
 const int memberIdStart = 1000;
 
-enum TigVarType { tigUndefined, tigString, tigInt, tigFloat, tigObj, tigFunc };
+enum TigVarType { tigUndefined, tigString, tigInt, tigFloat, tigObj, tigFunc, tigArray };

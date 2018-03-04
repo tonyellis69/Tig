@@ -35,10 +35,11 @@
 %type <nPtr> integer_constant
 %type <nPtr> option string_literal event_identifier 
 %type <nPtr> code_block optional_code_block
-%type <nPtr> variable_assign variable_expr
+%type <nPtr> variable_expr assignment variable_assignee obj_member_assignee element_assignee var_or_obj_memb
 %type <nPtr> string_statement
-%type <nPtr> obj_identifier class_identifier optional_member_list member_decl_list member_decl member_identifier object_ref init_expr member_expr
-
+%type <nPtr> obj_identifier class_identifier optional_member_list member_decl_list member_decl obj_expr init_expr member_expr
+%type <nPtr> memb_decl_identifier
+%type <nPtr> array_init_expr constant_seq array_init_const array_element_expr array_index_expr array_init_list
 
 %token PRINT END
 %token EVENT OPTION
@@ -71,7 +72,7 @@ tigcode:
 
 statement:
         PRINT expression ';'							{ $$ = new COpNode(opPrint,$2); }   	
-        | variable_assign '=' expression ';'			{ $$ = new COpNode(opAssign,$1,$3); }
+		| assignment ';'								{ $$ = $1; }
 		| '{' statement_list '}'						{ $$ = $2; }
 		| END ';'										{ $$ = new COpNode(opEnd);}
 		| option ';'									{ $$ = $1; }
@@ -79,8 +80,35 @@ statement:
 		| START_TIMER	';'								{ $$ = new COpNode(opStartTimer); }
 		| START_EVENT event_identifier AT INTEGER ';'	{ $$ = new CTimedEventNode($2,$4); }
 		| member_expr ';'								{ $$ = new COpNode(opCall,$1); }
-		| HOT STRING member_identifier ';'				{ $$ = new CHotTextNode($2,$3); }
+		| HOT STRING IDENTIFIER	 ';'					{ $$ = new CHotTextNode($2,$3); }
         ;
+
+assignment:
+		var_or_obj_memb '=' expression					{ $$ = new COpNode(opAssign,$1,$3); }
+		| element_assignee '=' expression				{ $$ = new COpNode(opAssign,$1,$3); }
+		;
+
+var_or_obj_memb:
+		variable_assignee								{ $$ = $1; }
+		| obj_member_assignee							{ $$ = $1; }
+		;
+
+variable_assignee:
+		IDENTIFIER										{ $$ = new CVarAssigneeNode($1); }
+		;
+
+obj_member_assignee:
+		obj_expr '.' IDENTIFIER							{ $$ = new CObjMemberAssigneeNode($1,$3); }
+		;
+
+obj_expr:												
+		IDENTIFIER										{ $$ = new CObjRefNode($1); }
+		| member_expr									{ $$ = $1; }
+		;
+
+element_assignee:
+		var_or_obj_memb '[' array_index_expr ']'		{ $$ = new CArrayAssignNode($1,$3); }
+		;
 
 string_statement:
 		string_literal							{ $$ = $1; }
@@ -90,7 +118,6 @@ string_statement:
 dec_statement:
 		EVENT event_identifier code_block ';'				{ $$ = new CEventNode($2,$3); }	
 		| OBJECT obj_identifier optional_member_list ';'	{ $$ = new CObjDeclNode($2,$3,NULL); }
-		//| OBJECT obj_identifier HAS member_decl_list ';'	{ $$ = new CObjDeclNode($2,$4); }
 		| class_identifier obj_identifier optional_member_list ';'	{ $$ = new CObjDeclNode($2,$3,$1); }
 		;
 
@@ -99,7 +126,7 @@ obj_identifier:
 		;
 
 class_identifier:
-		IDENTIFIER					   { $$ = new ClassIdentNode($1); } //TO DO: change to CObjIdentNode
+		IDENTIFIER					   { $$ = new ClassIdentNode($1); } //TO DO: can use CObjIdentNode
 		;
 
 optional_member_list:
@@ -113,39 +140,28 @@ member_decl_list:
 		;
 
 member_decl:
-		member_identifier						{ $$ = new CMemberDeclNode($1,new CInitNode()); } //
-		| member_identifier '=' init_expr		{ $$ = new CMemberDeclNode($1,$3); }
-		| member_identifier	init_expr			{ $$ = new CMemberDeclNode($1,$2); }
+		memb_decl_identifier						{ $$ = new CMemberDeclNode($1,NULL); } 
+		| memb_decl_identifier '=' init_expr		{ $$ = new CMemberDeclNode($1,$3); }
+		| memb_decl_identifier	init_expr			{ $$ = new CMemberDeclNode($1,$2); }
 		;
 
-member_identifier:					
-		IDENTIFIER					{ $$ = new CMemberIdentNode($1); } //TO DO: just passes string, replace
+memb_decl_identifier:
+		IDENTIFIER							{ $$ = new CMembDeclIdentNode($1); }
 		;
+
 
 init_expr:
 		STRING						{ $$ = new CInitNode($1); }
 		| INTEGER					{ $$ = new CInitNode($1); }
 		| code_block				{ $$ = new CInitNode($1); }
 		| obj_identifier			{ $$ = new CInitNode((CObjIdentNode*)$1); }
+		| array_init_list			{ $$ = new CInitNode((CArrayInitListNode*)$1); }
 		;
-
-variable_assign:
-		IDENTIFIER						{ $$ = new CGlobalVarAssignNode($1); }
-		| object_ref '.' IDENTIFIER		{ $$ = new CReferenceNode($1,$3); }
-		; 
-
-object_ref:
-		IDENTIFIER						{ $$ = new CObjRefNode($1); }
-		| object_ref '.' IDENTIFIER		{ $$ = new CMemberNode($1, $3); }
-		;
-
 
 statement_list:
 		statement						{ $$ = $1; }
 		| statement_list statement		{ $$ = new CJointNode($1,$2); }
 		;
-
-
 
 string_literal:
 		STRING							{ $$ = new CStrNode($1); } 
@@ -174,14 +190,16 @@ expression:
 	  | expression '+' expression		{ $$ = new COpNode(opAdd, $1, $3); }
 	  | member_expr						{ $$ = $1; }
 	  | constant_expr					{ $$ = $1; }
+	  | array_init_expr					{ $$ = $1; }
+	  | array_element_expr				{ $$ = $1; }
       ;
 
 variable_expr:
-	IDENTIFIER							{ $$ = new CIdentExprNode($1); }
+	IDENTIFIER							{ $$ = new CVarExprNode($1); }
 	;
 
 member_expr:
-	object_ref '.' IDENTIFIER			{ $$ = new CMemberNode($1, $3); }
+	obj_expr '.' IDENTIFIER			{ $$ = new CMemberExprNode($1, $3); }
 	;
 
 constant_expr:							//TO DO: float
@@ -193,7 +211,34 @@ integer_constant:
 	INTEGER								{ $$ = new CIntNode($1); }
 	;
 
+array_init_expr:
+	'[' constant_seq ']'				{ $$ = new CArrayInitNode($2); }
+	;
 
+array_init_list:
+	'[' constant_seq ']'				{ $$ = new CArrayInitListNode($2); }
+	;
+
+constant_seq:
+	array_init_const						{ $$ = $1; }
+	| constant_seq ',' array_init_const		{ $$ = new CJointNode($1,$3); }
+	;
+
+array_init_const:
+	STRING						{ $$ = new CArrayInitConstNode($1); }
+	| INTEGER					{ $$ = new CArrayInitConstNode($1); }
+	| obj_identifier			{ $$ = new CArrayInitConstNode((CObjIdentNode*)$1); }
+	;
+
+	
+array_element_expr:
+	var_or_obj_memb '[' array_index_expr ']'		{ $$ = new CArrayElementExprNode($1,$3); }
+	;
+
+array_index_expr:
+	variable_expr				{ $$ = $1; }
+	| integer_constant			{ $$ = $1; }
+	;
 
 %%
 

@@ -2,6 +2,8 @@
 %{	//Definitions section. Anything here is copied to the generated C file.
    	#include "syntaxNode.h"
 
+	#include <iostream>
+
 	#include <io.h>       // isatty
 	 #pragma warning (push)
 	#pragma warning (disable : 4005)
@@ -51,7 +53,7 @@ IDENT    {LETTER}({LETTER}|{DIGIT})*
 							return INTEGER;
 						}
 						
-[-()<>=+*/%;{}.,] 		return *yytext;    // Match any one of these nonalphanumeric characters amd returns the Ascii code.
+[-()<>=+*/%;{}.,\[\]] 		return *yytext;    // Match any one of these nonalphanumeric characters amd returns the Ascii code.
 					
 "print"         		return PRINT;
 "end"					return END;
@@ -68,6 +70,7 @@ IDENT    {LETTER}({LETTER}|{DIGIT})*
 							identBufs[currentIdentBuf].assign(yytext,yyleng);
 							yylval.str = &identBufs[currentIdentBuf];
 							currentIdentBuf++;
+							std::cerr << "\ncurrentIdentBuf at " << currentIdentBuf << " with " << identBufs[currentIdentBuf-1] ;
 							if (currentIdentBuf == maxIdentBufs)
 								currentIdentBuf = 0;
 							return IDENTIFIER;

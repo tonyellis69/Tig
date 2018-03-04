@@ -457,7 +457,7 @@ static const YY_CHAR yy_ec[256] =
         6,    6,    1,    1,   11,   11,   11,   11,   11,   11,
        11,   11,   11,   11,   11,   11,   11,   11,   11,   11,
        11,   11,   12,   13,   11,   11,   11,   11,   11,   11,
-        1,   14,    1,    1,   11,    1,   15,   16,   17,   18,
+        6,   14,    6,    1,   11,    1,   15,   16,   17,   18,
 
        19,   11,   20,   21,   22,   23,   11,   11,   24,   25,
        26,   27,   11,   28,   29,   30,   11,   31,   11,   11,
@@ -579,6 +579,8 @@ char *yytext;
     /* Tig lexer */
    	#include "syntaxNode.h"
 
+	#include <iostream>
+
 	#include <io.h>       // isatty
 	 #pragma warning (push)
 	#pragma warning (disable : 4005)
@@ -596,13 +598,13 @@ char *yytext;
 	const int maxIdentBufs = 10;
 	std::string identBufs[maxIdentBufs];
 	int currentIdentBuf = 0;
-#line 599 "tigLex.cpp"
-#line 25 "tig.l"
+#line 601 "tigLex.cpp"
+#line 27 "tig.l"
 	/* Substitutions simplify pattern-matching rules, eg, letter [A-Za-z] or digit [0-9] */
 	//Excusive states are useful for sequences where the usual rules change.
 
 	//supposedly hits performance: %option yylineno 
-#line 605 "tigLex.cpp"
+#line 607 "tigLex.cpp"
 
 #define INITIAL 0
 #define COMMENT 1
@@ -813,11 +815,11 @@ YY_DECL
 		}
 
 	{
-#line 37 "tig.l"
+#line 39 "tig.l"
 
 	//Rules section. Here we tell the lexer what to look out for and what to do when it finds it.
 	
-#line 820 "tigLex.cpp"
+#line 822 "tigLex.cpp"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -876,33 +878,33 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 40 "tig.l"
+#line 42 "tig.l"
 BEGIN(COMMENT);
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 41 "tig.l"
+#line 43 "tig.l"
 /* eat anything that's not a '*'  */
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 42 "tig.l"
+#line 44 "tig.l"
 /* eat up '*'s not followed by '/'s */
 	YY_BREAK
 case 4:
 /* rule 4 can match eol */
 YY_RULE_SETUP
-#line 43 "tig.l"
+#line 45 "tig.l"
 trackLine();
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 44 "tig.l"
+#line 46 "tig.l"
 BEGIN(INITIAL);
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 46 "tig.l"
+#line 48 "tig.l"
 {	char c;  /*eat //comments */
 							while ((c = yyinput()) != '\n' && c != 0);
 							trackLine();
@@ -910,78 +912,79 @@ YY_RULE_SETUP
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 51 "tig.l"
+#line 53 "tig.l"
 {	yylval.iValue = atoi(yytext);
 							return INTEGER;
 						}
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 55 "tig.l"
+#line 57 "tig.l"
 return *yytext;    // Match any one of these nonalphanumeric characters amd returns the Ascii code.
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 57 "tig.l"
+#line 59 "tig.l"
 return PRINT;
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 58 "tig.l"
+#line 60 "tig.l"
 return END;
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 59 "tig.l"
+#line 61 "tig.l"
 return EVENT;
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 60 "tig.l"
+#line 62 "tig.l"
 return OPTION;
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 61 "tig.l"
+#line 63 "tig.l"
 return GETSTRING;
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 62 "tig.l"
+#line 64 "tig.l"
 return START_TIMER;
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 63 "tig.l"
+#line 65 "tig.l"
 return START_EVENT;
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 64 "tig.l"
+#line 66 "tig.l"
 return AT;
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 65 "tig.l"
+#line 67 "tig.l"
 return OBJECT;
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 66 "tig.l"
+#line 68 "tig.l"
 return HAS;
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 67 "tig.l"
+#line 69 "tig.l"
 return HOT;
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 68 "tig.l"
+#line 70 "tig.l"
 {	identBufs[currentIdentBuf].clear(); 
 							identBufs[currentIdentBuf].assign(yytext,yyleng);
 							yylval.str = &identBufs[currentIdentBuf];
 							currentIdentBuf++;
+							std::cerr << "\ncurrentIdentBuf at " << currentIdentBuf << " with " << identBufs[currentIdentBuf-1] ;
 							if (currentIdentBuf == maxIdentBufs)
 								currentIdentBuf = 0;
 							return IDENTIFIER;
@@ -989,19 +992,19 @@ YY_RULE_SETUP
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 77 "tig.l"
+#line 80 "tig.l"
 { 	BEGIN(STR); //We've started lexxing a string. 
 							stringBuf.clear(); 
 						}	
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 80 "tig.l"
+#line 83 "tig.l"
 stringBuf.append("\"");	//Two double quotes, replace with one.
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 81 "tig.l"
+#line 84 "tig.l"
 {	//End of string. 
 							yylval.str = &stringBuf;
 							BEGIN INITIAL;			/*The string ended normally with a quote, so no more to be done. */
@@ -1010,47 +1013,47 @@ YY_RULE_SETUP
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 86 "tig.l"
+#line 89 "tig.l"
 stringBuf.append("\n"); /* user-supplied line break. */ 
 	YY_BREAK
 case 25:
 /* rule 25 can match eol */
 YY_RULE_SETUP
-#line 87 "tig.l"
+#line 90 "tig.l"
 stringBuf.append(" "); trackLine(); //An actual line break
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 88 "tig.l"
+#line 91 "tig.l"
 stringBuf.append(" ");
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 89 "tig.l"
+#line 92 "tig.l"
 stringBuf.append( yytext,yyleng);		
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
-#line 91 "tig.l"
+#line 94 "tig.l"
 ;	/* skip whitespace */
 	YY_BREAK
 case 29:
 /* rule 29 can match eol */
 YY_RULE_SETUP
-#line 92 "tig.l"
+#line 95 "tig.l"
 trackLine();    //keep track of line number
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
-#line 93 "tig.l"
+#line 96 "tig.l"
 yyerror("Unknown character");
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
-#line 95 "tig.l"
+#line 98 "tig.l"
 ECHO;
 	YY_BREAK
-#line 1053 "tigLex.cpp"
+#line 1056 "tigLex.cpp"
 case YY_STATE_EOF(INITIAL):
 case YY_STATE_EOF(COMMENT):
 case YY_STATE_EOF(STR):
@@ -2053,7 +2056,7 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 95 "tig.l"
+#line 98 "tig.l"
 
 
 int yywrap(void) { //Called when input exhausted. Reset yyin and return 0 to process another file.

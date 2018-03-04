@@ -22,6 +22,7 @@ int CSyntaxNode::nextMemberId = memberIdStart;
 std::map<std::string, CObject> CSyntaxNode::objects; 
 int CSyntaxNode::nextObjectId = 0;
 std::vector<TMemberRec> CSyntaxNode::memberStack2;
+std::vector<CTigVar> CSyntaxNode::arrayStack;
 
 
 std::vector<CSyntaxNode*> CSyntaxNode::nodeList;
@@ -110,6 +111,14 @@ void CSyntaxNode::writeObjectDefTable() {
 				writeWord(member.value.getObjId());
 			if (member.value.type == tigUndefined)
 				writeWord(0);
+			if (member.value.type == tigArray) {
+				writeWord(member.arrayInitList.size());
+				for (auto element : member.arrayInitList) {
+					writeByte(element.type);
+					writeWord(element.getIntValue());
+					//TO DO: provide for other values
+				}
+			}
 		}
 	}
 }
@@ -342,14 +351,14 @@ std::string & CEventIdentNode::getText() {
 	return text;
 }
 
-/** Create a global variable assignment node for the named variable. */
-CGlobalVarAssignNode::CGlobalVarAssignNode(std::string * parsedString) {
+/** Create a variable assignment node for the named variable. */
+CVarAssigneeNode::CVarAssigneeNode(std::string * parsedString) {
 	varId = getGlobalVarId(*parsedString);
 	name = *parsedString;
 }
 
-/** Write this variable's identifier for the VM to pick up. */
-void CGlobalVarAssignNode::encode() {
+/** Tell the VM to push this variable's identifier on to the stack. */
+void CVarAssigneeNode::encode() {
 	writeOp(opPushInt);
 	writeWord(varId); 
 }
@@ -392,9 +401,9 @@ void CTimedEventNode::encode() {
 }
 
 /** Create a node representing the declaration of the named object member. */
-CMemberDeclNode::CMemberDeclNode(CSyntaxNode* identNode, CSyntaxNode* initialiser) {
-	//name = identNode->getText(); //TO DO get rid of name member/.
-	memberId = identNode->getId();
+CMemberDeclNode::CMemberDeclNode(CSyntaxNode* identifier, CSyntaxNode* initialiser) {
+	memberId = getMemberId(identifier->getText());
+	//memberId = identNode->getId();
 	if (initialiser)
 		operands.push_back(initialiser);
 }
@@ -408,10 +417,11 @@ void CMemberDeclNode::encode() {
 	TMemberRec memberRec;
 	memberRec.memberId = getId();
 	memberStack2.push_back(memberRec);
-	operands[0]->encode();
+	if (operands.size() > 0)
+		operands[0]->encode();
 }
 
-/** Create a node representing an object identifier. */
+/** Create a node representing an object identifier, that returns its id on request. */
 CObjIdentNode::CObjIdentNode(std::string* parsedString) {
 	name = *parsedString;
 	objectId = getObjectId(*parsedString);
@@ -450,8 +460,8 @@ void CObjDeclNode::encode() {
 	memberStack2.clear();
 }
 
-/** Create a node representing a member reference. */
-CReferenceNode::CReferenceNode(CSyntaxNode * parent, std::string* parsedString) {
+/** Create a node representing an object's member reference. */
+CObjMemberAssigneeNode::CObjMemberAssigneeNode(CSyntaxNode * parent, std::string* parsedString) {
 	//assume that parent will leave an object id on the stack
 	operands.push_back(parent);
 
@@ -459,13 +469,13 @@ CReferenceNode::CReferenceNode(CSyntaxNode * parent, std::string* parsedString) 
 	auto iter = memberIds.find(*parsedString);
 	if (iter == memberIds.end()) {
 		std::cout << "\nError! No member named " << *parsedString << " exists.";
-		//exit(1);
+		exit(1);
 	}
 	memberId = iter->second;
 }
 
-/** Leave the member id of this reference for the VM to pick up. */
-void CReferenceNode::encode() {
+/** Tell the VM to push the object id and member id onto the stack. */
+void CObjMemberAssigneeNode::encode() {
 	operands[0]->encode();
 	writeOp(opPushInt);
 	writeWord(memberId);
@@ -473,7 +483,7 @@ void CReferenceNode::encode() {
 
 
 
-/** Create a node representing a reference to an object - either by name or variable. */
+/** Create a node representing a reference to an object - either named or in a variable. */
 CObjRefNode::CObjRefNode(std::string * parsedString) {
 	auto iter = objects.find(*parsedString);
 	if (iter != objects.end()) {
@@ -489,10 +499,10 @@ CObjRefNode::CObjRefNode(std::string * parsedString) {
 	}
 
 	std::cout << "\nError! No object or variable named " << *parsedString << " exists.";
-	//exit(1);
+	exit(1);
 }
 
-/** Leave the object id on the stack for the VM to pick up. */
+/** Tell the VM to push the object id on the stack . */
 void CObjRefNode::encode() {
 	if (identType == object) {
 		writeOp(opPushInt);
@@ -504,28 +514,28 @@ void CObjRefNode::encode() {
 	}
 }
 
-//TO DO: identical to CReferenceNode - definitely room for refactoring.
+//TO DO: identical to CObjMemberAssigneeNode - definitely room for refactoring.
 /** Create a node representing a member expression. */
-CMemberNode::CMemberNode(CSyntaxNode * parent, std::string * parsedString) {
+CMemberExprNode::CMemberExprNode(CSyntaxNode * parent, std::string * parsedString) {
 	operands.push_back(parent);
 	//identify member
 	auto iter = memberIds.find(*parsedString);
 	if (iter == memberIds.end()) {
 		std::cout << "\nError! No member named " << *parsedString << " exists.";
-		//exit(1);
+		exit(1);
 	}
 	memberId = iter->second;
 }
 
-/** Get the value expressed by this member on the stack for the VM to pick up. */
-void CMemberNode::encode() {
+/** Tell the VM to put the value expressed by this member on the stack. */
+void CMemberExprNode::encode() {
 	operands[0]->encode(); //eg push object id onto stack
 	writeOp(opPushVar); //pushvar expects either a var or member id, puts contents on stack
 	writeWord(memberId);
 }
 
-/** Create an  expression node for the named identifier. */
-CIdentExprNode::CIdentExprNode(std::string * parsedString) {
+/** Create a node identifying the named variable/object. */
+CVarExprNode::CVarExprNode(std::string * parsedString) {
 	name = *parsedString;
 	//TO DO: check if this is a local variable
 
@@ -537,6 +547,7 @@ CIdentExprNode::CIdentExprNode(std::string * parsedString) {
 		return;
 	}
 	
+	//is this a previously declared object?
 	auto iter2 = objects.find(*parsedString);
 	if (iter2 != objects.end()) {
 		varId = iter2->second.objectId;
@@ -545,8 +556,8 @@ CIdentExprNode::CIdentExprNode(std::string * parsedString) {
 	}
 }
 
-/** Tell VM to push this variable's contents onto the stack. */
-void CIdentExprNode::encode() {
+/** Tell VM to push this variable's value onto the stack. */
+void CVarExprNode::encode() {
 	if (identType == globalVar)
 		writeOp(opPushVar);
 	else
@@ -574,6 +585,11 @@ CInitNode::CInitNode(CObjIdentNode * objIdent) {
 	value.setObjId(objIdent->getId());
 }
 
+CInitNode::CInitNode(CArrayInitListNode * arrayInitList) {
+	value.type = tigArray;
+	operands.push_back(arrayInitList);
+}
+
 CInitNode::CInitNode() {
 	
 }
@@ -589,24 +605,15 @@ void CInitNode::encode() {
 		setOutputFile(globalByteCode);
 	}
 
+
+	if (value.type == tigArray) {
+		operands[0]->encode(); //encodes arrayInitListNode, values left in arrayStack
+		memberStack2.back().arrayInitList = arrayStack;
+		arrayStack.clear();
+	}
+
 	memberStack2.back().value = value;
 }
-
-/** Create a node for this member identifier, encapuslating its name and id. */
-CMemberIdentNode::CMemberIdentNode(std::string * parsedString) {
-//	name = *parsedString;
-	//Either find existing id or create a new one. This member name exists as of
-	//this moment.
-	memberId = getMemberId(*parsedString);
-
-	//getId returns it
-	//change code currently using getText to use getId instead
-}
-
-int CMemberIdentNode::getId() {
-	return memberId;
-}
-
 
 
 ClassIdentNode::ClassIdentNode(std::string * parsedString) {
@@ -634,13 +641,87 @@ void CodeBlockNode::encode() {
 }
 
 
-CHotTextNode::CHotTextNode(std::string * parsedString, CSyntaxNode* member) {
-	text = *parsedString;
-	memberId = member->getId();
+CHotTextNode::CHotTextNode(std::string * hotText, std::string* member) {
+	text = *hotText;
+	memberId = getMemberId(*member);
 }
 
 void CHotTextNode::encode() {
 	writeOp(opHot);
 	writeString(text);
 	writeWord(memberId);
+}
+
+void CArrayInitConstNode::encode() {
+	//arrayStack.back().value = value;
+	arrayStack.push_back(value);
+}
+
+
+CArrayInitNode::CArrayInitNode(CSyntaxNode * initList) {
+	operands.push_back(initList);
+}
+
+void CArrayInitNode::encode() {
+	writeOp(opInitArray);
+
+	arrayStack.clear();
+	operands[0]->encode(); //get all the initialisation values on the array stack
+	//now write those values as bytecode for the VM to pick up.
+	writeWord(arrayStack.size());
+	for (auto initValue : arrayStack) {
+		writeByte(initValue.type);
+		if (initValue.type == tigString)
+			writeString(initValue.getStringValue());
+		if (initValue.type == tigInt)
+			writeWord(initValue.getIntValue());
+		//if (initValue.type == tigFunc)
+		//	writeWord(initValue.getFuncAddress());
+		if (initValue.type == tigObj)
+			writeWord(initValue.getObjId());
+		if (initValue.type == tigUndefined)
+			writeWord(0);
+	}
+	arrayStack.clear();
+}
+
+CArrayElementExprNode::CArrayElementExprNode(CSyntaxNode * array, CSyntaxNode * index) {
+	operands.push_back(index);
+	operands.push_back(array);
+}
+
+void CArrayElementExprNode::encode() {
+	operands[0]->encode();
+	operands[1]->encode();
+	writeOp(opPushElem);
+}
+
+CArrayAssignNode::CArrayAssignNode(CSyntaxNode* array, CSyntaxNode* index) {
+	operands.push_back(index);
+	operands.push_back(array);
+}
+
+void CArrayAssignNode::encode() {
+	operands[0]->encode();
+	operands[1]->encode();
+	//writeOp(opAssignElem);
+}
+
+CArrayInitListNode::CArrayInitListNode(CSyntaxNode * initList) {
+	operands.push_back(initList);
+}
+
+void CArrayInitListNode::encode() {
+	arrayStack.clear();
+	operands[0]->encode(); //get all the initialisation values on the array stack
+}
+
+/** Important: this quickly gets the member identifier string stored before an identifier in its initialisation block
+	can overwrite it. */
+CMembDeclIdentNode::CMembDeclIdentNode(std::string * ident) {
+	text = *ident;
+}
+
+std::string & CMembDeclIdentNode::getText() {
+	return text;
 }
