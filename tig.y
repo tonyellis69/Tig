@@ -10,7 +10,6 @@
     void yyerror(char *);
     int yylex(void);
 
-    //int sym[26];
 
 	CTigCompiler* tigC;
 
@@ -37,13 +36,14 @@
 %type <nPtr> code_block optional_code_block
 %type <nPtr> variable_expr assignment variable_assignee obj_member_assignee element_assignee var_or_obj_memb
 %type <nPtr> string_statement
-%type <nPtr> obj_identifier class_identifier optional_member_list member_decl_list member_decl obj_expr init_expr member_expr
+%type <nPtr> obj_identifier class_identifier optional_member_list member_decl_list member_decl obj_expr init_expr member_expr 
+%type <iValue> level
 %type <nPtr> memb_decl_identifier
 %type <nPtr> array_init_expr constant_seq array_init_const array_element_expr array_index_expr array_init_list
 
 %token PRINT END
 %token EVENT OPTION
-%token OBJECT HAS
+%token OBJECT HAS CHILD 
 %token GETSTRING
 %token HOT
 %token START_TIMER START_EVENT AT
@@ -116,10 +116,18 @@ string_statement:
 		;
 
 dec_statement:
-		EVENT event_identifier code_block ';'				{ $$ = new CEventNode($2,$3); }	
-		| OBJECT obj_identifier optional_member_list ';'	{ $$ = new CObjDeclNode($2,$3,NULL); }
-		| class_identifier obj_identifier optional_member_list ';'	{ $$ = new CObjDeclNode($2,$3,$1); }
+		EVENT event_identifier code_block ';'								{ $$ = new CEventNode($2,$3); }	
+		| OBJECT obj_identifier optional_member_list ';'					{ $$ = new CObjDeclNode($2,$3,NULL); }
+		| class_identifier obj_identifier optional_member_list ';'			{ $$ = new CObjDeclNode($2,$3,$1); }
+		| level OBJECT obj_identifier optional_member_list ';'				{ $$ = new CObjDeclNode($3,$4,NULL); }
+		| level class_identifier obj_identifier optional_member_list ';'	{ $$ = new CObjDeclNode($3,$4,$2); }
 		;
+
+level:
+		CHILD							{ CSyntaxNode::childLevel++; }
+		| level CHILD					{ CSyntaxNode::childLevel++; }
+		;
+
 
 obj_identifier:
 		IDENTIFIER					   { $$ = new CObjIdentNode($1); }

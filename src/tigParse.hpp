@@ -51,15 +51,16 @@ extern int yydebug;
     OPTION = 261,
     OBJECT = 262,
     HAS = 263,
-    GETSTRING = 264,
-    HOT = 265,
-    START_TIMER = 266,
-    START_EVENT = 267,
-    AT = 268,
-    INTEGER = 269,
-    IDENTIFIER = 270,
-    STRING = 271,
-    ENDL = 272
+    CHILD = 264,
+    GETSTRING = 265,
+    HOT = 266,
+    START_TIMER = 267,
+    START_EVENT = 268,
+    AT = 269,
+    INTEGER = 270,
+    IDENTIFIER = 271,
+    STRING = 272,
+    ENDL = 273
   };
 #endif
 
@@ -68,14 +69,14 @@ extern int yydebug;
 typedef union YYSTYPE YYSTYPE;
 union YYSTYPE
 {
-#line 27 "tig.y" /* yacc.c:1909  */
+#line 26 "tig.y" /* yacc.c:1909  */
 				 						
     int iValue;                 // integer value - for numeric constants etc 
 	float fValue;				//float value - for floating-point constants
     CSyntaxNode *nPtr;          // node pointer - enables symbols to point to syntax nodes
 	 std::string* str;
 
-#line 79 "tigParse.hpp" /* yacc.c:1909  */
+#line 80 "tigParse.hpp" /* yacc.c:1909  */
 };
 # define YYSTYPE_IS_TRIVIAL 1
 # define YYSTYPE_IS_DECLARED 1

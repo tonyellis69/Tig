@@ -20,9 +20,11 @@ int CSyntaxNode::globalCodeAddr = 0;
 std::map<std::string, int> CSyntaxNode::memberIds;
 int CSyntaxNode::nextMemberId = memberIdStart;
 std::map<std::string, CObject> CSyntaxNode::objects; 
-int CSyntaxNode::nextObjectId = 0;
+int CSyntaxNode::nextObjectId = 1; //0 is the default 'object zero'
 std::vector<TMemberRec> CSyntaxNode::memberStack2;
 std::vector<CTigVar> CSyntaxNode::arrayStack;
+int CSyntaxNode::childLevel = 0;
+std::map<int,int> CSyntaxNode::parentList;
 
 
 std::vector<CSyntaxNode*> CSyntaxNode::nodeList;
@@ -441,6 +443,19 @@ CObjDeclNode::CObjDeclNode(CSyntaxNode * identifier, CSyntaxNode * memberList, C
 	identNode = identifier;
 	members = memberList;
 	classObj = classObject;
+
+	//maintain object tree 
+	parentList[childLevel] = identNode->getId();
+	if (parentList.find(childLevel - 1) != parentList.end()) {
+		std::cerr << "\nobject " << identifier->getText() << " parent: " << parentList[childLevel - 1] << lineNo;
+	}
+	else {
+		if (childLevel > 0) {
+			std::cerr << "\nObject definition error! Unable to make " << identifier->getText() << " a level " << childLevel << " child.";
+			exit(1);
+		}
+	}
+	childLevel = 0;
 }
 
 /** Create an object definition for the VM to pick up. */

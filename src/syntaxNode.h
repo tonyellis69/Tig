@@ -9,8 +9,11 @@
 #include <fstream>
 #include <map>
 
+
 #include "sharedTypes.h"
 #include "..\..\VMtest\src\var.h"
+
+extern int lineNo;
 
 class CSyntaxNode;
 struct TMemberRec {
@@ -83,6 +86,9 @@ public:
 	static std::vector<CSyntaxNode*> nodeList;
 
 	static int globalCodeAddr; ///<Where the global code starts, if any.
+
+	static std::map<int,int> parentList; //ids of current parent objects at each tree level
+	static int childLevel;
 };
 
 enum TIdentType { local, globalVar, object };

@@ -29,6 +29,7 @@ void CTigCompiler::compile(std::string filename) {
 		return;
 	}
 	
+
 	tigC = this;
 	//yydebug = 1;
 	yyparse();

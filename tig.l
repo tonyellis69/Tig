@@ -49,7 +49,7 @@ IDENT    {LETTER}({LETTER}|{DIGIT})*
 							trackLine();
 						}
 
-[1-9][0-9]*				{	yylval.iValue = atoi(yytext);
+[0-9]+					{	yylval.iValue = atoi(yytext);
 							return INTEGER;
 						}
 						
@@ -66,6 +66,7 @@ IDENT    {LETTER}({LETTER}|{DIGIT})*
 "object"				return OBJECT;
 "has"					return HAS;
 "hot"					return HOT;
+"->"					return CHILD;
 {IDENT}					{	identBufs[currentIdentBuf].clear(); 
 							identBufs[currentIdentBuf].assign(yytext,yyleng);
 							yylval.str = &identBufs[currentIdentBuf];
