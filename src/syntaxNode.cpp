@@ -153,6 +153,26 @@ void CSyntaxNode::killNodes() {
 		delete node;
 }
 
+/** Return a pointer to the object with this id. */
+CObject * CSyntaxNode::getObject(int objId) {
+	auto it = std::find_if(objects.begin(), objects.end(),
+		[&](auto &objRec)->bool 
+	{ return objRec.second.objectId == objId; });
+	if (it == objects.end())
+		return NULL;
+	return &it->second;
+}
+
+/** Return a pointer to the named member record of the given object. */
+TMemberRec * CSyntaxNode::getObjectMember(CObject & obj, std::string  membName) {
+	int membId = getMemberId(membName);
+	auto it = std::find_if(obj.members.begin(), obj.members.end(),
+		[&](auto& memberRec) { return memberRec.memberId == membId; });
+	if (it == obj.members.end())
+		return NULL;
+	return &*it;
+}
+
 
 /** Return the unique id number for this event identifier. */
 int CSyntaxNode::getEventId(std::string & identifier) {
@@ -443,11 +463,12 @@ CObjDeclNode::CObjDeclNode(CSyntaxNode * identifier, CSyntaxNode * memberList, C
 	identNode = identifier;
 	members = memberList;
 	classObj = classObject;
-
+	parentId = 0;
 	//maintain object tree 
 	parentList[childLevel] = identNode->getId();
 	if (parentList.find(childLevel - 1) != parentList.end()) {
 		std::cerr << "\nobject " << identifier->getText() << " parent: " << parentList[childLevel - 1] << lineNo;
+		parentId = parentList[childLevel - 1];
 	}
 	else {
 		if (childLevel > 0) {
@@ -461,18 +482,46 @@ CObjDeclNode::CObjDeclNode(CSyntaxNode * identifier, CSyntaxNode * memberList, C
 /** Create an object definition for the VM to pick up. */
 void CObjDeclNode::encode() {
 	std::string name = identNode->getText();
+	CObject* thisObj = &objects[name];
 	if (classObj)
-		objects[name].classId = classObj->getId();
+		thisObj->classId = classObj->getId();
 
 	if (!members)
 		return;
+
 	//run through the member node declarations and add these to the object's definition
 	memberStack2.clear();
 	members->encode();
+
 	for (auto memberRec2 : memberStack2) {
-		objects[name].members.push_back(memberRec2);
+		thisObj->members.push_back(memberRec2);
 	}
 	memberStack2.clear();
+
+	if (parentId == 0)
+		return;
+
+	CObject* parentObj = getObject(parentId);
+	TMemberRec parentMemb;
+	parentMemb.memberId = memberIds["parent"];
+	parentMemb.value.setObjId(parentId);
+	thisObj->members.push_back(parentMemb);
+
+	TMemberRec* parentObjChildMemb = getObjectMember(*parentObj, "child");
+	if (parentObjChildMemb == NULL) { //parent obj has no current children
+		TMemberRec newChildMemb;
+		newChildMemb.memberId = memberIds["child"];
+		newChildMemb.value.setObjId(thisObj->objectId);
+		parentObj->members.push_back(newChildMemb);
+	}
+	else {	//parent obj already has a child
+		TMemberRec newSiblingMemb;
+		newSiblingMemb.memberId = memberIds["sibling"];
+		newSiblingMemb.value.setObjId(parentObjChildMemb->value.getObjId());
+		thisObj->members.push_back(newSiblingMemb);
+		parentObjChildMemb->value.setObjId(thisObj->objectId);
+	}
+
 }
 
 /** Create a node representing an object's member reference. */

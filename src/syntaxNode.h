@@ -58,6 +58,9 @@ public:
 
 	void killNodes();
 
+	CObject* getObject(int id);
+	TMemberRec* getObjectMember(CObject& obj, std::string membName);
+
 
 	std::vector<CSyntaxNode*> operands;
 
@@ -217,6 +220,7 @@ public:
 	CSyntaxNode* identNode;
 	CSyntaxNode* members;
 	CSyntaxNode* classObj;
+	int parentId;
 };
 
 class CObjMemberAssigneeNode : public CSyntaxNode {
