@@ -12,7 +12,8 @@ std::map<std::string, int> CSyntaxNode::eventIds;
 int CSyntaxNode::nextEventId = 0;
 std::map<int, int> CSyntaxNode::eventTable;
 std::map<std::string, int> CSyntaxNode::globalVarIds;
-int CSyntaxNode::nextGlobalVarId = 0;
+int CSyntaxNode::nextGlobalVarId = globalVarStart;
+std::vector<std::string> CSyntaxNode::localVarIds;
 std::vector<COptionNode*> CSyntaxNode::optionStack;
 int CSyntaxNode::eventTableAddr = 0;
 int CSyntaxNode::globalVarTableAddr = 0;
@@ -25,6 +26,7 @@ std::vector<TMemberRec> CSyntaxNode::memberStack2;
 std::vector<CTigVar> CSyntaxNode::arrayStack;
 int CSyntaxNode::childLevel = 0;
 std::map<int,int> CSyntaxNode::parentList;
+bool CSyntaxNode::global = true;
 
 
 std::vector<CSyntaxNode*> CSyntaxNode::nodeList;
@@ -41,12 +43,12 @@ void CSyntaxNode::setOutputFile(std::ofstream& file) {
 void CSyntaxNode::writeOp(char byte) {
 	int addr = outputFile->tellp();
 	outputFile->write(&byte, 1);
-	cout << "\n" << addr << " " << opCode[byte];
+	cout << "\n" << outputFile << " " << addr << " " << opCode[byte];
 }
 
 void CSyntaxNode::writeByte(char byte) {
 	outputFile->write(&byte, 1);
-	cout << " " << byte;
+	cout << "\n" << outputFile << " [writeByte] " << (int)byte;
 }
 
 void CSyntaxNode::writeWord(unsigned int word) {
@@ -173,6 +175,11 @@ TMemberRec * CSyntaxNode::getObjectMember(CObject & obj, std::string  membName) 
 	return &*it;
 }
 
+void CSyntaxNode::funcMode(bool onOff) {
+	global = !onOff;
+	std::cerr << "\nglobal mode set to " << global;
+}
+
 
 /** Return the unique id number for this event identifier. */
 int CSyntaxNode::getEventId(std::string & identifier) {
@@ -192,6 +199,28 @@ int CSyntaxNode::getGlobalVarId(std::string & identifier) {
 		return globalVarIds[identifier];
 	}
 	return iter->second;
+}
+
+/** Return a variable id for a variable used at a local level. */
+int CSyntaxNode::getLocalVarId(std::string & identifier) {
+	//TO DO: check if it's a local member
+
+	//check if it's an existing global variable
+	auto iter = globalVarIds.find(identifier);
+	if (iter != globalVarIds.end()) {
+		return iter->second;
+	}
+
+	//Check if it's an existing local variable
+	//if not, make it one
+	auto it = std::find_if(localVarIds.begin(), localVarIds.end(),
+		[&](auto& varName) { return varName == identifier; });
+	if (it == localVarIds.end()) {
+		localVarIds.push_back(identifier);
+		return localVarIds.size()-1;
+	}
+
+	return it - localVarIds.begin();
 }
 
 /** Return the unique id number for this object member identifier. */
@@ -323,6 +352,7 @@ void CEventNode::encode() {
 
 	if (optionStack.size() == 0) {
 		writeOp(opEnd);
+		setOutputFile(globalByteCode);
 		return;
 	}
 
@@ -355,6 +385,7 @@ void CEventNode::encode() {
 	outputFile->seekp(resume);
 	
 	optionStack.clear();
+	setOutputFile(globalByteCode);
 }
 
 /** Create an identifier node for the given identifier string. */
@@ -375,13 +406,22 @@ std::string & CEventIdentNode::getText() {
 
 /** Create a variable assignment node for the named variable. */
 CVarAssigneeNode::CVarAssigneeNode(std::string * parsedString) {
-	varId = getGlobalVarId(*parsedString);
+	//Is this global code?
+	if (global)
+		varId = getGlobalVarId(*parsedString);
+	else
+		varId = -1;
+
 	name = *parsedString;
 }
 
 /** Tell the VM to push this variable's identifier on to the stack. */
 void CVarAssigneeNode::encode() {
 	writeOp(opPushInt);
+	if (varId == -1) { //this is not a global variable
+		varId = getLocalVarId(name);
+
+	}
 	writeWord(varId); 
 }
 
@@ -464,6 +504,8 @@ CObjDeclNode::CObjDeclNode(CSyntaxNode * identifier, CSyntaxNode * memberList, C
 	members = memberList;
 	classObj = classObject;
 	parentId = 0;
+	funcMode(false);
+
 	//maintain object tree 
 	parentList[childLevel] = identNode->getId();
 	if (parentList.find(childLevel - 1) != parentList.end()) {
@@ -622,12 +664,42 @@ CVarExprNode::CVarExprNode(std::string * parsedString) {
 
 /** Tell VM to push this variable's value onto the stack. */
 void CVarExprNode::encode() {
-	if (identType == globalVar)
-		writeOp(opPushVar);
-	else
-		writeOp(opPushObj);
+	//is this a local variable
+	auto it = std::find_if(localVarIds.begin(), localVarIds.end(),
+		[&](auto& varName) { return varName == name; });
+	if (it != localVarIds.end()) {
+		varId = it - localVarIds.begin();
+		writeOp(opPushVar); //TO DO: may need sepatate op for global/local
+		writeWord(varId);
+		return;
+	}
+
+	//is it global?
+	auto iter = globalVarIds.find(name);
+	if (iter != globalVarIds.end()) {
+		varId = iter->second;
+		writeOp(opPushVar); //TO DO: may need sepatate op for global/local
+		writeWord(varId);
+		return;
+	}
+
+	//or is it an object?
+	auto iter2 = objects.find(name);
+	if (iter2 != objects.end()) {
+		varId = iter2->second.objectId;
+		writeOp(opPushObj); 
+		writeWord(varId);
+		return;
+	}
+
+	std::cerr << "\nError! Identifier " << name << " not recognised.";
+
+	//if (identType == globalVar)
+//		writeOp(opPushVar);
+//	else
+//		writeOp(opPushObj);
 	//TO DO: may be able to do this entirely with pushVar, if object ids start at 1000.
-	writeWord(varId);
+//	writeWord(varId);
 }
 
 /** Create a member-initialisation node initialising with a string. */
@@ -664,9 +736,9 @@ void CInitNode::encode() {
 		setOutputFile(fnByteCode);
 		int codeStart = outputFile->tellp();
 		operands[0]->encode();
-		writeOp(opReturn);
+		//writeOp(opReturn);
 		value.setFuncAddr(codeStart);
-		setOutputFile(globalByteCode);
+		//setOutputFile(globalByteCode);
 	}
 
 
@@ -699,7 +771,7 @@ CodeBlockNode::CodeBlockNode(CSyntaxNode * codeBlock) {
 }
 
 void CodeBlockNode::encode() {
-	setOutputFile(fnByteCode);
+	setOutputFile(fnByteCode); //TO DO: scrap and catch code inside function definitions instead
 	operands[0]->encode();
 	//setOutputFile(globalByteCode);
 }
@@ -788,4 +860,29 @@ CMembDeclIdentNode::CMembDeclIdentNode(std::string * ident) {
 
 std::string & CMembDeclIdentNode::getText() {
 	return text;
+}
+
+
+CFunctionDefNode::CFunctionDefNode(CSyntaxNode * codeBlock) {
+	operands.push_back(codeBlock);
+}
+
+/** Write the function code, prefacing it with the number of local variables required. */
+void CFunctionDefNode::encode() {
+	setOutputFile(fnByteCode);
+	global = false;
+	localVarIds.clear();
+	int varCountAddr = outputFile->tellp();
+	writeByte(0);
+	operands[0]->encode();
+	char varCount = (char)localVarIds.size();
+	if (varCount > 0) {
+		int resume = outputFile->tellp();
+		outputFile->seekp(varCountAddr);
+		writeByte(varCount);
+		outputFile->seekp(resume);
+	}
+	writeOp(opReturn);
+	global = true;
+	setOutputFile(globalByteCode);
 }

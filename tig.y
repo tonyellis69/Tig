@@ -38,7 +38,7 @@
 %type <nPtr> string_statement
 %type <nPtr> obj_identifier class_identifier optional_member_list member_decl_list member_decl obj_expr init_expr member_expr 
 %type <iValue> level
-%type <nPtr> memb_decl_identifier
+%type <nPtr> memb_decl_identifier memb_function_def
 %type <nPtr> array_init_expr constant_seq array_init_const array_element_expr array_index_expr array_init_list
 
 %token PRINT END
@@ -117,11 +117,13 @@ string_statement:
 
 dec_statement:
 		EVENT event_identifier code_block ';'								{ $$ = new CEventNode($2,$3); }	
-		| OBJECT obj_identifier optional_member_list ';'					{ $$ = new CObjDeclNode($2,$3,NULL); }
+		| obj_identifier optional_member_list ';'							{ $$ = new CObjDeclNode($1,$2,NULL); }
 		| class_identifier obj_identifier optional_member_list ';'			{ $$ = new CObjDeclNode($2,$3,$1); }
-		| level OBJECT obj_identifier optional_member_list ';'				{ $$ = new CObjDeclNode($3,$4,NULL); }
+		| level  obj_identifier optional_member_list ';'				{ $$ = new CObjDeclNode($2,$3,NULL); }
 		| level class_identifier obj_identifier optional_member_list ';'	{ $$ = new CObjDeclNode($3,$4,$2); }
 		;
+
+
 
 level:
 		CHILD							{ CSyntaxNode::childLevel++; }
@@ -138,7 +140,8 @@ class_identifier:
 		;
 
 optional_member_list:
-		HAS member_decl_list			{ $$ = $2; }
+		HAS								{ CSyntaxNode::funcMode(true); }
+		member_decl_list				{ $$ = $3; }
 		|								{ $$ = NULL; }
 		;
 
@@ -161,9 +164,13 @@ memb_decl_identifier:
 init_expr:
 		STRING						{ $$ = new CInitNode($1); }
 		| INTEGER					{ $$ = new CInitNode($1); }
-		| code_block				{ $$ = new CInitNode($1); }
+		| memb_function_def			{ $$ = new CInitNode($1); }
 		| obj_identifier			{ $$ = new CInitNode((CObjIdentNode*)$1); }
 		| array_init_list			{ $$ = new CInitNode((CArrayInitListNode*)$1); }
+		;
+
+memb_function_def:
+		code_block					{ $$ = new CFunctionDefNode($1); }
 		;
 
 statement_list:

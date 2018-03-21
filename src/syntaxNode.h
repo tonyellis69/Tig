@@ -42,6 +42,7 @@ public:
 	virtual std::string& getText() { std::string nul;  return nul; };
 	int getEventId(std::string& identifier); //TO DO still needed?
 	int getGlobalVarId(std::string & identifier);
+	int getLocalVarId(std::string & identifier);
 	int getMemberId(std::string & identifier);
 	int getObjectId(std::string & identifier);
 	static void setOutputFile(std::ofstream& file);
@@ -61,6 +62,7 @@ public:
 	CObject* getObject(int id);
 	TMemberRec* getObjectMember(CObject& obj, std::string membName);
 
+	static void funcMode(bool onOff);
 
 	std::vector<CSyntaxNode*> operands;
 
@@ -72,6 +74,7 @@ public:
 	static int nextEventId;
 	static std::map<std::string, int> globalVarIds;
 	static int nextGlobalVarId;
+	static std::vector<std::string> localVarIds; ///<Local variable names.
 	static std::map<std::string, int> memberIds; ///<Object member names and their ids.
 	static int nextMemberId;
 	static std::map<std::string, CObject> objects; ///<Objects names and their details.
@@ -92,6 +95,8 @@ public:
 
 	static std::map<int,int> parentList; //ids of current parent objects at each tree level
 	static int childLevel;
+
+	static bool global; ///<True if we're encoding global code, false inside function definitions.
 };
 
 enum TIdentType { local, globalVar, object };
@@ -337,4 +342,11 @@ public:
 	std::string& getText();
 
 	std::string text;
+};
+
+
+class CFunctionDefNode : public CSyntaxNode {
+public:
+	CFunctionDefNode(CSyntaxNode* codeBlock);
+	void encode();
 };

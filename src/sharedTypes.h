@@ -30,5 +30,6 @@ static char* opCode[] = { "opNop\0",
 	"opAssignElem\0"};
 
 const int memberIdStart = 1000;
+const int globalVarStart = 100;
 
 enum TigVarType { tigUndefined, tigString, tigInt, tigFloat, tigObj, tigFunc, tigArray };
