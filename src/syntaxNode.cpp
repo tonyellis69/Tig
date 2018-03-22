@@ -886,3 +886,17 @@ void CFunctionDefNode::encode() {
 	global = true;
 	setOutputFile(globalByteCode);
 }
+
+
+CReturnNode::CReturnNode(CSyntaxNode * returnVal) {
+	operands.push_back(returnVal);
+}
+
+void CReturnNode::encode() {
+	if (operands.size() > 0) {
+		operands[0]->encode();
+		writeOp(opReturnVal);
+	}
+	else
+		writeOp(opReturn);
+}

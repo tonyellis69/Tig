@@ -38,10 +38,10 @@
 %type <nPtr> string_statement
 %type <nPtr> obj_identifier class_identifier optional_member_list member_decl_list member_decl obj_expr init_expr member_expr 
 %type <iValue> level
-%type <nPtr> memb_decl_identifier memb_function_def
+%type <nPtr> memb_decl_identifier memb_function_def return_expr
 %type <nPtr> array_init_expr constant_seq array_init_const array_element_expr array_index_expr array_init_list
 
-%token PRINT END
+%token PRINT END RETURN
 %token EVENT OPTION
 %token OBJECT HAS CHILD 
 %token GETSTRING
@@ -79,9 +79,15 @@ statement:
 		| string_statement	';'							{ $$ = new CStrStatement($1);}
 		| START_TIMER	';'								{ $$ = new COpNode(opStartTimer); }
 		| START_EVENT event_identifier AT INTEGER ';'	{ $$ = new CTimedEventNode($2,$4); }
-		| member_expr ';'								{ $$ = new COpNode(opCall,$1); }
+		| member_expr ';'								{ $$ = new COpNode(opCallDiscard,$1); }
 		| HOT STRING IDENTIFIER	 ';'					{ $$ = new CHotTextNode($2,$3); }
+		| RETURN return_expr ';'						{ $$ = new CReturnNode($2); }
         ;
+
+return_expr:
+		expression										{ $$ = $1; }
+		|												{ $$ = NULL; }
+		;
 
 assignment:
 		var_or_obj_memb '=' expression					{ $$ = new COpNode(opAssign,$1,$3); }

@@ -350,3 +350,9 @@ public:
 	CFunctionDefNode(CSyntaxNode* codeBlock);
 	void encode();
 };
+
+class CReturnNode : public CSyntaxNode {
+public:
+	CReturnNode(CSyntaxNode* returnVal);
+	void encode();
+};

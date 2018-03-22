@@ -67,6 +67,7 @@ IDENT    {LETTER}({LETTER}|{DIGIT})*
 "has"					return HAS;
 "hot"					return HOT;
 "->"					return CHILD;
+"return"				return RETURN;
 {IDENT}					{	identBufs[currentIdentBuf].clear(); 
 							identBufs[currentIdentBuf].assign(yytext,yyleng);
 							yylval.str = &identBufs[currentIdentBuf];
