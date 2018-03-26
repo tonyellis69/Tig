@@ -38,7 +38,7 @@
 %type <nPtr> string_statement
 %type <nPtr> obj_identifier class_identifier optional_member_list member_decl_list member_decl obj_expr init_expr member_expr 
 %type <iValue> level
-%type <nPtr> memb_decl_identifier memb_function_def return_expr
+%type <nPtr> memb_decl_identifier memb_function_def return_expr member_call
 %type <nPtr> array_init_expr constant_seq array_init_const array_element_expr array_index_expr array_init_list
 
 %token PRINT END RETURN
@@ -79,7 +79,7 @@ statement:
 		| string_statement	';'							{ $$ = new CStrStatement($1);}
 		| START_TIMER	';'								{ $$ = new COpNode(opStartTimer); }
 		| START_EVENT event_identifier AT INTEGER ';'	{ $$ = new CTimedEventNode($2,$4); }
-		| member_expr ';'								{ $$ = new COpNode(opCallDiscard,$1); }
+		| member_call ';'								{ $$ = new CallDiscardNode($1); }
 		| HOT STRING IDENTIFIER	 ';'					{ $$ = new CHotTextNode($2,$3); }
 		| RETURN return_expr ';'						{ $$ = new CReturnNode($2); }
         ;
@@ -210,6 +210,7 @@ expression:
 	  | GETSTRING						{ $$ = new COpNode(opGetString); }
 	  | expression '+' expression		{ $$ = new COpNode(opAdd, $1, $3); }
 	  | member_expr						{ $$ = $1; }
+	  | member_call						{ $$ = new COpNode(opCall, $1); }
 	  | constant_expr					{ $$ = $1; }
 	  | array_init_expr					{ $$ = $1; }
 	  | array_element_expr				{ $$ = $1; }
@@ -220,7 +221,11 @@ variable_expr:
 	;
 
 member_expr:
-	obj_expr '.' IDENTIFIER			{ $$ = new CMemberExprNode($1, $3); }
+	obj_expr '.' IDENTIFIER				{ $$ = new CMemberExprNode($1, $3); }
+	;
+
+member_call:
+	 obj_expr '.' IDENTIFIER	'(' ')'		{ $$ = new CMemberExprNode($1, $3); }
 	;
 
 constant_expr:							//TO DO: float

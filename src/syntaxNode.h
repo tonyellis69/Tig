@@ -254,7 +254,6 @@ public:
 	int memberId;
 };
 
-
 class CVarExprNode : public CSyntaxNode {
 public:
 	CVarExprNode(std::string* parsedString);
@@ -354,5 +353,11 @@ public:
 class CReturnNode : public CSyntaxNode {
 public:
 	CReturnNode(CSyntaxNode* returnVal);
+	void encode();
+};
+
+class CallDiscardNode : public CSyntaxNode {
+public:
+	CallDiscardNode(CSyntaxNode* funcCode);
 	void encode();
 };

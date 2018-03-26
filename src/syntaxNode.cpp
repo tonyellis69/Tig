@@ -640,6 +640,7 @@ void CMemberExprNode::encode() {
 	writeWord(memberId);
 }
 
+
 /** Create a node identifying the named variable/object. */
 CVarExprNode::CVarExprNode(std::string * parsedString) {
 	name = *parsedString;
@@ -882,7 +883,7 @@ void CFunctionDefNode::encode() {
 		writeByte(varCount);
 		outputFile->seekp(resume);
 	}
-	writeOp(opReturn);
+	writeOp(opReturnTrue); //TO DO: check if user included return?
 	global = true;
 	setOutputFile(globalByteCode);
 }
@@ -895,8 +896,19 @@ CReturnNode::CReturnNode(CSyntaxNode * returnVal) {
 void CReturnNode::encode() {
 	if (operands.size() > 0) {
 		operands[0]->encode();
-		writeOp(opReturnVal);
+		writeOp(opReturn);
 	}
 	else
-		writeOp(opReturn);
+		writeOp(opReturnTrue);
+}
+
+/** Create a node for calling a function and discarding the returned value. */
+CallDiscardNode::CallDiscardNode(CSyntaxNode * funcCode) {
+	operands.push_back(funcCode);
+}
+
+void CallDiscardNode::encode() {
+	operands[0]->encode();
+	writeOp(opCall);
+	writeOp(opPop);
 }

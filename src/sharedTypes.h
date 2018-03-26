@@ -2,8 +2,8 @@
 
 enum TOpCode { opNop, opPrint, opGiveOptions, opOption, opJumpEvent, opEnd, opAssign, opPushStr, opPushInt, 
 	opPushVar, opGetString, opAdd,  opStartTimer, opTimedEvent,
-	opExpressVar, opPushObj, opCall, opReturn, opReturnVal, opHot, opInitArray,
-	opPushElem, opAssignElem
+	opExpressVar, opPushObj, opCall, opReturn, opReturnTrue, opHot, opInitArray,
+	opPushElem, opAssignElem, opPop
 };
 
 static char* opCode[] = { "opNop\0",
@@ -24,11 +24,12 @@ static char* opCode[] = { "opNop\0",
 	"opPushObj\0",
 	"opCall\0",
 	"opReturn\0",
-	"opReturnVal\0",
+	"opReturnTrue\0",
 	"opHot\0",
 	"opInitArray\0",
 	"opPushElem\0",
-	"opAssignElem\0"};
+	"opAssignElem\0",
+	"opPop\0"};
 
 const int memberIdStart = 1000;
 const int globalVarStart = 100;
