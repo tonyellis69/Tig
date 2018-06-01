@@ -361,3 +361,9 @@ public:
 	CallDiscardNode(CSyntaxNode* funcCode);
 	void encode();
 };
+
+class CIfNode : public CSyntaxNode {
+public:
+	CIfNode(CSyntaxNode* expr, CSyntaxNode* code, CSyntaxNode* elseCode);
+	void encode();
+};

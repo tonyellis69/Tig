@@ -61,7 +61,17 @@ extern int yydebug;
     INTEGER = 271,
     IDENTIFIER = 272,
     STRING = 273,
-    ENDL = 274
+    ENDL = 274,
+    IF = 275,
+    EQ = 276,
+    NE = 277,
+    GE = 278,
+    LE = 279,
+    OR = 280,
+    AND = 281,
+    UMINUS = 282,
+    IFX = 283,
+    ELSE = 284
   };
 #endif
 
@@ -77,7 +87,7 @@ union YYSTYPE
     CSyntaxNode *nPtr;          // node pointer - enables symbols to point to syntax nodes
 	 std::string* str;
 
-#line 81 "tigParse.hpp" /* yacc.c:1909  */
+#line 91 "tigParse.hpp" /* yacc.c:1909  */
 };
 # define YYSTYPE_IS_TRIVIAL 1
 # define YYSTYPE_IS_DECLARED 1

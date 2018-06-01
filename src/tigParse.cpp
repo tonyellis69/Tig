@@ -136,7 +136,17 @@ extern int yydebug;
     INTEGER = 271,
     IDENTIFIER = 272,
     STRING = 273,
-    ENDL = 274
+    ENDL = 274,
+    IF = 275,
+    EQ = 276,
+    NE = 277,
+    GE = 278,
+    LE = 279,
+    OR = 280,
+    AND = 281,
+    UMINUS = 282,
+    IFX = 283,
+    ELSE = 284
   };
 #endif
 
@@ -152,7 +162,7 @@ union YYSTYPE
     CSyntaxNode *nPtr;          // node pointer - enables symbols to point to syntax nodes
 	 std::string* str;
 
-#line 156 "tigParse.cpp" /* yacc.c:355  */
+#line 166 "tigParse.cpp" /* yacc.c:355  */
 };
 # define YYSTYPE_IS_TRIVIAL 1
 # define YYSTYPE_IS_DECLARED 1
@@ -167,7 +177,7 @@ int yyparse (void);
 
 /* Copy the second part of user declarations.  */
 
-#line 171 "tigParse.cpp" /* yacc.c:358  */
+#line 181 "tigParse.cpp" /* yacc.c:358  */
 
 #ifdef short
 # undef short
@@ -388,23 +398,23 @@ union yyalloc
 #endif /* !YYCOPY_NEEDED */
 
 /* YYFINAL -- State number of the termination state.  */
-#define YYFINAL  57
+#define YYFINAL  61
 /* YYLAST -- Last index in YYTABLE.  */
-#define YYLAST   177
+#define YYLAST   223
 
 /* YYNTOKENS -- Number of terminals.  */
-#define YYNTOKENS  34
+#define YYNTOKENS  47
 /* YYNNTS -- Number of nonterminals.  */
-#define YYNNTS  41
+#define YYNNTS  42
 /* YYNRULES -- Number of rules.  */
-#define YYNRULES  87
+#define YYNRULES  96
 /* YYNSTATES -- Number of states.  */
-#define YYNSTATES  145
+#define YYNSTATES  166
 
 /* YYTRANSLATE[YYX] -- Symbol number corresponding to YYX as returned
    by yylex, with out-of-bounds checking.  */
 #define YYUNDEFTOK  2
-#define YYMAXUTOK   274
+#define YYMAXUTOK   284
 
 #define YYTRANSLATE(YYX)                                                \
   ((unsigned int) (YYX) <= YYMAXUTOK ? yytranslate[YYX] : YYUNDEFTOK)
@@ -416,16 +426,16 @@ static const yytype_uint8 yytranslate[] =
        0,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-      32,    33,    22,    20,    31,    21,    28,    23,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,     2,    24,
-       2,    27,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,    29,     2,    30,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,    33,     2,     2,
+      40,    41,    31,    29,    46,    30,    43,    32,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,    37,
+      26,    42,    24,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,    25,     2,    26,     2,     2,     2,     2,
+       2,    44,     2,    45,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
+       2,     2,     2,    38,     2,    39,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
@@ -440,22 +450,24 @@ static const yytype_uint8 yytranslate[] =
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
        2,     2,     2,     2,     2,     2,     1,     2,     3,     4,
        5,     6,     7,     8,     9,    10,    11,    12,    13,    14,
-      15,    16,    17,    18,    19
+      15,    16,    17,    18,    19,    20,    21,    22,    23,    25,
+      27,    28,    34,    35,    36
 };
 
 #if YYDEBUG
   /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_uint16 yyrline[] =
 {
-       0,    62,    62,    63,    67,    68,    69,    70,    74,    75,
-      76,    77,    78,    79,    80,    81,    82,    83,    84,    88,
-      89,    93,    94,    98,    99,   103,   107,   111,   112,   116,
-     120,   121,   125,   126,   127,   128,   129,   135,   136,   141,
-     145,   149,   149,   151,   155,   156,   160,   161,   162,   166,
-     171,   172,   173,   174,   175,   179,   183,   184,   188,   192,
-     196,   200,   201,   205,   209,   210,   211,   212,   213,   214,
-     215,   216,   220,   224,   228,   232,   233,   237,   241,   245,
-     249,   250,   254,   255,   256,   261,   265,   266
+       0,    69,    69,    70,    74,    75,    76,    77,    81,    82,
+      83,    84,    85,    86,    87,    88,    89,    90,    91,    92,
+      93,    97,    98,   102,   103,   107,   108,   112,   116,   120,
+     121,   125,   129,   130,   134,   135,   136,   137,   138,   144,
+     145,   150,   154,   158,   158,   160,   164,   165,   169,   170,
+     171,   175,   180,   181,   182,   183,   184,   188,   192,   193,
+     197,   201,   205,   209,   210,   214,   218,   219,   220,   221,
+     222,   223,   224,   225,   226,   227,   231,   235,   239,   243,
+     244,   248,   252,   256,   260,   261,   265,   266,   267,   272,
+     276,   277,   282,   283,   284,   285,   286
 };
 #endif
 
@@ -466,19 +478,21 @@ static const char *const yytname[] =
 {
   "$end", "error", "$undefined", "PRINT", "END", "RETURN", "EVENT",
   "OPTION", "OBJECT", "HAS", "CHILD", "GETSTRING", "HOT", "START_TIMER",
-  "START_EVENT", "AT", "INTEGER", "IDENTIFIER", "STRING", "ENDL", "'+'",
-  "'-'", "'*'", "'/'", "';'", "'{'", "'}'", "'='", "'.'", "'['", "']'",
-  "','", "'('", "')'", "$accept", "program", "tigcode", "statement",
-  "return_expr", "assignment", "var_or_obj_memb", "variable_assignee",
-  "obj_member_assignee", "obj_expr", "element_assignee",
-  "string_statement", "dec_statement", "level", "obj_identifier",
-  "class_identifier", "optional_member_list", "$@1", "member_decl_list",
-  "member_decl", "memb_decl_identifier", "init_expr", "memb_function_def",
-  "statement_list", "string_literal", "event_identifier", "option",
-  "optional_code_block", "code_block", "expression", "variable_expr",
-  "member_expr", "member_call", "constant_expr", "integer_constant",
-  "array_init_expr", "array_init_list", "constant_seq", "array_init_const",
-  "array_element_expr", "array_index_expr", YY_NULL
+  "START_EVENT", "AT", "INTEGER", "IDENTIFIER", "STRING", "ENDL", "IF",
+  "EQ", "NE", "GE", "'>'", "LE", "'<'", "OR", "AND", "'+'", "'-'", "'*'",
+  "'/'", "'%'", "UMINUS", "IFX", "ELSE", "';'", "'{'", "'}'", "'('", "')'",
+  "'='", "'.'", "'['", "']'", "','", "$accept", "program", "tigcode",
+  "statement", "return_expr", "assignment", "var_or_obj_memb",
+  "variable_assignee", "obj_member_assignee", "obj_expr",
+  "element_assignee", "string_statement", "dec_statement", "level",
+  "obj_identifier", "class_identifier", "optional_member_list", "$@1",
+  "member_decl_list", "member_decl", "memb_decl_identifier", "init_expr",
+  "memb_function_def", "statement_list", "string_literal",
+  "event_identifier", "option", "optional_code_block", "code_block",
+  "expression", "variable_expr", "member_expr", "member_call",
+  "constant_expr", "integer_constant", "array_init_expr",
+  "array_init_list", "constant_seq", "array_init_const",
+  "array_element_expr", "array_index_expr", "comparison_expr", YY_NULL
 };
 #endif
 
@@ -489,8 +503,9 @@ static const yytype_uint16 yytoknum[] =
 {
        0,   256,   257,   258,   259,   260,   261,   262,   263,   264,
      265,   266,   267,   268,   269,   270,   271,   272,   273,   274,
-      43,    45,    42,    47,    59,   123,   125,    61,    46,    91,
-      93,    44,    40,    41
+     275,   276,   277,   278,    62,   279,    60,   280,   281,    43,
+      45,    42,    47,    37,   282,   283,   284,    59,   123,   125,
+      40,    41,    61,    46,    91,    93,    44
 };
 # endif
 
@@ -499,7 +514,7 @@ static const yytype_uint16 yytoknum[] =
 #define yypact_value_is_default(Yystate) \
   (!!((Yystate) == (-67)))
 
-#define YYTABLE_NINF -41
+#define YYTABLE_NINF -43
 
 #define yytable_value_is_error(Yytable_value) \
   0
@@ -508,21 +523,23 @@ static const yytype_uint16 yytoknum[] =
      STATE-NUM.  */
 static const yytype_int16 yypact[] =
 {
-     114,    36,   -11,    36,     4,    28,   -67,    57,    58,     4,
-      21,   -67,   133,    84,   114,   -67,    64,    45,   -67,   -67,
-      -3,    73,    77,   -67,    -1,    96,    89,    91,    85,   -67,
-      86,   -67,   -67,     6,   -67,    42,    93,    24,   -67,    97,
-     -67,   -67,   -67,   -67,   -67,   -67,   105,    94,   -67,    88,
-      88,   113,   -67,   118,   107,   -67,    15,   -67,   -67,   -67,
-     -67,    36,    34,   124,    36,   -67,   -67,   125,    96,    89,
-     -67,   119,   -67,    96,    36,   -67,   -67,   -67,   -67,   -67,
-      25,   -67,    34,    36,   -67,   -67,   133,   120,     4,   -67,
-     131,   132,   -67,   -67,    94,   -67,   -67,   -67,   126,    10,
-      94,   135,    96,   140,   -67,   138,    94,   -67,    42,   130,
-     -67,    90,   -67,   -67,   -67,   139,   -67,   116,   -67,   142,
-     -67,   137,   -67,    62,   -67,   -67,   -67,   -67,   -67,   -67,
-     -67,   140,   -67,   -67,   136,    42,   -67,   -67,   -67,   -67,
-     -67,   -67,   -67,    31,   -67
+      69,    10,   -25,    10,     7,    19,   -67,    34,   -15,     7,
+      16,   -67,    15,   163,    65,    69,   -67,    30,   -35,   -67,
+     -67,    28,    38,    47,   -67,    29,    81,    78,    73,    93,
+     -67,   104,   -67,   -67,    14,   -67,    10,    88,   101,    98,
+     -67,   107,   -67,   -67,   -67,   -67,   -67,   -67,   -67,   114,
+     182,   -67,   116,   116,   139,   -67,   142,    10,   119,   -67,
+      31,   -67,   -67,   -67,   -67,    10,    99,   148,    10,   -67,
+     -67,   152,    81,    78,   -67,   122,   -67,    81,    10,   -67,
+     -67,   161,   -67,   -67,   -67,    72,   -67,    99,    10,    10,
+      10,    10,    10,    10,   -67,   -67,   163,   134,     7,   -67,
+     141,   156,   168,   -67,   -67,   182,   -67,   -67,   -67,   143,
+      59,   182,   158,    81,   162,   -67,   159,   182,   -67,   -67,
+      88,   153,   170,   170,   170,   170,   170,   -67,   135,   -67,
+     -67,   -67,   167,   163,   -67,   169,   -67,   175,   -67,   154,
+     -67,    24,   -67,   -67,   -67,   -67,   -67,   177,   -67,   -67,
+     162,   -67,   -67,    76,    88,   -67,   -67,   -67,   -67,   -67,
+     163,   -67,   -67,    80,   -67,   -67
 };
 
   /* YYDEFACT[STATE-NUM] -- Default reduction number in state STATE-NUM.
@@ -530,41 +547,43 @@ static const yytype_int16 yypact[] =
      means the default is an error.  */
 static const yytype_uint8 yydefact[] =
 {
-       3,     0,     0,    20,     0,     0,    37,     0,     0,     0,
-      25,    58,     0,     0,     2,     4,     0,     0,    23,    24,
-       0,     0,     0,     6,     0,    43,     0,    30,     0,    28,
-       0,    65,    77,    72,    76,     0,     0,     0,    64,    67,
-      68,    69,    75,    70,    71,    11,     0,    19,    59,     0,
-      62,     0,    14,     0,    25,    56,     0,     1,     5,     7,
-       9,     0,     0,     0,     0,    13,    38,    39,    43,     0,
-      41,     0,    39,    43,     0,    12,    16,    83,    82,    84,
-       0,    80,     0,     0,     8,    18,     0,     0,     0,    61,
-       0,     0,    10,    57,    21,    72,    86,    87,     0,    73,
-      22,     0,    43,     0,    33,     0,    31,    78,     0,     0,
-      66,     0,    32,    60,    17,     0,    29,     0,    35,     0,
-      49,    42,    44,    46,    34,    81,    85,    63,    15,    74,
-      36,     0,    51,    50,     0,     0,    53,    48,    52,    55,
-      54,    45,    47,     0,    79
+       3,     0,     0,    22,     0,     0,    39,     0,     0,     0,
+      27,    60,     0,     0,     0,     2,     4,     0,     0,    25,
+      26,     0,     0,     0,     6,     0,    45,     0,    32,     0,
+      30,     0,    67,    81,    76,    80,     0,     0,     0,     0,
+      66,    69,    70,    71,    79,    72,    73,    74,    11,     0,
+      21,    61,     0,    64,     0,    14,     0,     0,    27,    58,
+       0,     1,     5,     7,     9,     0,     0,     0,     0,    13,
+      40,    41,    45,     0,    43,     0,    41,    45,     0,    12,
+      16,     0,    87,    86,    88,     0,    84,     0,     0,     0,
+       0,     0,     0,     0,     8,    18,     0,     0,     0,    63,
+       0,     0,     0,    10,    59,    23,    76,    90,    91,     0,
+      77,    24,     0,    45,     0,    35,     0,    33,    75,    82,
+       0,     0,    92,    96,    95,    94,    93,    68,     0,    34,
+      62,    17,     0,     0,    31,     0,    37,     0,    51,    44,
+      46,    48,    36,    85,    89,    65,    15,    19,    78,    38,
+       0,    53,    52,     0,     0,    55,    50,    54,    57,    56,
+       0,    47,    49,     0,    20,    83
 };
 
   /* YYPGOTO[NTERM-NUM].  */
 static const yytype_int16 yypgoto[] =
 {
-     -67,   -67,   -67,     1,   -67,   -67,     2,   -67,   -67,   -67,
-     -67,   -67,   150,   -67,     0,   143,   -66,   -67,   -67,    38,
-     -67,    37,   -67,    87,   165,     8,   -67,   -67,    49,     9,
-     -51,     3,     7,   -67,   -39,   -67,   -67,    39,    67,   -67,
-      95
+     -67,   -67,   -67,     3,   -67,   -67,     0,   -67,   -67,   -67,
+     -67,   -67,   199,   -67,     5,   190,   -66,   -67,   -67,    66,
+     -67,    64,   -67,   123,   213,    -7,   -67,   -67,    91,    20,
+     -58,     1,     4,   -67,   -56,   -67,   -67,    67,   100,   -67,
+     136,   -67
 };
 
   /* YYDEFGOTO[NTERM-NUM].  */
 static const yytype_int16 yydefgoto[] =
 {
-      -1,    13,    14,    55,    46,    16,    17,    18,    19,    20,
-      21,    22,    23,    24,    79,    26,    71,   103,   121,   122,
-     123,   137,   138,    56,    27,    49,    28,    88,   139,    37,
-      38,    29,    30,    41,    42,    43,   140,    80,    81,    44,
-      98
+      -1,    14,    15,    59,    49,    17,    38,    19,    20,    21,
+      22,    23,    24,    25,    84,    27,    75,   114,   139,   140,
+     141,   156,   157,    60,    28,    52,    29,    98,   158,    39,
+      40,    41,    42,    43,    44,    45,   159,    85,    86,    46,
+     109,    47
 };
 
   /* YYTABLE[YYPACT[STATE-NUM]] -- What to do in state STATE-NUM.  If
@@ -572,46 +591,56 @@ static const yytype_int16 yydefgoto[] =
      number is the opposite.  If YYTABLE_NINF, syntax error.  */
 static const yytype_int16 yytable[] =
 {
-      25,    15,   101,    36,    39,    36,    39,   105,    40,    66,
-      40,    96,    47,    45,    25,    58,    67,    53,     1,     2,
-       3,    48,     5,    97,    68,    63,    73,     7,     8,     9,
-     -39,    96,    54,    11,   -27,   -25,   119,   -26,   -40,   -26,
-      12,    92,   117,    97,    83,   -39,    11,    31,    84,   -27,
-      32,    95,    32,    33,    34,   107,   108,    93,    77,    72,
-      78,   144,   108,    36,    39,    35,    36,    39,    40,   102,
-      94,    40,    61,   100,    62,    51,    36,    39,   132,    72,
-     133,    40,    52,   106,    57,    36,    39,    86,    60,   134,
-      40,   135,   110,     1,     2,     3,   113,     5,    87,    89,
-      64,    65,     7,     8,     9,    70,    72,    54,    11,    75,
-      76,    74,    93,    86,    83,    12,   127,     1,     2,     3,
-       4,     5,    82,   136,     6,   -28,     7,     8,     9,    85,
-      90,    10,    11,    91,   136,   -27,     1,     2,     3,    12,
-       5,    99,   -40,   104,   112,     7,     8,     9,   115,   129,
-      54,    11,   132,    72,   133,   114,   116,   120,    12,   118,
-     126,    86,   124,   128,    59,   135,   130,    69,   131,   141,
-      50,   142,     0,   111,   143,   125,     0,   109
+      18,    30,    56,    16,    31,    26,   112,    65,   107,    66,
+     108,   116,    48,    18,    30,    18,    30,    31,    62,    31,
+      26,    32,    55,    50,    51,   -41,    33,    34,    35,   107,
+      72,   108,    77,   -42,     1,     2,     3,    11,     5,    70,
+     151,    76,   152,     7,     8,     9,    71,   137,    58,    11,
+      36,    12,    54,   -41,    37,    57,    81,   -29,   -27,   -29,
+      18,    30,    96,   104,    31,    61,   153,    64,   154,    13,
+     103,    67,     1,     2,     3,     4,     5,   102,   113,     6,
+      68,     7,     8,     9,    69,   105,    10,    11,   111,    12,
+      74,   130,   151,    76,   152,    76,    18,    30,   117,   135,
+      31,   -28,    78,   -28,    82,    76,    83,    13,   122,   123,
+     124,   125,   126,   127,    96,    33,   106,   119,   120,    88,
+     154,    89,    90,    91,    92,   165,   120,    93,    18,    30,
+      79,   104,    31,    18,    30,    94,   147,    31,     1,     2,
+       3,    80,     5,    97,    99,    87,   155,     7,     8,     9,
+     -30,    95,    58,    11,    96,    12,   100,   101,   155,   115,
+      18,    30,   -29,   164,    31,   110,     1,     2,     3,   -42,
+       5,   129,   132,    13,   145,     7,     8,     9,   131,   138,
+      58,    11,    88,    12,    89,    90,    91,    92,   134,    88,
+      93,    89,    90,    91,    92,   136,   142,    93,   144,    93,
+     150,    13,   118,    88,   146,    89,    90,    91,    92,   133,
+     148,    93,   149,   160,    63,    73,   161,   162,    53,   128,
+     143,   163,     0,   121
 };
 
 static const yytype_int16 yycheck[] =
 {
-       0,     0,    68,     1,     1,     3,     3,    73,     1,    10,
-       3,    62,     3,    24,    14,    14,    17,     9,     3,     4,
-       5,    17,     7,    62,    24,    28,    26,    12,    13,    14,
-       9,    82,    17,    18,    28,    29,   102,    27,    17,    29,
-      25,    26,    32,    82,    20,    24,    18,    11,    24,    28,
-      16,    17,    16,    17,    18,    30,    31,    56,    16,    17,
-      18,    30,    31,    61,    61,    29,    64,    64,    61,    69,
-      61,    64,    27,    64,    29,    18,    74,    74,    16,    17,
-      18,    74,    24,    74,     0,    83,    83,    25,    24,    27,
-      83,    29,    83,     3,     4,     5,    88,     7,    49,    50,
-      27,    24,    12,    13,    14,     9,    17,    17,    18,    24,
-      24,    20,   111,    25,    20,    25,    26,     3,     4,     5,
-       6,     7,    29,   123,    10,    28,    12,    13,    14,    24,
-      17,    17,    18,    15,   134,    28,     3,     4,     5,    25,
-       7,    17,    17,    24,    24,    12,    13,    14,    16,    33,
-      17,    18,    16,    17,    18,    24,    30,    17,    25,    24,
-      30,    25,    24,    24,    14,    29,    24,    24,    31,   131,
-       5,   134,    -1,    86,   135,   108,    -1,    82
+       0,     0,     9,     0,     0,     0,    72,    42,    66,    44,
+      66,    77,    37,    13,    13,    15,    15,    13,    15,    15,
+      15,    11,    37,     3,    17,     9,    16,    17,    18,    87,
+      25,    87,    27,    17,     3,     4,     5,    18,     7,    10,
+      16,    17,    18,    12,    13,    14,    17,   113,    17,    18,
+      40,    20,    18,    37,    44,    40,    36,    43,    44,    43,
+      60,    60,    38,    60,    60,     0,    42,    37,    44,    38,
+      39,    43,     3,     4,     5,     6,     7,    57,    73,    10,
+      42,    12,    13,    14,    37,    65,    17,    18,    68,    20,
+       9,    98,    16,    17,    18,    17,    96,    96,    78,    40,
+      96,    42,    29,    44,    16,    17,    18,    38,    88,    89,
+      90,    91,    92,    93,    38,    16,    17,    45,    46,    21,
+      44,    23,    24,    25,    26,    45,    46,    29,   128,   128,
+      37,   128,   128,   133,   133,    37,   133,   133,     3,     4,
+       5,    37,     7,    52,    53,    44,   141,    12,    13,    14,
+      43,    37,    17,    18,    38,    20,    17,    15,   153,    37,
+     160,   160,    43,   160,   160,    17,     3,     4,     5,    17,
+       7,    37,    16,    38,    39,    12,    13,    14,    37,    17,
+      17,    18,    21,    20,    23,    24,    25,    26,    45,    21,
+      29,    23,    24,    25,    26,    37,    37,    29,    45,    29,
+      46,    38,    41,    21,    37,    23,    24,    25,    26,    41,
+      41,    29,    37,    36,    15,    25,   150,   153,     5,    96,
+     120,   154,    -1,    87
 };
 
   /* YYSTOS[STATE-NUM] -- The (internal number of the) accessing
@@ -619,48 +648,52 @@ static const yytype_int16 yycheck[] =
 static const yytype_uint8 yystos[] =
 {
        0,     3,     4,     5,     6,     7,    10,    12,    13,    14,
-      17,    18,    25,    35,    36,    37,    39,    40,    41,    42,
-      43,    44,    45,    46,    47,    48,    49,    58,    60,    65,
-      66,    11,    16,    17,    18,    29,    40,    63,    64,    65,
-      66,    67,    68,    69,    73,    24,    38,    63,    17,    59,
-      58,    18,    24,    59,    17,    37,    57,     0,    37,    46,
-      24,    27,    29,    28,    27,    24,    10,    17,    48,    49,
-       9,    50,    17,    48,    20,    24,    24,    16,    18,    48,
-      71,    72,    29,    20,    24,    24,    25,    62,    61,    62,
-      17,    15,    26,    37,    63,    17,    64,    68,    74,    17,
-      63,    50,    48,    51,    24,    50,    63,    30,    31,    74,
-      63,    57,    24,    59,    24,    16,    30,    32,    24,    50,
-      17,    52,    53,    54,    24,    72,    30,    26,    24,    33,
-      24,    31,    16,    18,    27,    29,    48,    55,    56,    62,
-      70,    53,    55,    71,    30
+      17,    18,    20,    38,    48,    49,    50,    52,    53,    54,
+      55,    56,    57,    58,    59,    60,    61,    62,    71,    73,
+      78,    79,    11,    16,    17,    18,    40,    44,    53,    76,
+      77,    78,    79,    80,    81,    82,    86,    88,    37,    51,
+      76,    17,    72,    71,    18,    37,    72,    40,    17,    50,
+      70,     0,    50,    59,    37,    42,    44,    43,    42,    37,
+      10,    17,    61,    62,     9,    63,    17,    61,    29,    37,
+      37,    76,    16,    18,    61,    84,    85,    44,    21,    23,
+      24,    25,    26,    29,    37,    37,    38,    75,    74,    75,
+      17,    15,    76,    39,    50,    76,    17,    77,    81,    87,
+      17,    76,    63,    61,    64,    37,    63,    76,    41,    45,
+      46,    87,    76,    76,    76,    76,    76,    76,    70,    37,
+      72,    37,    16,    41,    45,    40,    37,    63,    17,    65,
+      66,    67,    37,    85,    45,    39,    37,    50,    41,    37,
+      46,    16,    18,    42,    44,    61,    68,    69,    75,    83,
+      36,    66,    68,    84,    50,    45
 };
 
   /* YYR1[YYN] -- Symbol number of symbol that rule YYN derives.  */
 static const yytype_uint8 yyr1[] =
 {
-       0,    34,    35,    35,    36,    36,    36,    36,    37,    37,
-      37,    37,    37,    37,    37,    37,    37,    37,    37,    38,
-      38,    39,    39,    40,    40,    41,    42,    43,    43,    44,
-      45,    45,    46,    46,    46,    46,    46,    47,    47,    48,
-      49,    51,    50,    50,    52,    52,    53,    53,    53,    54,
-      55,    55,    55,    55,    55,    56,    57,    57,    58,    59,
-      60,    61,    61,    62,    63,    63,    63,    63,    63,    63,
-      63,    63,    64,    65,    66,    67,    67,    68,    69,    70,
-      71,    71,    72,    72,    72,    73,    74,    74
+       0,    47,    48,    48,    49,    49,    49,    49,    50,    50,
+      50,    50,    50,    50,    50,    50,    50,    50,    50,    50,
+      50,    51,    51,    52,    52,    53,    53,    54,    55,    56,
+      56,    57,    58,    58,    59,    59,    59,    59,    59,    60,
+      60,    61,    62,    64,    63,    63,    65,    65,    66,    66,
+      66,    67,    68,    68,    68,    68,    68,    69,    70,    70,
+      71,    72,    73,    74,    74,    75,    76,    76,    76,    76,
+      76,    76,    76,    76,    76,    76,    77,    78,    79,    80,
+      80,    81,    82,    83,    84,    84,    85,    85,    85,    86,
+      87,    87,    88,    88,    88,    88,    88
 };
 
   /* YYR2[YYN] -- Number of symbols on the right hand side of rule YYN.  */
 static const yytype_uint8 yyr2[] =
 {
        0,     2,     1,     0,     1,     2,     1,     2,     3,     2,
-       3,     2,     2,     2,     2,     5,     2,     4,     3,     1,
-       0,     3,     3,     1,     1,     1,     3,     1,     1,     4,
-       1,     3,     4,     3,     4,     4,     5,     1,     2,     1,
-       1,     0,     3,     0,     1,     3,     1,     3,     2,     1,
-       1,     1,     1,     1,     1,     1,     1,     2,     1,     1,
-       4,     1,     0,     3,     1,     1,     3,     1,     1,     1,
-       1,     1,     1,     3,     5,     1,     1,     1,     3,     3,
-       1,     3,     1,     1,     1,     4,     1,     1
+       3,     2,     2,     2,     2,     5,     2,     4,     3,     5,
+       7,     1,     0,     3,     3,     1,     1,     1,     3,     1,
+       1,     4,     1,     3,     4,     3,     4,     4,     5,     1,
+       2,     1,     1,     0,     3,     0,     1,     3,     1,     3,
+       2,     1,     1,     1,     1,     1,     1,     1,     1,     2,
+       1,     1,     4,     1,     0,     3,     1,     1,     3,     1,
+       1,     1,     1,     1,     1,     3,     1,     3,     5,     1,
+       1,     1,     3,     3,     1,     3,     1,     1,     1,     4,
+       1,     1,     3,     3,     3,     3,     3
 };
 
 
@@ -1337,523 +1370,577 @@ yyreduce:
   switch (yyn)
     {
         case 2:
-#line 62 "tig.y" /* yacc.c:1646  */
+#line 69 "tig.y" /* yacc.c:1646  */
     { tigC->encode((yyvsp[0].nPtr)); }
-#line 1343 "tigParse.cpp" /* yacc.c:1646  */
+#line 1376 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 3:
-#line 63 "tig.y" /* yacc.c:1646  */
+#line 70 "tig.y" /* yacc.c:1646  */
     { ;}
-#line 1349 "tigParse.cpp" /* yacc.c:1646  */
+#line 1382 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 4:
-#line 67 "tig.y" /* yacc.c:1646  */
+#line 74 "tig.y" /* yacc.c:1646  */
     { (yyval.nPtr) = (yyvsp[0].nPtr); }
-#line 1355 "tigParse.cpp" /* yacc.c:1646  */
+#line 1388 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 5:
-#line 68 "tig.y" /* yacc.c:1646  */
+#line 75 "tig.y" /* yacc.c:1646  */
     { (yyval.nPtr) = new CJointNode((yyvsp[-1].nPtr),(yyvsp[0].nPtr)); }
-#line 1361 "tigParse.cpp" /* yacc.c:1646  */
+#line 1394 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 6:
-#line 69 "tig.y" /* yacc.c:1646  */
+#line 76 "tig.y" /* yacc.c:1646  */
     { (yyval.nPtr) = (yyvsp[0].nPtr); }
-#line 1367 "tigParse.cpp" /* yacc.c:1646  */
+#line 1400 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 7:
-#line 70 "tig.y" /* yacc.c:1646  */
+#line 77 "tig.y" /* yacc.c:1646  */
     { (yyval.nPtr) = new CJointNode((yyvsp[-1].nPtr),(yyvsp[0].nPtr)); }
-#line 1373 "tigParse.cpp" /* yacc.c:1646  */
+#line 1406 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 8:
-#line 74 "tig.y" /* yacc.c:1646  */
+#line 81 "tig.y" /* yacc.c:1646  */
     { (yyval.nPtr) = new COpNode(opPrint,(yyvsp[-1].nPtr)); }
-#line 1379 "tigParse.cpp" /* yacc.c:1646  */
+#line 1412 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 9:
-#line 75 "tig.y" /* yacc.c:1646  */
+#line 82 "tig.y" /* yacc.c:1646  */
     { (yyval.nPtr) = (yyvsp[-1].nPtr); }
-#line 1385 "tigParse.cpp" /* yacc.c:1646  */
+#line 1418 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 10:
-#line 76 "tig.y" /* yacc.c:1646  */
+#line 83 "tig.y" /* yacc.c:1646  */
     { (yyval.nPtr) = (yyvsp[-1].nPtr); }
-#line 1391 "tigParse.cpp" /* yacc.c:1646  */
+#line 1424 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 11:
-#line 77 "tig.y" /* yacc.c:1646  */
+#line 84 "tig.y" /* yacc.c:1646  */
     { (yyval.nPtr) = new COpNode(opEnd);}
-#line 1397 "tigParse.cpp" /* yacc.c:1646  */
+#line 1430 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 12:
-#line 78 "tig.y" /* yacc.c:1646  */
+#line 85 "tig.y" /* yacc.c:1646  */
     { (yyval.nPtr) = (yyvsp[-1].nPtr); }
-#line 1403 "tigParse.cpp" /* yacc.c:1646  */
+#line 1436 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 13:
-#line 79 "tig.y" /* yacc.c:1646  */
+#line 86 "tig.y" /* yacc.c:1646  */
     { (yyval.nPtr) = new CStrStatement((yyvsp[-1].nPtr));}
-#line 1409 "tigParse.cpp" /* yacc.c:1646  */
+#line 1442 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 14:
-#line 80 "tig.y" /* yacc.c:1646  */
+#line 87 "tig.y" /* yacc.c:1646  */
     { (yyval.nPtr) = new COpNode(opStartTimer); }
-#line 1415 "tigParse.cpp" /* yacc.c:1646  */
+#line 1448 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 15:
-#line 81 "tig.y" /* yacc.c:1646  */
+#line 88 "tig.y" /* yacc.c:1646  */
     { (yyval.nPtr) = new CTimedEventNode((yyvsp[-3].nPtr),(yyvsp[-1].iValue)); }
-#line 1421 "tigParse.cpp" /* yacc.c:1646  */
+#line 1454 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 16:
-#line 82 "tig.y" /* yacc.c:1646  */
+#line 89 "tig.y" /* yacc.c:1646  */
     { (yyval.nPtr) = new CallDiscardNode((yyvsp[-1].nPtr)); }
-#line 1427 "tigParse.cpp" /* yacc.c:1646  */
+#line 1460 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 17:
-#line 83 "tig.y" /* yacc.c:1646  */
+#line 90 "tig.y" /* yacc.c:1646  */
     { (yyval.nPtr) = new CHotTextNode((yyvsp[-2].str),(yyvsp[-1].str)); }
-#line 1433 "tigParse.cpp" /* yacc.c:1646  */
+#line 1466 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 18:
-#line 84 "tig.y" /* yacc.c:1646  */
+#line 91 "tig.y" /* yacc.c:1646  */
     { (yyval.nPtr) = new CReturnNode((yyvsp[-1].nPtr)); }
-#line 1439 "tigParse.cpp" /* yacc.c:1646  */
+#line 1472 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 19:
-#line 88 "tig.y" /* yacc.c:1646  */
-    { (yyval.nPtr) = (yyvsp[0].nPtr); }
-#line 1445 "tigParse.cpp" /* yacc.c:1646  */
+#line 92 "tig.y" /* yacc.c:1646  */
+    { (yyval.nPtr) = new CIfNode((yyvsp[-2].nPtr), (yyvsp[0].nPtr), NULL); }
+#line 1478 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 20:
-#line 89 "tig.y" /* yacc.c:1646  */
-    { (yyval.nPtr) = NULL; }
-#line 1451 "tigParse.cpp" /* yacc.c:1646  */
+#line 93 "tig.y" /* yacc.c:1646  */
+    { (yyval.nPtr) = new CIfNode((yyvsp[-4].nPtr), (yyvsp[-2].nPtr), (yyvsp[0].nPtr)); }
+#line 1484 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 21:
-#line 93 "tig.y" /* yacc.c:1646  */
-    { (yyval.nPtr) = new COpNode(opAssign,(yyvsp[-2].nPtr),(yyvsp[0].nPtr)); }
-#line 1457 "tigParse.cpp" /* yacc.c:1646  */
+#line 97 "tig.y" /* yacc.c:1646  */
+    { (yyval.nPtr) = (yyvsp[0].nPtr); }
+#line 1490 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 22:
-#line 94 "tig.y" /* yacc.c:1646  */
-    { (yyval.nPtr) = new COpNode(opAssign,(yyvsp[-2].nPtr),(yyvsp[0].nPtr)); }
-#line 1463 "tigParse.cpp" /* yacc.c:1646  */
+#line 98 "tig.y" /* yacc.c:1646  */
+    { (yyval.nPtr) = NULL; }
+#line 1496 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 23:
-#line 98 "tig.y" /* yacc.c:1646  */
-    { (yyval.nPtr) = (yyvsp[0].nPtr); }
-#line 1469 "tigParse.cpp" /* yacc.c:1646  */
+#line 102 "tig.y" /* yacc.c:1646  */
+    { (yyval.nPtr) = new COpNode(opAssign,(yyvsp[-2].nPtr),(yyvsp[0].nPtr)); }
+#line 1502 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 24:
-#line 99 "tig.y" /* yacc.c:1646  */
-    { (yyval.nPtr) = (yyvsp[0].nPtr); }
-#line 1475 "tigParse.cpp" /* yacc.c:1646  */
+#line 103 "tig.y" /* yacc.c:1646  */
+    { (yyval.nPtr) = new COpNode(opAssign,(yyvsp[-2].nPtr),(yyvsp[0].nPtr)); }
+#line 1508 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 25:
-#line 103 "tig.y" /* yacc.c:1646  */
-    { (yyval.nPtr) = new CVarAssigneeNode((yyvsp[0].str)); }
-#line 1481 "tigParse.cpp" /* yacc.c:1646  */
+#line 107 "tig.y" /* yacc.c:1646  */
+    { (yyval.nPtr) = (yyvsp[0].nPtr); }
+#line 1514 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 26:
-#line 107 "tig.y" /* yacc.c:1646  */
-    { (yyval.nPtr) = new CObjMemberAssigneeNode((yyvsp[-2].nPtr),(yyvsp[0].str)); }
-#line 1487 "tigParse.cpp" /* yacc.c:1646  */
+#line 108 "tig.y" /* yacc.c:1646  */
+    { (yyval.nPtr) = (yyvsp[0].nPtr); }
+#line 1520 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 27:
-#line 111 "tig.y" /* yacc.c:1646  */
-    { (yyval.nPtr) = new CObjRefNode((yyvsp[0].str)); }
-#line 1493 "tigParse.cpp" /* yacc.c:1646  */
+#line 112 "tig.y" /* yacc.c:1646  */
+    { (yyval.nPtr) = new CVarAssigneeNode((yyvsp[0].str)); }
+#line 1526 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 28:
-#line 112 "tig.y" /* yacc.c:1646  */
-    { (yyval.nPtr) = (yyvsp[0].nPtr); }
-#line 1499 "tigParse.cpp" /* yacc.c:1646  */
+#line 116 "tig.y" /* yacc.c:1646  */
+    { (yyval.nPtr) = new CObjMemberAssigneeNode((yyvsp[-2].nPtr),(yyvsp[0].str)); }
+#line 1532 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 29:
-#line 116 "tig.y" /* yacc.c:1646  */
-    { (yyval.nPtr) = new CArrayAssignNode((yyvsp[-3].nPtr),(yyvsp[-1].nPtr)); }
-#line 1505 "tigParse.cpp" /* yacc.c:1646  */
+#line 120 "tig.y" /* yacc.c:1646  */
+    { (yyval.nPtr) = new CObjRefNode((yyvsp[0].str)); }
+#line 1538 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 30:
-#line 120 "tig.y" /* yacc.c:1646  */
+#line 121 "tig.y" /* yacc.c:1646  */
     { (yyval.nPtr) = (yyvsp[0].nPtr); }
-#line 1511 "tigParse.cpp" /* yacc.c:1646  */
+#line 1544 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 31:
-#line 121 "tig.y" /* yacc.c:1646  */
-    { (yyval.nPtr) = new COpNode(opAdd, (yyvsp[-2].nPtr), (yyvsp[0].nPtr)); }
-#line 1517 "tigParse.cpp" /* yacc.c:1646  */
+#line 125 "tig.y" /* yacc.c:1646  */
+    { (yyval.nPtr) = new CArrayAssignNode((yyvsp[-3].nPtr),(yyvsp[-1].nPtr)); }
+#line 1550 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 32:
-#line 125 "tig.y" /* yacc.c:1646  */
-    { (yyval.nPtr) = new CEventNode((yyvsp[-2].nPtr),(yyvsp[-1].nPtr)); }
-#line 1523 "tigParse.cpp" /* yacc.c:1646  */
+#line 129 "tig.y" /* yacc.c:1646  */
+    { (yyval.nPtr) = (yyvsp[0].nPtr); }
+#line 1556 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 33:
-#line 126 "tig.y" /* yacc.c:1646  */
-    { (yyval.nPtr) = new CObjDeclNode((yyvsp[-2].nPtr),(yyvsp[-1].nPtr),NULL); }
-#line 1529 "tigParse.cpp" /* yacc.c:1646  */
+#line 130 "tig.y" /* yacc.c:1646  */
+    { (yyval.nPtr) = new COpNode(opAdd, (yyvsp[-2].nPtr), (yyvsp[0].nPtr)); }
+#line 1562 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 34:
-#line 127 "tig.y" /* yacc.c:1646  */
-    { (yyval.nPtr) = new CObjDeclNode((yyvsp[-2].nPtr),(yyvsp[-1].nPtr),(yyvsp[-3].nPtr)); }
-#line 1535 "tigParse.cpp" /* yacc.c:1646  */
+#line 134 "tig.y" /* yacc.c:1646  */
+    { (yyval.nPtr) = new CEventNode((yyvsp[-2].nPtr),(yyvsp[-1].nPtr)); }
+#line 1568 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 35:
-#line 128 "tig.y" /* yacc.c:1646  */
+#line 135 "tig.y" /* yacc.c:1646  */
     { (yyval.nPtr) = new CObjDeclNode((yyvsp[-2].nPtr),(yyvsp[-1].nPtr),NULL); }
-#line 1541 "tigParse.cpp" /* yacc.c:1646  */
+#line 1574 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 36:
-#line 129 "tig.y" /* yacc.c:1646  */
+#line 136 "tig.y" /* yacc.c:1646  */
     { (yyval.nPtr) = new CObjDeclNode((yyvsp[-2].nPtr),(yyvsp[-1].nPtr),(yyvsp[-3].nPtr)); }
-#line 1547 "tigParse.cpp" /* yacc.c:1646  */
+#line 1580 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 37:
-#line 135 "tig.y" /* yacc.c:1646  */
-    { CSyntaxNode::childLevel++; }
-#line 1553 "tigParse.cpp" /* yacc.c:1646  */
+#line 137 "tig.y" /* yacc.c:1646  */
+    { (yyval.nPtr) = new CObjDeclNode((yyvsp[-2].nPtr),(yyvsp[-1].nPtr),NULL); }
+#line 1586 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 38:
-#line 136 "tig.y" /* yacc.c:1646  */
-    { CSyntaxNode::childLevel++; }
-#line 1559 "tigParse.cpp" /* yacc.c:1646  */
+#line 138 "tig.y" /* yacc.c:1646  */
+    { (yyval.nPtr) = new CObjDeclNode((yyvsp[-2].nPtr),(yyvsp[-1].nPtr),(yyvsp[-3].nPtr)); }
+#line 1592 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 39:
-#line 141 "tig.y" /* yacc.c:1646  */
-    { (yyval.nPtr) = new CObjIdentNode((yyvsp[0].str)); }
-#line 1565 "tigParse.cpp" /* yacc.c:1646  */
+#line 144 "tig.y" /* yacc.c:1646  */
+    { CSyntaxNode::childLevel++; }
+#line 1598 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 40:
 #line 145 "tig.y" /* yacc.c:1646  */
-    { (yyval.nPtr) = new ClassIdentNode((yyvsp[0].str)); }
-#line 1571 "tigParse.cpp" /* yacc.c:1646  */
+    { CSyntaxNode::childLevel++; }
+#line 1604 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 41:
-#line 149 "tig.y" /* yacc.c:1646  */
-    { CSyntaxNode::funcMode(true); }
-#line 1577 "tigParse.cpp" /* yacc.c:1646  */
+#line 150 "tig.y" /* yacc.c:1646  */
+    { (yyval.nPtr) = new CObjIdentNode((yyvsp[0].str)); }
+#line 1610 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 42:
-#line 150 "tig.y" /* yacc.c:1646  */
-    { (yyval.nPtr) = (yyvsp[0].nPtr); }
-#line 1583 "tigParse.cpp" /* yacc.c:1646  */
+#line 154 "tig.y" /* yacc.c:1646  */
+    { (yyval.nPtr) = new ClassIdentNode((yyvsp[0].str)); }
+#line 1616 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 43:
-#line 151 "tig.y" /* yacc.c:1646  */
-    { (yyval.nPtr) = NULL; }
-#line 1589 "tigParse.cpp" /* yacc.c:1646  */
+#line 158 "tig.y" /* yacc.c:1646  */
+    { CSyntaxNode::funcMode(true); }
+#line 1622 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 44:
-#line 155 "tig.y" /* yacc.c:1646  */
+#line 159 "tig.y" /* yacc.c:1646  */
     { (yyval.nPtr) = (yyvsp[0].nPtr); }
-#line 1595 "tigParse.cpp" /* yacc.c:1646  */
+#line 1628 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 45:
-#line 156 "tig.y" /* yacc.c:1646  */
-    { (yyval.nPtr) = new CJointNode((yyvsp[-2].nPtr),(yyvsp[0].nPtr)); }
-#line 1601 "tigParse.cpp" /* yacc.c:1646  */
+#line 160 "tig.y" /* yacc.c:1646  */
+    { (yyval.nPtr) = NULL; }
+#line 1634 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 46:
-#line 160 "tig.y" /* yacc.c:1646  */
-    { (yyval.nPtr) = new CMemberDeclNode((yyvsp[0].nPtr),NULL); }
-#line 1607 "tigParse.cpp" /* yacc.c:1646  */
+#line 164 "tig.y" /* yacc.c:1646  */
+    { (yyval.nPtr) = (yyvsp[0].nPtr); }
+#line 1640 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 47:
-#line 161 "tig.y" /* yacc.c:1646  */
-    { (yyval.nPtr) = new CMemberDeclNode((yyvsp[-2].nPtr),(yyvsp[0].nPtr)); }
-#line 1613 "tigParse.cpp" /* yacc.c:1646  */
+#line 165 "tig.y" /* yacc.c:1646  */
+    { (yyval.nPtr) = new CJointNode((yyvsp[-2].nPtr),(yyvsp[0].nPtr)); }
+#line 1646 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 48:
-#line 162 "tig.y" /* yacc.c:1646  */
-    { (yyval.nPtr) = new CMemberDeclNode((yyvsp[-1].nPtr),(yyvsp[0].nPtr)); }
-#line 1619 "tigParse.cpp" /* yacc.c:1646  */
+#line 169 "tig.y" /* yacc.c:1646  */
+    { (yyval.nPtr) = new CMemberDeclNode((yyvsp[0].nPtr),NULL); }
+#line 1652 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 49:
-#line 166 "tig.y" /* yacc.c:1646  */
-    { (yyval.nPtr) = new CMembDeclIdentNode((yyvsp[0].str)); }
-#line 1625 "tigParse.cpp" /* yacc.c:1646  */
+#line 170 "tig.y" /* yacc.c:1646  */
+    { (yyval.nPtr) = new CMemberDeclNode((yyvsp[-2].nPtr),(yyvsp[0].nPtr)); }
+#line 1658 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 50:
 #line 171 "tig.y" /* yacc.c:1646  */
-    { (yyval.nPtr) = new CInitNode((yyvsp[0].str)); }
-#line 1631 "tigParse.cpp" /* yacc.c:1646  */
+    { (yyval.nPtr) = new CMemberDeclNode((yyvsp[-1].nPtr),(yyvsp[0].nPtr)); }
+#line 1664 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 51:
-#line 172 "tig.y" /* yacc.c:1646  */
-    { (yyval.nPtr) = new CInitNode((yyvsp[0].iValue)); }
-#line 1637 "tigParse.cpp" /* yacc.c:1646  */
+#line 175 "tig.y" /* yacc.c:1646  */
+    { (yyval.nPtr) = new CMembDeclIdentNode((yyvsp[0].str)); }
+#line 1670 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 52:
-#line 173 "tig.y" /* yacc.c:1646  */
-    { (yyval.nPtr) = new CInitNode((yyvsp[0].nPtr)); }
-#line 1643 "tigParse.cpp" /* yacc.c:1646  */
+#line 180 "tig.y" /* yacc.c:1646  */
+    { (yyval.nPtr) = new CInitNode((yyvsp[0].str)); }
+#line 1676 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 53:
-#line 174 "tig.y" /* yacc.c:1646  */
-    { (yyval.nPtr) = new CInitNode((CObjIdentNode*)(yyvsp[0].nPtr)); }
-#line 1649 "tigParse.cpp" /* yacc.c:1646  */
+#line 181 "tig.y" /* yacc.c:1646  */
+    { (yyval.nPtr) = new CInitNode((yyvsp[0].iValue)); }
+#line 1682 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 54:
-#line 175 "tig.y" /* yacc.c:1646  */
-    { (yyval.nPtr) = new CInitNode((CArrayInitListNode*)(yyvsp[0].nPtr)); }
-#line 1655 "tigParse.cpp" /* yacc.c:1646  */
+#line 182 "tig.y" /* yacc.c:1646  */
+    { (yyval.nPtr) = new CInitNode((yyvsp[0].nPtr)); }
+#line 1688 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 55:
-#line 179 "tig.y" /* yacc.c:1646  */
-    { (yyval.nPtr) = new CFunctionDefNode((yyvsp[0].nPtr)); }
-#line 1661 "tigParse.cpp" /* yacc.c:1646  */
+#line 183 "tig.y" /* yacc.c:1646  */
+    { (yyval.nPtr) = new CInitNode((CObjIdentNode*)(yyvsp[0].nPtr)); }
+#line 1694 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 56:
-#line 183 "tig.y" /* yacc.c:1646  */
-    { (yyval.nPtr) = (yyvsp[0].nPtr); }
-#line 1667 "tigParse.cpp" /* yacc.c:1646  */
+#line 184 "tig.y" /* yacc.c:1646  */
+    { (yyval.nPtr) = new CInitNode((CArrayInitListNode*)(yyvsp[0].nPtr)); }
+#line 1700 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 57:
-#line 184 "tig.y" /* yacc.c:1646  */
-    { (yyval.nPtr) = new CJointNode((yyvsp[-1].nPtr),(yyvsp[0].nPtr)); }
-#line 1673 "tigParse.cpp" /* yacc.c:1646  */
+#line 188 "tig.y" /* yacc.c:1646  */
+    { (yyval.nPtr) = new CFunctionDefNode((yyvsp[0].nPtr)); }
+#line 1706 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 58:
-#line 188 "tig.y" /* yacc.c:1646  */
-    { (yyval.nPtr) = new CStrNode((yyvsp[0].str)); }
-#line 1679 "tigParse.cpp" /* yacc.c:1646  */
+#line 192 "tig.y" /* yacc.c:1646  */
+    { (yyval.nPtr) = (yyvsp[0].nPtr); }
+#line 1712 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 59:
-#line 192 "tig.y" /* yacc.c:1646  */
-    { (yyval.nPtr) = new CEventIdentNode((yyvsp[0].str)); }
-#line 1685 "tigParse.cpp" /* yacc.c:1646  */
+#line 193 "tig.y" /* yacc.c:1646  */
+    { (yyval.nPtr) = new CJointNode((yyvsp[-1].nPtr),(yyvsp[0].nPtr)); }
+#line 1718 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 60:
-#line 196 "tig.y" /* yacc.c:1646  */
-    { (yyval.nPtr) = new COptionNode((yyvsp[-2].nPtr),(yyvsp[-1].nPtr),(yyvsp[0].nPtr)); }
-#line 1691 "tigParse.cpp" /* yacc.c:1646  */
+#line 197 "tig.y" /* yacc.c:1646  */
+    { (yyval.nPtr) = new CStrNode((yyvsp[0].str)); }
+#line 1724 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 61:
-#line 200 "tig.y" /* yacc.c:1646  */
-    { (yyval.nPtr) = (yyvsp[0].nPtr); }
-#line 1697 "tigParse.cpp" /* yacc.c:1646  */
+#line 201 "tig.y" /* yacc.c:1646  */
+    { (yyval.nPtr) = new CEventIdentNode((yyvsp[0].str)); }
+#line 1730 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 62:
-#line 201 "tig.y" /* yacc.c:1646  */
-    { (yyval.nPtr) = NULL; }
-#line 1703 "tigParse.cpp" /* yacc.c:1646  */
+#line 205 "tig.y" /* yacc.c:1646  */
+    { (yyval.nPtr) = new COptionNode((yyvsp[-2].nPtr),(yyvsp[-1].nPtr),(yyvsp[0].nPtr)); }
+#line 1736 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 63:
-#line 205 "tig.y" /* yacc.c:1646  */
-    { (yyval.nPtr) = new CodeBlockNode((yyvsp[-1].nPtr)); }
-#line 1709 "tigParse.cpp" /* yacc.c:1646  */
+#line 209 "tig.y" /* yacc.c:1646  */
+    { (yyval.nPtr) = (yyvsp[0].nPtr); }
+#line 1742 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 64:
-#line 209 "tig.y" /* yacc.c:1646  */
-    { (yyval.nPtr) = (yyvsp[0].nPtr); }
-#line 1715 "tigParse.cpp" /* yacc.c:1646  */
+#line 210 "tig.y" /* yacc.c:1646  */
+    { (yyval.nPtr) = NULL; }
+#line 1748 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 65:
-#line 210 "tig.y" /* yacc.c:1646  */
-    { (yyval.nPtr) = new COpNode(opGetString); }
-#line 1721 "tigParse.cpp" /* yacc.c:1646  */
+#line 214 "tig.y" /* yacc.c:1646  */
+    { (yyval.nPtr) = new CodeBlockNode((yyvsp[-1].nPtr)); }
+#line 1754 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 66:
-#line 211 "tig.y" /* yacc.c:1646  */
-    { (yyval.nPtr) = new COpNode(opAdd, (yyvsp[-2].nPtr), (yyvsp[0].nPtr)); }
-#line 1727 "tigParse.cpp" /* yacc.c:1646  */
+#line 218 "tig.y" /* yacc.c:1646  */
+    { (yyval.nPtr) = (yyvsp[0].nPtr); }
+#line 1760 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 67:
-#line 212 "tig.y" /* yacc.c:1646  */
-    { (yyval.nPtr) = (yyvsp[0].nPtr); }
-#line 1733 "tigParse.cpp" /* yacc.c:1646  */
+#line 219 "tig.y" /* yacc.c:1646  */
+    { (yyval.nPtr) = new COpNode(opGetString); }
+#line 1766 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 68:
-#line 213 "tig.y" /* yacc.c:1646  */
-    { (yyval.nPtr) = new COpNode(opCall, (yyvsp[0].nPtr)); }
-#line 1739 "tigParse.cpp" /* yacc.c:1646  */
+#line 220 "tig.y" /* yacc.c:1646  */
+    { (yyval.nPtr) = new COpNode(opAdd, (yyvsp[-2].nPtr), (yyvsp[0].nPtr)); }
+#line 1772 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 69:
-#line 214 "tig.y" /* yacc.c:1646  */
+#line 221 "tig.y" /* yacc.c:1646  */
     { (yyval.nPtr) = (yyvsp[0].nPtr); }
-#line 1745 "tigParse.cpp" /* yacc.c:1646  */
+#line 1778 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 70:
-#line 215 "tig.y" /* yacc.c:1646  */
-    { (yyval.nPtr) = (yyvsp[0].nPtr); }
-#line 1751 "tigParse.cpp" /* yacc.c:1646  */
+#line 222 "tig.y" /* yacc.c:1646  */
+    { (yyval.nPtr) = new COpNode(opCall, (yyvsp[0].nPtr)); }
+#line 1784 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 71:
-#line 216 "tig.y" /* yacc.c:1646  */
+#line 223 "tig.y" /* yacc.c:1646  */
     { (yyval.nPtr) = (yyvsp[0].nPtr); }
-#line 1757 "tigParse.cpp" /* yacc.c:1646  */
+#line 1790 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 72:
-#line 220 "tig.y" /* yacc.c:1646  */
-    { (yyval.nPtr) = new CVarExprNode((yyvsp[0].str)); }
-#line 1763 "tigParse.cpp" /* yacc.c:1646  */
+#line 224 "tig.y" /* yacc.c:1646  */
+    { (yyval.nPtr) = (yyvsp[0].nPtr); }
+#line 1796 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 73:
-#line 224 "tig.y" /* yacc.c:1646  */
-    { (yyval.nPtr) = new CMemberExprNode((yyvsp[-2].nPtr), (yyvsp[0].str)); }
-#line 1769 "tigParse.cpp" /* yacc.c:1646  */
+#line 225 "tig.y" /* yacc.c:1646  */
+    { (yyval.nPtr) = (yyvsp[0].nPtr); }
+#line 1802 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 74:
-#line 228 "tig.y" /* yacc.c:1646  */
-    { (yyval.nPtr) = new CMemberExprNode((yyvsp[-4].nPtr), (yyvsp[-2].str)); }
-#line 1775 "tigParse.cpp" /* yacc.c:1646  */
+#line 226 "tig.y" /* yacc.c:1646  */
+    { (yyval.nPtr) = (yyvsp[0].nPtr); }
+#line 1808 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 75:
-#line 232 "tig.y" /* yacc.c:1646  */
-    { (yyval.nPtr) = (yyvsp[0].nPtr); }
-#line 1781 "tigParse.cpp" /* yacc.c:1646  */
+#line 227 "tig.y" /* yacc.c:1646  */
+    { (yyval.nPtr) = (yyvsp[-1].nPtr); }
+#line 1814 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 76:
-#line 233 "tig.y" /* yacc.c:1646  */
-    { (yyval.nPtr) = new CStrNode((yyvsp[0].str)); }
-#line 1787 "tigParse.cpp" /* yacc.c:1646  */
+#line 231 "tig.y" /* yacc.c:1646  */
+    { (yyval.nPtr) = new CVarExprNode((yyvsp[0].str)); }
+#line 1820 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 77:
-#line 237 "tig.y" /* yacc.c:1646  */
-    { (yyval.nPtr) = new CIntNode((yyvsp[0].iValue)); }
-#line 1793 "tigParse.cpp" /* yacc.c:1646  */
+#line 235 "tig.y" /* yacc.c:1646  */
+    { (yyval.nPtr) = new CMemberExprNode((yyvsp[-2].nPtr), (yyvsp[0].str)); }
+#line 1826 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 78:
-#line 241 "tig.y" /* yacc.c:1646  */
-    { (yyval.nPtr) = new CArrayInitNode((yyvsp[-1].nPtr)); }
-#line 1799 "tigParse.cpp" /* yacc.c:1646  */
+#line 239 "tig.y" /* yacc.c:1646  */
+    { (yyval.nPtr) = new CMemberExprNode((yyvsp[-4].nPtr), (yyvsp[-2].str)); }
+#line 1832 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 79:
-#line 245 "tig.y" /* yacc.c:1646  */
-    { (yyval.nPtr) = new CArrayInitListNode((yyvsp[-1].nPtr)); }
-#line 1805 "tigParse.cpp" /* yacc.c:1646  */
+#line 243 "tig.y" /* yacc.c:1646  */
+    { (yyval.nPtr) = (yyvsp[0].nPtr); }
+#line 1838 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 80:
-#line 249 "tig.y" /* yacc.c:1646  */
-    { (yyval.nPtr) = (yyvsp[0].nPtr); }
-#line 1811 "tigParse.cpp" /* yacc.c:1646  */
+#line 244 "tig.y" /* yacc.c:1646  */
+    { (yyval.nPtr) = new CStrNode((yyvsp[0].str)); }
+#line 1844 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 81:
-#line 250 "tig.y" /* yacc.c:1646  */
-    { (yyval.nPtr) = new CJointNode((yyvsp[-2].nPtr),(yyvsp[0].nPtr)); }
-#line 1817 "tigParse.cpp" /* yacc.c:1646  */
+#line 248 "tig.y" /* yacc.c:1646  */
+    { (yyval.nPtr) = new CIntNode((yyvsp[0].iValue)); }
+#line 1850 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 82:
-#line 254 "tig.y" /* yacc.c:1646  */
-    { (yyval.nPtr) = new CArrayInitConstNode((yyvsp[0].str)); }
-#line 1823 "tigParse.cpp" /* yacc.c:1646  */
+#line 252 "tig.y" /* yacc.c:1646  */
+    { (yyval.nPtr) = new CArrayInitNode((yyvsp[-1].nPtr)); }
+#line 1856 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 83:
-#line 255 "tig.y" /* yacc.c:1646  */
-    { (yyval.nPtr) = new CArrayInitConstNode((yyvsp[0].iValue)); }
-#line 1829 "tigParse.cpp" /* yacc.c:1646  */
+#line 256 "tig.y" /* yacc.c:1646  */
+    { (yyval.nPtr) = new CArrayInitListNode((yyvsp[-1].nPtr)); }
+#line 1862 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 84:
-#line 256 "tig.y" /* yacc.c:1646  */
-    { (yyval.nPtr) = new CArrayInitConstNode((CObjIdentNode*)(yyvsp[0].nPtr)); }
-#line 1835 "tigParse.cpp" /* yacc.c:1646  */
+#line 260 "tig.y" /* yacc.c:1646  */
+    { (yyval.nPtr) = (yyvsp[0].nPtr); }
+#line 1868 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 85:
 #line 261 "tig.y" /* yacc.c:1646  */
-    { (yyval.nPtr) = new CArrayElementExprNode((yyvsp[-3].nPtr),(yyvsp[-1].nPtr)); }
-#line 1841 "tigParse.cpp" /* yacc.c:1646  */
+    { (yyval.nPtr) = new CJointNode((yyvsp[-2].nPtr),(yyvsp[0].nPtr)); }
+#line 1874 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 86:
 #line 265 "tig.y" /* yacc.c:1646  */
-    { (yyval.nPtr) = (yyvsp[0].nPtr); }
-#line 1847 "tigParse.cpp" /* yacc.c:1646  */
+    { (yyval.nPtr) = new CArrayInitConstNode((yyvsp[0].str)); }
+#line 1880 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 87:
 #line 266 "tig.y" /* yacc.c:1646  */
+    { (yyval.nPtr) = new CArrayInitConstNode((yyvsp[0].iValue)); }
+#line 1886 "tigParse.cpp" /* yacc.c:1646  */
+    break;
+
+  case 88:
+#line 267 "tig.y" /* yacc.c:1646  */
+    { (yyval.nPtr) = new CArrayInitConstNode((CObjIdentNode*)(yyvsp[0].nPtr)); }
+#line 1892 "tigParse.cpp" /* yacc.c:1646  */
+    break;
+
+  case 89:
+#line 272 "tig.y" /* yacc.c:1646  */
+    { (yyval.nPtr) = new CArrayElementExprNode((yyvsp[-3].nPtr),(yyvsp[-1].nPtr)); }
+#line 1898 "tigParse.cpp" /* yacc.c:1646  */
+    break;
+
+  case 90:
+#line 276 "tig.y" /* yacc.c:1646  */
     { (yyval.nPtr) = (yyvsp[0].nPtr); }
-#line 1853 "tigParse.cpp" /* yacc.c:1646  */
+#line 1904 "tigParse.cpp" /* yacc.c:1646  */
+    break;
+
+  case 91:
+#line 277 "tig.y" /* yacc.c:1646  */
+    { (yyval.nPtr) = (yyvsp[0].nPtr); }
+#line 1910 "tigParse.cpp" /* yacc.c:1646  */
+    break;
+
+  case 92:
+#line 282 "tig.y" /* yacc.c:1646  */
+    { (yyval.nPtr) = new COpNode(opEq, (yyvsp[-2].nPtr), (yyvsp[0].nPtr)); }
+#line 1916 "tigParse.cpp" /* yacc.c:1646  */
+    break;
+
+  case 93:
+#line 283 "tig.y" /* yacc.c:1646  */
+    { (yyval.nPtr) = new COpNode(opLT, (yyvsp[-2].nPtr), (yyvsp[0].nPtr)); }
+#line 1922 "tigParse.cpp" /* yacc.c:1646  */
+    break;
+
+  case 94:
+#line 284 "tig.y" /* yacc.c:1646  */
+    { (yyval.nPtr) = new COpNode(opLE, (yyvsp[-2].nPtr), (yyvsp[0].nPtr)); }
+#line 1928 "tigParse.cpp" /* yacc.c:1646  */
+    break;
+
+  case 95:
+#line 285 "tig.y" /* yacc.c:1646  */
+    { (yyval.nPtr) = new COpNode(opGT, (yyvsp[-2].nPtr), (yyvsp[0].nPtr)); }
+#line 1934 "tigParse.cpp" /* yacc.c:1646  */
+    break;
+
+  case 96:
+#line 286 "tig.y" /* yacc.c:1646  */
+    { (yyval.nPtr) = new COpNode(opGE, (yyvsp[-2].nPtr), (yyvsp[0].nPtr)); }
+#line 1940 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
 
-#line 1857 "tigParse.cpp" /* yacc.c:1646  */
+#line 1944 "tigParse.cpp" /* yacc.c:1646  */
       default: break;
     }
   /* User semantic actions sometimes alter yychar, and that requires
@@ -2081,7 +2168,7 @@ yyreturn:
 #endif
   return yyresult;
 }
-#line 269 "tig.y" /* yacc.c:1906  */
+#line 289 "tig.y" /* yacc.c:1906  */
 
 
 void yyerror(char *s) {

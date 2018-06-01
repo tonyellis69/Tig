@@ -912,3 +912,10 @@ void CallDiscardNode::encode() {
 	writeOp(opCall);
 	writeOp(opPop);
 }
+
+CIfNode::CIfNode(CSyntaxNode * expr, CSyntaxNode * code, CSyntaxNode * elseCode) {
+}
+
+void CIfNode::encode() {
+
+}

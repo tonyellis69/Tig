@@ -40,6 +40,7 @@
 %type <iValue> level
 %type <nPtr> memb_decl_identifier memb_function_def return_expr member_call
 %type <nPtr> array_init_expr constant_seq array_init_const array_element_expr array_index_expr array_init_list
+%type <nPtr> comparison_expr
 
 %token PRINT END RETURN
 %token EVENT OPTION
@@ -50,8 +51,14 @@
 %token <iValue> INTEGER
 %token <str> IDENTIFIER STRING
 %token ENDL
-%left '+' '-'
-%left '*' '/'
+%token IF
+%left EQ NE GE '>' LE '<'  OR AND     // '%left' makes these tokens left associative
+%left '+' '-'							 // this ensures that long complex sums are never ambiguous. 
+%left '*' '/' '%' 
+//%left ','
+%nonassoc UMINUS
+%nonassoc IFX 
+%nonassoc ELSE
 
 //%verbose
 
@@ -82,6 +89,8 @@ statement:
 		| member_call ';'								{ $$ = new CallDiscardNode($1); }
 		| HOT STRING IDENTIFIER	 ';'					{ $$ = new CHotTextNode($2,$3); }
 		| RETURN return_expr ';'						{ $$ = new CReturnNode($2); }
+		| IF '(' expression ')' statement %prec IFX			{ $$ = new CIfNode($3, $5, NULL); }	//$prec gives this rule the lesser precedence of dummy token IFX
+        | IF '(' expression ')' statement ELSE statement	{ $$ = new CIfNode($3, $5, $7); } //thus rule has the greater precedence of ELSE
         ;
 
 return_expr:
@@ -214,6 +223,8 @@ expression:
 	  | constant_expr					{ $$ = $1; }
 	  | array_init_expr					{ $$ = $1; }
 	  | array_element_expr				{ $$ = $1; }
+	  | comparison_expr					{ $$ = $1; }
+	  | '(' expression ')'				{ $$ = $2; }
       ;
 
 variable_expr:
@@ -264,6 +275,15 @@ array_element_expr:
 array_index_expr:
 	variable_expr				{ $$ = $1; }
 	| integer_constant			{ $$ = $1; }
+	;
+
+
+comparison_expr:
+	expression EQ expression				{ $$ = new COpNode(opEq, $1, $3); }
+	| expression '<' expression				{ $$ = new COpNode(opLT, $1, $3); }
+	| expression LE expression				{ $$ = new COpNode(opLE, $1, $3); }
+	| expression '>' expression				{ $$ = new COpNode(opGT, $1, $3); }
+	| expression GE expression				{ $$ = new COpNode(opGE, $1, $3); }
 	;
 
 %%
