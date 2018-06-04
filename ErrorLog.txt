@@ -1,30 +1,7 @@
 
-currentIdentBuf at 1 with globVar
-currentIdentBuf at 2 with player
-global mode set to 0
-currentIdentBuf at 3 with message
-currentIdentBuf at 4 with localVar
-currentIdentBuf at 5 with localVar
-currentIdentBuf at 6 with name
-currentIdentBuf at 7 with career
-currentIdentBuf at 8 with inventory
-global mode set to 1
-currentIdentBuf at 9 with box
-global mode set to 0
-currentIdentBuf at 10 with colour
-global mode set to 1
-currentIdentBuf at 1 with monster
-global mode set to 0
-currentIdentBuf at 2 with response
-currentIdentBuf at 3 with otherVar
-currentIdentBuf at 4 with otherVar
-global mode set to 1
-currentIdentBuf at 5 with testEvent
-currentIdentBuf at 6 with globVar
-currentIdentBuf at 7 with result
-currentIdentBuf at 8 with result
-currentIdentBuf at 9 with testEvent
-currentIdentBuf at 10 with lateVar
-currentIdentBuf at 1 with player
-currentIdentBuf at 2 with message
-currentIdentBuf at 3 with globVar
+object desk parent: 642
+object box parent: 644
+object doll parent: 945
+object box2 parent: 646
+object bug parent: 1047
+object fromitz parent: 648

@@ -27,7 +27,7 @@ std::vector<CTigVar> CSyntaxNode::arrayStack;
 int CSyntaxNode::childLevel = 0;
 std::map<int,int> CSyntaxNode::parentList;
 bool CSyntaxNode::global = true;
-
+char CSyntaxNode::lastOp = 0;
 
 std::vector<CSyntaxNode*> CSyntaxNode::nodeList;
 
@@ -44,6 +44,7 @@ void CSyntaxNode::writeOp(char byte) {
 	int addr = outputFile->tellp();
 	outputFile->write(&byte, 1);
 	cout << "\n" << outputFile << " " << addr << " " << opCode[byte];
+	lastOp = byte;
 }
 
 void CSyntaxNode::writeByte(char byte) {
@@ -177,7 +178,7 @@ TMemberRec * CSyntaxNode::getObjectMember(CObject & obj, std::string  membName) 
 
 void CSyntaxNode::funcMode(bool onOff) {
 	global = !onOff;
-	std::cerr << "\nglobal mode set to " << global;
+	//std::cerr << "\nglobal mode set to " << global;
 }
 
 
@@ -883,7 +884,8 @@ void CFunctionDefNode::encode() {
 		writeByte(varCount);
 		outputFile->seekp(resume);
 	}
-	writeOp(opReturnTrue); //TO DO: check if user included return?
+	if (lastOp != opReturn && lastOp != opReturnTrue)
+		writeOp(opReturnTrue); 
 	global = true;
 	setOutputFile(globalByteCode);
 }
@@ -913,9 +915,45 @@ void CallDiscardNode::encode() {
 	writeOp(opPop);
 }
 
+
 CIfNode::CIfNode(CSyntaxNode * expr, CSyntaxNode * code, CSyntaxNode * elseCode) {
+	operands.push_back(expr);
+	operands.push_back(code);
+	if (elseCode)
+		operands.push_back(elseCode);
 }
 
 void CIfNode::encode() {
+	//write the test
+	operands[0]->encode();
 
+	writeOp(opJumpFalse);
+	int patchAddr = outputFile->tellp();
+	writeWord(0xFFFFFFFF); //dummy address
+
+	//write the conditional code
+	operands[1]->encode();
+
+	//int skipAddr = outputFile->tellp();
+	if (operands.size() > 2) {
+		writeOp(opJump);
+		int patch2Addr = outputFile->tellp();
+		writeWord(0xFFFFFFFF);
+		int elseAddr = outputFile->tellp();
+		outputFile->seekp(patchAddr);
+		cout << "\n[patch] " << patchAddr << " to ";
+		writeWord(elseAddr);
+		outputFile->seekp(elseAddr);
+		patchAddr = patch2Addr;
+		operands[2]->encode();
+	}
+
+
+	int resumeAddr = outputFile->tellp();
+
+	outputFile->seekp(patchAddr);
+	cout << "\n[patch] " << patchAddr << " to ";
+	writeWord(resumeAddr);
+
+	outputFile->seekp(resumeAddr);
 }

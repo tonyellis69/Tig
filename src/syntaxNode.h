@@ -97,6 +97,8 @@ public:
 	static int childLevel;
 
 	static bool global; ///<True if we're encoding global code, false inside function definitions.
+
+	static char lastOp; ///<Most recent op code written;
 };
 
 enum TIdentType { local, globalVar, object };

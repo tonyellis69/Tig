@@ -1050,7 +1050,7 @@ YY_RULE_SETUP
 							identBufs[currentIdentBuf].assign(yytext,yyleng);
 							yylval.str = &identBufs[currentIdentBuf];
 							currentIdentBuf++;
-							std::cerr << "\ncurrentIdentBuf at " << currentIdentBuf << " with " << identBufs[currentIdentBuf-1] ;
+							//std::cerr << "\ncurrentIdentBuf at " << currentIdentBuf << " with " << identBufs[currentIdentBuf-1] ;
 							if (currentIdentBuf == maxIdentBufs)
 								currentIdentBuf = 0;
 							return IDENTIFIER;
