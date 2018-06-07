@@ -28,6 +28,7 @@ int CSyntaxNode::childLevel = 0;
 std::map<int,int> CSyntaxNode::parentList;
 bool CSyntaxNode::global = true;
 char CSyntaxNode::lastOp = 0;
+int CSyntaxNode::currentObj = 0;
 
 std::vector<CSyntaxNode*> CSyntaxNode::nodeList;
 
@@ -420,10 +421,20 @@ CVarAssigneeNode::CVarAssigneeNode(std::string * parsedString) {
 void CVarAssigneeNode::encode() {
 	writeOp(opPushInt);
 	if (varId == -1) { //this is not a global variable
-		varId = getLocalVarId(name);
+		//check if it's a data member first.
+		auto iter = memberIds.find(name);
+		if (iter != memberIds.end()) {
+			//treat as assignment to a member
+			int memberId = iter->second;
+			writeWord(currentObj);
+			writeOp(opPushInt);
+			writeWord(memberId);
+			return;
+		}
 
+		varId = getLocalVarId(name); //local
 	}
-	writeWord(varId); 
+	writeWord(varId); //globl
 }
 
 
@@ -526,6 +537,7 @@ CObjDeclNode::CObjDeclNode(CSyntaxNode * identifier, CSyntaxNode * memberList, C
 void CObjDeclNode::encode() {
 	std::string name = identNode->getText();
 	CObject* thisObj = &objects[name];
+	currentObj = thisObj->objectId;
 	if (classObj)
 		thisObj->classId = classObj->getId();
 
@@ -540,6 +552,7 @@ void CObjDeclNode::encode() {
 		thisObj->members.push_back(memberRec2);
 	}
 	memberStack2.clear();
+	currentObj = 0;
 
 	if (parentId == 0)
 		return;
@@ -647,6 +660,8 @@ CVarExprNode::CVarExprNode(std::string * parsedString) {
 	name = *parsedString;
 	//TO DO: check if this is a local variable
 
+	//TO DO: can I scrap the below because it all happens at encoding time now?
+
 	//is this a global variable?
 	auto iter = globalVarIds.find(*parsedString);
 	if (iter != globalVarIds.end()) {
@@ -662,6 +677,8 @@ CVarExprNode::CVarExprNode(std::string * parsedString) {
 		identType = object;
 		return;
 	}
+
+	
 }
 
 /** Tell VM to push this variable's value onto the stack. */
@@ -675,6 +692,8 @@ void CVarExprNode::encode() {
 		writeWord(varId);
 		return;
 	}
+
+
 
 	//is it global?
 	auto iter = globalVarIds.find(name);
@@ -693,6 +712,23 @@ void CVarExprNode::encode() {
 		writeWord(varId);
 		return;
 	}
+
+	//are we in an object definition?
+	if (currentObj != 0) {
+		//assume it must be a member of the current object
+		//get member id for it
+		int memberId = getMemberId(name);
+		//treat it as a member expression
+		//operands[0]->encode(); //eg push object id onto stack
+		//writeOp(opPushVar); //pushvar expects either a var or member id, puts contents on stack
+		//writeWord(memberId);
+		writeOp(opPushInt);
+		writeWord(currentObj);
+		writeOp(opPushVar);
+		writeWord(memberId);
+		return;
+	}
+
 
 	std::cerr << "\nError! Identifier " << name << " not recognised.";
 

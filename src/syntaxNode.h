@@ -99,6 +99,8 @@ public:
 	static bool global; ///<True if we're encoding global code, false inside function definitions.
 
 	static char lastOp; ///<Most recent op code written;
+
+	static int currentObj; ///<Current object being defined, if any.
 };
 
 enum TIdentType { local, globalVar, object };

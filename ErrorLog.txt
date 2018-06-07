@@ -1,7 +1,7 @@
 
-object desk parent: 642
-object box parent: 644
-object doll parent: 945
-object box2 parent: 646
-object bug parent: 1047
-object fromitz parent: 648
+object box parent: 639
+object doll parent: 841
+object box2 parent: 643
+object bug parent: 944
+object fromitz parent: 646
+object desk parent: 661
