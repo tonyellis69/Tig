@@ -42,5 +42,6 @@ static char* opCode[] = { "opNop\0",
 
 const int memberIdStart = 1000;
 const int globalVarStart = 100;
+const int selfObjId = 0; ///<The object id that stands for 'this current object.'
 
 enum TigVarType { tigUndefined, tigString, tigInt, tigFloat, tigObj, tigFunc, tigArray };

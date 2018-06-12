@@ -465,9 +465,9 @@ static const yytype_uint16 yyrline[] =
      145,   150,   154,   158,   158,   160,   164,   165,   169,   170,
      171,   175,   180,   181,   182,   183,   184,   188,   192,   193,
      197,   201,   205,   209,   210,   214,   218,   219,   220,   221,
-     222,   223,   224,   225,   226,   227,   231,   235,   239,   243,
-     244,   248,   252,   256,   260,   261,   265,   266,   267,   272,
-     276,   277,   282,   283,   284,   285,   286
+     222,   223,   224,   225,   226,   227,   231,   235,   240,   244,
+     245,   249,   253,   257,   261,   262,   266,   267,   268,   273,
+     277,   278,   283,   284,   285,   286,   287
 };
 #endif
 
@@ -1826,115 +1826,115 @@ yyreduce:
     break;
 
   case 78:
-#line 239 "tig.y" /* yacc.c:1646  */
-    { (yyval.nPtr) = new CMemberExprNode((yyvsp[-4].nPtr), (yyvsp[-2].str)); }
+#line 240 "tig.y" /* yacc.c:1646  */
+    { (yyval.nPtr) = new CMemberCallNode((yyvsp[-4].nPtr), (yyvsp[-2].str),NULL); }
 #line 1832 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 79:
-#line 243 "tig.y" /* yacc.c:1646  */
+#line 244 "tig.y" /* yacc.c:1646  */
     { (yyval.nPtr) = (yyvsp[0].nPtr); }
 #line 1838 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 80:
-#line 244 "tig.y" /* yacc.c:1646  */
+#line 245 "tig.y" /* yacc.c:1646  */
     { (yyval.nPtr) = new CStrNode((yyvsp[0].str)); }
 #line 1844 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 81:
-#line 248 "tig.y" /* yacc.c:1646  */
+#line 249 "tig.y" /* yacc.c:1646  */
     { (yyval.nPtr) = new CIntNode((yyvsp[0].iValue)); }
 #line 1850 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 82:
-#line 252 "tig.y" /* yacc.c:1646  */
+#line 253 "tig.y" /* yacc.c:1646  */
     { (yyval.nPtr) = new CArrayInitNode((yyvsp[-1].nPtr)); }
 #line 1856 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 83:
-#line 256 "tig.y" /* yacc.c:1646  */
+#line 257 "tig.y" /* yacc.c:1646  */
     { (yyval.nPtr) = new CArrayInitListNode((yyvsp[-1].nPtr)); }
 #line 1862 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 84:
-#line 260 "tig.y" /* yacc.c:1646  */
+#line 261 "tig.y" /* yacc.c:1646  */
     { (yyval.nPtr) = (yyvsp[0].nPtr); }
 #line 1868 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 85:
-#line 261 "tig.y" /* yacc.c:1646  */
+#line 262 "tig.y" /* yacc.c:1646  */
     { (yyval.nPtr) = new CJointNode((yyvsp[-2].nPtr),(yyvsp[0].nPtr)); }
 #line 1874 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 86:
-#line 265 "tig.y" /* yacc.c:1646  */
+#line 266 "tig.y" /* yacc.c:1646  */
     { (yyval.nPtr) = new CArrayInitConstNode((yyvsp[0].str)); }
 #line 1880 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 87:
-#line 266 "tig.y" /* yacc.c:1646  */
+#line 267 "tig.y" /* yacc.c:1646  */
     { (yyval.nPtr) = new CArrayInitConstNode((yyvsp[0].iValue)); }
 #line 1886 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 88:
-#line 267 "tig.y" /* yacc.c:1646  */
+#line 268 "tig.y" /* yacc.c:1646  */
     { (yyval.nPtr) = new CArrayInitConstNode((CObjIdentNode*)(yyvsp[0].nPtr)); }
 #line 1892 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 89:
-#line 272 "tig.y" /* yacc.c:1646  */
+#line 273 "tig.y" /* yacc.c:1646  */
     { (yyval.nPtr) = new CArrayElementExprNode((yyvsp[-3].nPtr),(yyvsp[-1].nPtr)); }
 #line 1898 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 90:
-#line 276 "tig.y" /* yacc.c:1646  */
+#line 277 "tig.y" /* yacc.c:1646  */
     { (yyval.nPtr) = (yyvsp[0].nPtr); }
 #line 1904 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 91:
-#line 277 "tig.y" /* yacc.c:1646  */
+#line 278 "tig.y" /* yacc.c:1646  */
     { (yyval.nPtr) = (yyvsp[0].nPtr); }
 #line 1910 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 92:
-#line 282 "tig.y" /* yacc.c:1646  */
+#line 283 "tig.y" /* yacc.c:1646  */
     { (yyval.nPtr) = new COpNode(opEq, (yyvsp[-2].nPtr), (yyvsp[0].nPtr)); }
 #line 1916 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 93:
-#line 283 "tig.y" /* yacc.c:1646  */
+#line 284 "tig.y" /* yacc.c:1646  */
     { (yyval.nPtr) = new COpNode(opLT, (yyvsp[-2].nPtr), (yyvsp[0].nPtr)); }
 #line 1922 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 94:
-#line 284 "tig.y" /* yacc.c:1646  */
+#line 285 "tig.y" /* yacc.c:1646  */
     { (yyval.nPtr) = new COpNode(opLE, (yyvsp[-2].nPtr), (yyvsp[0].nPtr)); }
 #line 1928 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 95:
-#line 285 "tig.y" /* yacc.c:1646  */
+#line 286 "tig.y" /* yacc.c:1646  */
     { (yyval.nPtr) = new COpNode(opGT, (yyvsp[-2].nPtr), (yyvsp[0].nPtr)); }
 #line 1934 "tigParse.cpp" /* yacc.c:1646  */
     break;
 
   case 96:
-#line 286 "tig.y" /* yacc.c:1646  */
+#line 287 "tig.y" /* yacc.c:1646  */
     { (yyval.nPtr) = new COpNode(opGE, (yyvsp[-2].nPtr), (yyvsp[0].nPtr)); }
 #line 1940 "tigParse.cpp" /* yacc.c:1646  */
     break;
@@ -2168,7 +2168,7 @@ yyreturn:
 #endif
   return yyresult;
 }
-#line 289 "tig.y" /* yacc.c:1906  */
+#line 290 "tig.y" /* yacc.c:1906  */
 
 
 void yyerror(char *s) {

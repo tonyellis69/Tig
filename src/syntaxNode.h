@@ -371,3 +371,11 @@ public:
 	CIfNode(CSyntaxNode* expr, CSyntaxNode* code, CSyntaxNode* elseCode);
 	void encode();
 };
+
+class CMemberCallNode : public CSyntaxNode{
+public:
+	CMemberCallNode(CSyntaxNode* object, std::string* memberName, CSyntaxNode* params);
+	void encode();
+
+	int memberId;
+};

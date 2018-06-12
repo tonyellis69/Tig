@@ -426,7 +426,7 @@ void CVarAssigneeNode::encode() {
 		if (iter != memberIds.end()) {
 			//treat as assignment to a member
 			int memberId = iter->second;
-			writeWord(currentObj);
+			writeWord(selfObjId);
 			writeOp(opPushInt);
 			writeWord(memberId);
 			return;
@@ -624,12 +624,12 @@ CObjRefNode::CObjRefNode(std::string * parsedString) {
 
 /** Tell the VM to push the object id on the stack . */
 void CObjRefNode::encode() {
-	if (identType == object) {
+	if (identType == object) { //absolute reference to an object
 		writeOp(opPushInt);
 		writeWord(refId);
 	}
 	else {
-		writeOp(opPushVar);
+		writeOp(opPushVar); //object id is stored in a variable
 		writeWord(refId);
 	}
 }
@@ -649,7 +649,7 @@ CMemberExprNode::CMemberExprNode(CSyntaxNode * parent, std::string * parsedStrin
 
 /** Tell the VM to put the value expressed by this member on the stack. */
 void CMemberExprNode::encode() {
-	operands[0]->encode(); //eg push object id onto stack
+	operands[0]->encode(); //eg an instruction that will push an object id onto stack
 	writeOp(opPushVar); //pushvar expects either a var or member id, puts contents on stack
 	writeWord(memberId);
 }
@@ -719,11 +719,8 @@ void CVarExprNode::encode() {
 		//get member id for it
 		int memberId = getMemberId(name);
 		//treat it as a member expression
-		//operands[0]->encode(); //eg push object id onto stack
-		//writeOp(opPushVar); //pushvar expects either a var or member id, puts contents on stack
-		//writeWord(memberId);
 		writeOp(opPushInt);
-		writeWord(currentObj);
+		writeWord(selfObjId);
 		writeOp(opPushVar);
 		writeWord(memberId);
 		return;
@@ -947,7 +944,7 @@ CallDiscardNode::CallDiscardNode(CSyntaxNode * funcCode) {
 
 void CallDiscardNode::encode() {
 	operands[0]->encode();
-	writeOp(opCall);
+	//writeOp(opCall);
 	writeOp(opPop);
 }
 
@@ -992,4 +989,17 @@ void CIfNode::encode() {
 	writeWord(resumeAddr);
 
 	outputFile->seekp(resumeAddr);
+}
+
+CMemberCallNode::CMemberCallNode(CSyntaxNode * object, std::string * memberName, CSyntaxNode * params) {
+	operands.push_back(object);
+	memberId = getMemberId(*memberName);
+	operands.push_back(params);
+}
+
+void CMemberCallNode::encode() {
+	//tell VM to put the object id on the stack:
+	operands[0]->encode();
+	writeOp(opCall);
+	writeWord(memberId);
 }

@@ -236,7 +236,8 @@ member_expr:
 	;
 
 member_call:
-	 obj_expr '.' IDENTIFIER	'(' ')'		{ $$ = new CMemberExprNode($1, $3); }
+	 //obj_expr '.' IDENTIFIER	'(' ')'		{ $$ = new CMemberExprNode($1, $3); }
+	 obj_expr '.' IDENTIFIER	'(' ')'		{ $$ = new CMemberCallNode($1, $3,NULL); }
 	;
 
 constant_expr:							//TO DO: float
