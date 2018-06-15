@@ -87,7 +87,7 @@ statement:
 		| START_TIMER	';'								{ $$ = new COpNode(opStartTimer); }
 		| START_EVENT event_identifier AT INTEGER ';'	{ $$ = new CTimedEventNode($2,$4); }
 		| member_call ';'								{ $$ = new CallDiscardNode($1); }
-		| HOT STRING IDENTIFIER	 ';'					{ $$ = new CHotTextNode($2,$3); }
+		| HOT STRING IDENTIFIER	 ';'					{ $$ = new CHotTextNode($2,$3,NULL); }
 		| RETURN return_expr ';'						{ $$ = new CReturnNode($2); }
 		| IF '(' expression ')' statement %prec IFX			{ $$ = new CIfNode($3, $5, NULL); }	//$prec gives this rule the lesser precedence of dummy token IFX
         | IF '(' expression ')' statement ELSE statement	{ $$ = new CIfNode($3, $5, $7); } //thus rule has the greater precedence of ELSE
@@ -147,11 +147,12 @@ level:
 
 
 obj_identifier:
-		IDENTIFIER					   { $$ = new CObjIdentNode($1); }
+		IDENTIFIER						{ $$ = new CObjIdentNode($1); }
 		;
 
 class_identifier:
-		IDENTIFIER					   { $$ = new ClassIdentNode($1); } //TO DO: can use CObjIdentNode
+		IDENTIFIER						{ $$ = new ClassIdentNode($1); } //TO DO: can use CObjIdentNode
+		| class_identifier IDENTIFIER	{ $$ = new CJointNode($1,new ClassIdentNode($2)); }
 		;
 
 optional_member_list:

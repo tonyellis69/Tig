@@ -22,12 +22,15 @@ struct TMemberRec {
 	std::vector<CTigVar> arrayInitList;
 };
 
+
+
 class CObject {
 public:
-	CObject() : objectId(-1), classId(-1) {};
+	CObject() : objectId(-1) {};
 	int objectId;
-	int classId;
+	std::vector<int> classIds;
 	std::vector<TMemberRec> members;
+	std::vector<int> membersToCheck;
 };
 
 /** Basic syntax node. */
@@ -63,6 +66,10 @@ public:
 	TMemberRec* getObjectMember(CObject& obj, std::string membName);
 
 	static void funcMode(bool onOff);
+
+	bool objectHasMember(int objId, int memberId);
+	void logMemberCheck(int objId, int memberId);
+	std::string getMemberName(int memberId);
 
 	std::vector<CSyntaxNode*> operands;
 
@@ -101,6 +108,8 @@ public:
 	static char lastOp; ///<Most recent op code written;
 
 	static int currentObj; ///<Current object being defined, if any.
+
+	static std::vector<int>* parentClassList;
 };
 
 enum TIdentType { local, globalVar, object };
@@ -288,7 +297,7 @@ class ClassIdentNode : public CSyntaxNode {
 public:
 	ClassIdentNode(std::string * parsedString);
 	int getId();
-
+	void encode();
 
 	int classId;
 	TIdentType identType;
@@ -302,7 +311,7 @@ public:
 
 class CHotTextNode : public CSyntaxNode {
 public:
-	CHotTextNode(std::string * hotText, std::string* action);
+	CHotTextNode(std::string * hotText, std::string* action, CSyntaxNode* object);
 	void encode();
 
 	std::string text;

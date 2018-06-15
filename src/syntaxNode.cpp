@@ -29,6 +29,7 @@ std::map<int,int> CSyntaxNode::parentList;
 bool CSyntaxNode::global = true;
 char CSyntaxNode::lastOp = 0;
 int CSyntaxNode::currentObj = 0;
+std::vector<int>* CSyntaxNode::parentClassList = NULL;
 
 std::vector<CSyntaxNode*> CSyntaxNode::nodeList;
 
@@ -102,7 +103,11 @@ void CSyntaxNode::writeObjectDefTable() {
 	writeWord(objects.size());
 	for (auto object : orderedObjects) {
 		writeWord(object.objectId);
-		writeWord(object.classId);
+	/////////////////////	writeWord(object.classId);
+		writeByte(object.classIds.size());
+		for (auto classId : object.classIds) {
+			writeWord(classId);
+		}
 		writeByte(object.members.size());
 		for (auto member : object.members) {
 			writeWord(member.memberId);
@@ -180,6 +185,35 @@ TMemberRec * CSyntaxNode::getObjectMember(CObject & obj, std::string  membName) 
 void CSyntaxNode::funcMode(bool onOff) {
 	global = !onOff;
 	//std::cerr << "\nglobal mode set to " << global;
+}
+
+bool CSyntaxNode::objectHasMember(int objId, int memberId) {
+	CObject* obj = getObject(objId);
+	for (auto member : obj->members) {
+		if (member.memberId == memberId)
+			return true;
+	}
+
+	for (auto parentClass : obj->classIds) {
+		CObject* parentObj = getObject(parentClass);
+		if (objectHasMember(parentObj->objectId, memberId))
+			return true;
+	}
+
+	return false;
+}
+
+void CSyntaxNode::logMemberCheck(int objId, int memberId) {
+	CObject* obj = getObject(objId);
+	obj->membersToCheck.push_back(memberId);
+}
+
+std::string CSyntaxNode::getMemberName(int memberId) {
+	auto it = std::find_if(memberIds.begin(), memberIds.end(),
+		[&](const std::pair<std::string, int>& member) {return member.second == memberId; });	
+	if (it == memberIds.end())
+		return NULL;
+	return it->first;
 }
 
 
@@ -538,8 +572,12 @@ void CObjDeclNode::encode() {
 	std::string name = identNode->getText();
 	CObject* thisObj = &objects[name];
 	currentObj = thisObj->objectId;
+	
+	parentClassList = &thisObj->classIds;
 	if (classObj)
-		thisObj->classId = classObj->getId();
+		classObj->encode();  //collect all the parent class ids, if any
+	//if (classObj)
+	//	thisObj->classId = classObj->getId();
 
 	if (!members)
 		return;
@@ -578,6 +616,13 @@ void CObjDeclNode::encode() {
 		parentObjChildMemb->value.setObjId(thisObj->objectId);
 	}
 
+	for (auto member : thisObj->membersToCheck) {
+		if (!objectHasMember(thisObj->objectId, member)) {
+			std::cerr << "\nError! Referal to non-existent member \"" << getMemberName(member) << "\" of object \"" << name << "\"";
+			exit(1);
+		}
+	}
+	thisObj->membersToCheck.clear();
 }
 
 /** Create a node representing an object's member reference. */
@@ -645,6 +690,7 @@ CMemberExprNode::CMemberExprNode(CSyntaxNode * parent, std::string * parsedStrin
 		exit(1);
 	}
 	memberId = iter->second;
+
 }
 
 /** Tell the VM to put the value expressed by this member on the stack. */
@@ -719,6 +765,10 @@ void CVarExprNode::encode() {
 		//get member id for it
 		int memberId = getMemberId(name);
 		//treat it as a member expression
+
+		//does the current object actually have this member?
+		logMemberCheck(currentObj, memberId);
+
 		writeOp(opPushInt);
 		writeWord(selfObjId);
 		writeOp(opPushVar);
@@ -728,7 +778,7 @@ void CVarExprNode::encode() {
 
 
 	std::cerr << "\nError! Identifier " << name << " not recognised.";
-
+	exit(1);
 	//if (identType == globalVar)
 //		writeOp(opPushVar);
 //	else
@@ -794,10 +844,16 @@ ClassIdentNode::ClassIdentNode(std::string * parsedString) {
 		return;
 	}
 	std::cout << "\nError! No object named " << *parsedString << " exists.";
+	exit(1);
 }
 
+//TO DO: can scrap now
 int ClassIdentNode::getId() {
 	return classId;
+}
+
+void ClassIdentNode::encode() {
+	parentClassList->push_back(classId);
 }
 
 /** Encapsulate functional, non-global code so that we can encode it separately. */
@@ -812,12 +868,20 @@ void CodeBlockNode::encode() {
 }
 
 
-CHotTextNode::CHotTextNode(std::string * hotText, std::string* member) {
+CHotTextNode::CHotTextNode(std::string * hotText, std::string* member, CSyntaxNode* object) {
 	text = *hotText;
 	memberId = getMemberId(*member);
+	if (object)
+		operands.push_back(object);
 }
 
 void CHotTextNode::encode() {
+	if (operands.size() > 0 )
+		operands[0]->encode(); 
+	else {
+		writeOp(opPushInt);
+		writeWord(selfObjId);
+	}
 	writeOp(opHot);
 	writeString(text);
 	writeWord(memberId);
