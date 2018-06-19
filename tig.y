@@ -42,9 +42,10 @@
 %type <nPtr> array_init_expr constant_seq array_init_const array_element_expr array_index_expr array_init_list
 %type <nPtr> comparison_expr
 
+
 %token PRINT END RETURN
 %token EVENT OPTION
-%token OBJECT HAS CHILD 
+%token OBJECT HAS ARROW 
 %token GETSTRING
 %token HOT
 %token START_TIMER START_EVENT AT
@@ -52,6 +53,9 @@
 %token <str> IDENTIFIER STRING
 %token ENDL
 %token IF
+%token FOR EACH IN
+%token SELF 
+//CHILD SIBLING PARENT
 %left EQ NE GE '>' LE '<'  OR AND     // '%left' makes these tokens left associative
 %left '+' '-'							 // this ensures that long complex sums are never ambiguous. 
 %left '*' '/' '%' 
@@ -91,6 +95,7 @@ statement:
 		| RETURN return_expr ';'						{ $$ = new CReturnNode($2); }
 		| IF '(' expression ')' statement %prec IFX			{ $$ = new CIfNode($3, $5, NULL); }	//$prec gives this rule the lesser precedence of dummy token IFX
         | IF '(' expression ')' statement ELSE statement	{ $$ = new CIfNode($3, $5, $7); } //thus rule has the greater precedence of ELSE
+		| FOR EACH var_or_obj_memb IN obj_expr statement	{ $$ = new CForEachNode($3, $5, $6); }
         ;
 
 return_expr:
@@ -100,12 +105,13 @@ return_expr:
 
 assignment:
 		var_or_obj_memb '=' expression					{ $$ = new COpNode(opAssign,$1,$3); }
-		| element_assignee '=' expression				{ $$ = new COpNode(opAssign,$1,$3); }
+		//| element_assignee '=' expression				{ $$ = new COpNode(opAssign,$1,$3); }
 		;
 
 var_or_obj_memb:
 		variable_assignee								{ $$ = $1; }
 		| obj_member_assignee							{ $$ = $1; }
+		| element_assignee								{ $$ = $1; }
 		;
 
 variable_assignee:
@@ -119,6 +125,7 @@ obj_member_assignee:
 obj_expr:												
 		IDENTIFIER										{ $$ = new CObjRefNode($1); }
 		| member_expr									{ $$ = $1; }
+		| SELF											{ $$ = new CSelfExprNode(); }
 		;
 
 element_assignee:
@@ -141,8 +148,8 @@ dec_statement:
 
 
 level:
-		CHILD							{ CSyntaxNode::childLevel++; }
-		| level CHILD					{ CSyntaxNode::childLevel++; }
+		ARROW							{ CSyntaxNode::childLevel++; }
+		| level ARROW					{ CSyntaxNode::childLevel++; }
 		;
 
 
@@ -226,6 +233,7 @@ expression:
 	  | array_element_expr				{ $$ = $1; }
 	  | comparison_expr					{ $$ = $1; }
 	  | '(' expression ')'				{ $$ = $2; }
+	  | SELF							{ $$ = new CSelfExprNode(); }
       ;
 
 variable_expr:

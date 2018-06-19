@@ -72,10 +72,14 @@ IDENT    {LETTER}({LETTER}|{DIGIT})*
 "object"				return OBJECT;
 "has"					return HAS;
 "hot"					return HOT;
-"->"					return CHILD;
+"->"					return ARROW;
 "return"				return RETURN;
 "if"					return IF;
 "else"					return ELSE;
+"for"					return FOR;
+"each"					return EACH;
+"in"					return IN;
+"self"					return SELF;
 {IDENT}					{	identBufs[currentIdentBuf].clear(); 
 							identBufs[currentIdentBuf].assign(yytext,yyleng);
 							yylval.str = &identBufs[currentIdentBuf];

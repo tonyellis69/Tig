@@ -663,8 +663,8 @@ CObjRefNode::CObjRefNode(std::string * parsedString) {
 		return;
 	}
 
-	std::cout << "\nError! No object or variable named " << *parsedString << " exists.";
-	exit(1);
+	//still here? may be a local variable
+	name = *parsedString;
 }
 
 /** Tell the VM to push the object id on the stack . */
@@ -674,6 +674,15 @@ void CObjRefNode::encode() {
 		writeWord(refId);
 	}
 	else {
+		//check for local
+		auto it = std::find_if(localVarIds.begin(), localVarIds.end(),
+			[&](auto& varName) { return varName == name; });
+		if (it == localVarIds.end()) {
+			std::cout << "\nError! No object or variable named " << name << " exists.";
+			exit(1);
+		}
+		refId = it - localVarIds.begin();
+
 		writeOp(opPushVar); //object id is stored in a variable
 		writeWord(refId);
 	}
@@ -1066,4 +1075,54 @@ void CMemberCallNode::encode() {
 	operands[0]->encode();
 	writeOp(opCall);
 	writeWord(memberId);
+}
+
+
+CForEachNode::CForEachNode(CSyntaxNode* variable, CSyntaxNode * containerObj, CSyntaxNode * code) {
+	operands.push_back(variable);
+	operands.push_back(containerObj);
+	operands.push_back(code);
+}
+
+void CForEachNode::encode() {
+	operands[0]->encode(); //write code to put variable identifier on the stack
+	operands[1]->encode(); //write code to put parent object identifier on the stack
+	//initialise var with first child of container
+		//get child of container object
+		writeOp(opChild);
+		//assign to variable
+		writeOp(opAssign);
+	//:start
+	int loopAddr = outputFile->tellp();
+	//is var == NULL
+	operands[0]->encode(); //put variable identifier back on stack
+	writeOp(opGetVar); //leave variable contents on stack
+	//yes? jump to resume
+	writeOp(opJumpFalse);
+	int patchAddr = outputFile->tellp();
+	writeWord(0xFFFFFFFF);
+	//otherwise do code
+	operands[2]->encode();
+	//set var to sibling of currently assigned object
+	operands[0]->encode(); //put variable identifier on stack
+	operands[0]->encode(); //put variable identifier on stack
+	writeOp(opGetVar); //resolve to an object identifier
+	writeOp(opSibling); //get sibling on stack
+	writeOp(opAssign); //assign to variable
+	//loop to start
+	writeOp(opJump);
+	writeWord(loopAddr);
+	//:resume
+
+	int resumeAddr = outputFile->tellp();
+	outputFile->seekp(patchAddr);
+	cout << "\n[patch] " << patchAddr << " to ";
+	writeWord(resumeAddr);
+	outputFile->seekp(resumeAddr);
+}
+
+void CSelfExprNode::encode() {
+	//TO DO: if this is global code, just throw an error.
+	writeOp(opPushObj);
+	writeWord(selfObjId);
 }

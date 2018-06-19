@@ -52,7 +52,7 @@ extern int yydebug;
     OPTION = 262,
     OBJECT = 263,
     HAS = 264,
-    CHILD = 265,
+    ARROW = 265,
     GETSTRING = 266,
     HOT = 267,
     START_TIMER = 268,
@@ -63,15 +63,22 @@ extern int yydebug;
     STRING = 273,
     ENDL = 274,
     IF = 275,
-    EQ = 276,
-    NE = 277,
-    GE = 278,
-    LE = 279,
-    OR = 280,
-    AND = 281,
-    UMINUS = 282,
-    IFX = 283,
-    ELSE = 284
+    FOR = 276,
+    EACH = 277,
+    IN = 278,
+    SELF = 279,
+    CHILD = 280,
+    SIBLING = 281,
+    PARENT = 282,
+    EQ = 283,
+    NE = 284,
+    GE = 285,
+    LE = 286,
+    OR = 287,
+    AND = 288,
+    UMINUS = 289,
+    IFX = 290,
+    ELSE = 291
   };
 #endif
 
@@ -87,7 +94,7 @@ union YYSTYPE
     CSyntaxNode *nPtr;          // node pointer - enables symbols to point to syntax nodes
 	 std::string* str;
 
-#line 91 "tigParse.hpp" /* yacc.c:1909  */
+#line 98 "tigParse.hpp" /* yacc.c:1909  */
 };
 # define YYSTYPE_IS_TRIVIAL 1
 # define YYSTYPE_IS_DECLARED 1

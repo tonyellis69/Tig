@@ -1,7 +1,0 @@
-
-object box parent: 640
-object doll parent: 842
-object box2 parent: 644
-object bug parent: 945
-object fromitz parent: 647
-object desk parent: 661

@@ -257,6 +257,7 @@ public:
 
 	int refId;
 	TIdentType identType;
+	std::string name;
 };
 
 class CMemberExprNode : public CSyntaxNode {
@@ -387,4 +388,17 @@ public:
 	void encode();
 
 	int memberId;
+};
+
+class CForEachNode : public CSyntaxNode {
+public:
+	CForEachNode(CSyntaxNode* variable, CSyntaxNode* containerObj, CSyntaxNode* code);
+	void encode();
+
+};
+
+class CSelfExprNode : public CSyntaxNode {
+public:
+	CSelfExprNode() {};
+	void encode();
 };
