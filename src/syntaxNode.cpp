@@ -466,6 +466,10 @@ void CVarAssigneeNode::encode() {
 			return;
 		}
 
+		//TO DO: check *here* if it's global or local, no need to do so in the constructor
+		//check first if it's a prexisting global, that takes priority
+		//if not and we're in global mode it must still be a global variable
+		//if we're not in global mode assume it's local
 		varId = getLocalVarId(name); //local
 	}
 	writeWord(varId); //globl
@@ -998,7 +1002,8 @@ void CFunctionDefNode::encode() {
 
 
 CReturnNode::CReturnNode(CSyntaxNode * returnVal) {
-	operands.push_back(returnVal);
+	if (returnVal)
+		operands.push_back(returnVal);
 }
 
 void CReturnNode::encode() {
@@ -1125,4 +1130,19 @@ void CSelfExprNode::encode() {
 	//TO DO: if this is global code, just throw an error.
 	writeOp(opPushObj);
 	writeWord(selfObjId);
+}
+
+COpAssignNode::COpAssignNode(TOpCode code, CSyntaxNode * assignee, CSyntaxNode * expr) {
+	opCode = code;
+	operands.push_back(assignee);
+	operands.push_back(expr);
+}
+
+void COpAssignNode::encode() {
+	operands[0]->encode(); 
+	operands[0]->encode();
+	writeOp(opGetVar);
+	operands[1]->encode();
+	writeOp(opCode); //sum values on stack
+	writeOp(opAssign); //leave result in the assignee
 }

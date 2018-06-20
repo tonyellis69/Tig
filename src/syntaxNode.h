@@ -402,3 +402,11 @@ public:
 	CSelfExprNode() {};
 	void encode();
 };
+
+class COpAssignNode : public CSyntaxNode {
+public:
+	COpAssignNode(TOpCode code, CSyntaxNode* assignee, CSyntaxNode* expr);
+	void encode();
+
+	TOpCode opCode;
+};

@@ -1,10 +1,11 @@
 #pragma once
 
-enum TOpCode { opNop, opPrint, opGiveOptions, opOption, opJumpEvent, opEnd, opAssign, opPushStr, opPushInt, 
-	opPushVar, opGetString, opAdd,  opStartTimer, opTimedEvent,
+enum TOpCode { opNop, opPrint, opGiveOptions, opOption, opJumpEvent, opEnd,
+	opAssign,  opPushStr, opPushInt, 
+	opPushVar, opGetString, opAdd, opSub, opStartTimer, opTimedEvent,
 	opExpressVar, opPushObj, opCall, opReturn, opReturnTrue, opHot, opInitArray,
 	opPushElem, opAssignElem, opPop, opEq, opLT, opLE, opGT, opGE,
-	opJumpFalse, opJump, opChild, opSibling, opGetVar
+	opJumpFalse, opJump, opChild, opSibling, opGetVar, opChildren
 };
 
 static char* opCode[] = { "opNop\0",
@@ -19,6 +20,7 @@ static char* opCode[] = { "opNop\0",
 	"opPushVar\0",
 	"opGetString\0",
 	"opAdd\0",
+	"opSub\0",
 	"opStartTimer\0",
 	"opTimedEvent\0",
 	"opExpressVar\0",
@@ -40,7 +42,8 @@ static char* opCode[] = { "opNop\0",
 	"opJump\0",
 	"opChild\0",
 	"opSibling\0",
-	"opGetVar\0"
+	"opGetVar\0",
+	"opChildren\0"
 
 };
 

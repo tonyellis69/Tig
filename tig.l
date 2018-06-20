@@ -57,10 +57,11 @@ IDENT    {LETTER}({LETTER}|{DIGIT})*
 	
 ">="					return GE;    /* Matches the literal string inside " " */
 "<="					return LE;
-"=="					 return EQ;
+"=="					return EQ;
 "!="					return NE;
 "&&"					return AND;
 "||"					return OR;
+"+="					return ADD_ASSIGN;
 "print"         		return PRINT;
 "end"					return END;
 "event"					return EVENT;
@@ -80,6 +81,7 @@ IDENT    {LETTER}({LETTER}|{DIGIT})*
 "each"					return EACH;
 "in"					return IN;
 "self"					return SELF;
+"children"				return CHILDREN;
 {IDENT}					{	identBufs[currentIdentBuf].clear(); 
 							identBufs[currentIdentBuf].assign(yytext,yyleng);
 							yylval.str = &identBufs[currentIdentBuf];

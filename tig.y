@@ -54,8 +54,9 @@
 %token ENDL
 %token IF
 %token FOR EACH IN
-%token SELF 
+%token SELF CHILDREN
 //CHILD SIBLING PARENT
+%token ADD_ASSIGN
 %left EQ NE GE '>' LE '<'  OR AND     // '%left' makes these tokens left associative
 %left '+' '-'							 // this ensures that long complex sums are never ambiguous. 
 %left '*' '/' '%' 
@@ -96,6 +97,7 @@ statement:
 		| IF '(' expression ')' statement %prec IFX			{ $$ = new CIfNode($3, $5, NULL); }	//$prec gives this rule the lesser precedence of dummy token IFX
         | IF '(' expression ')' statement ELSE statement	{ $$ = new CIfNode($3, $5, $7); } //thus rule has the greater precedence of ELSE
 		| FOR EACH var_or_obj_memb IN obj_expr statement	{ $$ = new CForEachNode($3, $5, $6); }
+		| var_or_obj_memb ADD_ASSIGN expression ';'			{ $$ = new COpAssignNode(opAdd,$1,$3); }
         ;
 
 return_expr:
@@ -226,6 +228,7 @@ expression:
       variable_expr						{ $$ = $1; }
 	  | GETSTRING						{ $$ = new COpNode(opGetString); }
 	  | expression '+' expression		{ $$ = new COpNode(opAdd, $1, $3); }
+	  | expression '-' expression		{ $$ = new COpNode(opSub, $1, $3); }
 	  | member_expr						{ $$ = $1; }
 	  | member_call						{ $$ = new COpNode(opCall, $1); }
 	  | constant_expr					{ $$ = $1; }
@@ -234,6 +237,7 @@ expression:
 	  | comparison_expr					{ $$ = $1; }
 	  | '(' expression ')'				{ $$ = $2; }
 	  | SELF							{ $$ = new CSelfExprNode(); }
+	  | CHILDREN '(' obj_expr ')'		{ $$ = new COpNode(opChildren,$3); }
       ;
 
 variable_expr:
