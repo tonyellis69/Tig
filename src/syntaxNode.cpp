@@ -320,6 +320,13 @@ COpNode::COpNode(TOpCode code, CSyntaxNode * operand1, CSyntaxNode * operand2) {
 	operands.push_back(operand2);
 }
 
+COpNode::COpNode(TOpCode code, CSyntaxNode * operand1, CSyntaxNode * operand2, CSyntaxNode * operand3) {
+	opCode = code;
+	operands.push_back(operand1);
+	operands.push_back(operand2);
+	operands.push_back(operand3);
+}
+
 
 /** Write the bytecode for this operator and its operands. */
 void COpNode::encode() {

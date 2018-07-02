@@ -5,7 +5,7 @@ enum TOpCode { opNop, opPrint, opGiveOptions, opOption, opJumpEvent, opEnd,
 	opPushVar, opGetString, opAdd, opSub, opStartTimer, opTimedEvent,
 	opExpressVar, opPushObj, opCall, opReturn, opReturnTrue, opHot, opInitArray,
 	opPushElem, opAssignElem, opPop, opEq, opLT, opLE, opGT, opGE,
-	opJumpFalse, opJump, opChild, opSibling, opGetVar, opChildren
+	opJumpFalse, opJump, opChild, opSibling, opGetVar, opChildren, opMakeHot
 };
 
 static char* opCode[] = { "opNop\0",
@@ -43,7 +43,8 @@ static char* opCode[] = { "opNop\0",
 	"opChild\0",
 	"opSibling\0",
 	"opGetVar\0",
-	"opChildren\0"
+	"opChildren\0",
+	"opMakeHot\0"
 
 };
 

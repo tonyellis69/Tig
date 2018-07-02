@@ -129,6 +129,7 @@ public:
 	COpNode(TOpCode code, CSyntaxNode* operand);
 	COpNode(TOpCode code);
 	COpNode(TOpCode code, CSyntaxNode* operand1, CSyntaxNode* operand2);
+	COpNode(TOpCode code, CSyntaxNode* operand1, CSyntaxNode* operand2, CSyntaxNode* operand3);
 	void encode();
 
 	TOpCode opCode;

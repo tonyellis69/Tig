@@ -57,6 +57,7 @@
 %token SELF CHILDREN
 //CHILD SIBLING PARENT
 %token ADD_ASSIGN
+%token MAKE_HOT
 %left EQ NE GE '>' LE '<'  OR AND     // '%left' makes these tokens left associative
 %left '+' '-'							 // this ensures that long complex sums are never ambiguous. 
 %left '*' '/' '%' 
@@ -238,6 +239,7 @@ expression:
 	  | '(' expression ')'				{ $$ = $2; }
 	  | SELF							{ $$ = new CSelfExprNode(); }
 	  | CHILDREN '(' obj_expr ')'		{ $$ = new COpNode(opChildren,$3); }
+	  | MAKE_HOT '(' expression ',' expression ',' expression ')' { $$ = new COpNode(opMakeHot,$3,$5,$7);}
       ;
 
 variable_expr:

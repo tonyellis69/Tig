@@ -82,6 +82,7 @@ IDENT    {LETTER}({LETTER}|{DIGIT})*
 "in"					return IN;
 "self"					return SELF;
 "children"				return CHILDREN;
+"makeHot"				return MAKE_HOT;
 {IDENT}					{	identBufs[currentIdentBuf].clear(); 
 							identBufs[currentIdentBuf].assign(yytext,yyleng);
 							yylval.str = &identBufs[currentIdentBuf];
