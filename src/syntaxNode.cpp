@@ -30,6 +30,8 @@ bool CSyntaxNode::global = true;
 char CSyntaxNode::lastOp = 0;
 int CSyntaxNode::currentObj = 0;
 std::vector<int>* CSyntaxNode::parentClassList = NULL;
+std::map<std::string, TGlobalFn> CSyntaxNode::globalFuncIds;
+int CSyntaxNode::nextGlobalFuncId = 0;
 
 std::vector<CSyntaxNode*> CSyntaxNode::nodeList;
 
@@ -50,8 +52,9 @@ void CSyntaxNode::writeOp(char byte) {
 }
 
 void CSyntaxNode::writeByte(char byte) {
+	int addr = outputFile->tellp();
 	outputFile->write(&byte, 1);
-	cout << "\n" << outputFile << " [writeByte] " << (int)byte;
+	cout << "\n" << outputFile << " " << addr << " [writeByte] " << (int)byte;
 }
 
 void CSyntaxNode::writeWord(unsigned int word) {
@@ -151,6 +154,14 @@ void CSyntaxNode::writeMemberNameTable() {
 	}
 }
 
+void CSyntaxNode::writeGlobalFuncTable() {
+	writeWord(globalFuncIds.size());
+	//I don't *think* I need to order these
+	for (auto fn : globalFuncIds) {
+		writeWord(fn.second.addr);
+	}
+}
+
 void CSyntaxNode::writeHeader() {
 	int headerSize = 8;
 	writeWord(eventTableAddr + headerSize); //event table start
@@ -238,7 +249,7 @@ int CSyntaxNode::getGlobalVarId(std::string & identifier) {
 }
 
 /** Return a variable id for a variable used at a local level. */
-int CSyntaxNode::getLocalVarId(std::string & identifier) {
+int CSyntaxNode::getVarId(std::string & identifier) {
 	//TO DO: check if it's a local member
 
 	//check if it's an existing global variable
@@ -279,6 +290,16 @@ int CSyntaxNode::getObjectId(std::string & identifier) {
 		return newObject.objectId;
 	}
 	return iter->second.objectId;
+}
+
+/** Return the unique id number for this global function identifier. */
+int CSyntaxNode::getGlobalFuncId(std::string& identifier) {
+	auto iter = globalFuncIds.find(identifier);
+	if (iter == globalFuncIds.end()) {
+		globalFuncIds[identifier].id = nextGlobalFuncId++;
+		return globalFuncIds[identifier].id;
+	}
+	return iter->second.id;
 }
 
 
@@ -450,10 +471,10 @@ std::string & CEventIdentNode::getText() {
 /** Create a variable assignment node for the named variable. */
 CVarAssigneeNode::CVarAssigneeNode(std::string * parsedString) {
 	//Is this global code?
-	if (global)
-		varId = getGlobalVarId(*parsedString);
-	else
-		varId = -1;
+//	if (global)
+//		varId = getGlobalVarId(*parsedString);
+	//else
+	//	varId = -1;
 
 	name = *parsedString;
 }
@@ -461,7 +482,7 @@ CVarAssigneeNode::CVarAssigneeNode(std::string * parsedString) {
 /** Tell the VM to push this variable's identifier on to the stack. */
 void CVarAssigneeNode::encode() {
 	writeOp(opPushInt);
-	if (varId == -1) { //this is not a global variable
+	//if (varId == -1) { //this is not a global variable
 		//check if it's a data member first.
 		auto iter = memberIds.find(name);
 		if (iter != memberIds.end()) {
@@ -477,8 +498,15 @@ void CVarAssigneeNode::encode() {
 		//check first if it's a prexisting global, that takes priority
 		//if not and we're in global mode it must still be a global variable
 		//if we're not in global mode assume it's local
-		varId = getLocalVarId(name); //local
-	}
+		auto gIt = globalVarIds.find(name);
+		if (gIt != globalVarIds.end()) {
+			varId = gIt->second;
+		}
+		else if (global)
+			varId = getGlobalVarId(name);
+		else
+			varId = getVarId(name); //local
+	//}
 	writeWord(varId); //globl
 }
 
@@ -1078,14 +1106,28 @@ void CIfNode::encode() {
 
 CMemberCallNode::CMemberCallNode(CSyntaxNode * object, std::string * memberName, CSyntaxNode * params) {
 	operands.push_back(object);
-	memberId = getMemberId(*memberName);
+	isFnCall = false;
+	auto iter = globalFuncIds.find(*memberName);
+	if (iter != globalFuncIds.end()) {
+		memberId = iter->second.id;
+		isFnCall = true;
+	}
+	else
+		memberId = getMemberId(*memberName);
 	operands.push_back(params);
 }
 
 void CMemberCallNode::encode() {
-	//tell VM to put the object id on the stack:
-	operands[0]->encode();
-	writeOp(opCall);
+	if (operands[0] == NULL) {
+		writeOp(opPushInt);
+		writeWord(selfObjId);
+	}
+	else
+		operands[0]->encode();
+	if (isFnCall)
+		writeOp(opCallFn);
+	else
+		writeOp(opCall);
 	writeWord(memberId);
 }
 
@@ -1153,3 +1195,40 @@ void COpAssignNode::encode() {
 	writeOp(opCode); //sum values on stack
 	writeOp(opAssign); //leave result in the assignee
 }
+
+
+CGlobalFuncDeclNode::CGlobalFuncDeclNode(std::string * ident, CSyntaxNode * params, CSyntaxNode * code) {
+	//add name to list of global functions
+	id = getGlobalFuncId(*ident);
+	operands.push_back(params);
+	operands.push_back(code);
+	name = *ident;
+}
+
+void CGlobalFuncDeclNode::encode() {
+	if (operands[0])
+		operands[0]->encode();
+	//should now know how many params
+	setOutputFile(fnByteCode);
+	global = false; 
+	localVarIds.clear();
+	int fnStartAddr = outputFile->tellp();
+	writeByte(0); //initial var count
+	operands[1]->encode(); //actual function code
+	char varCount = (char)localVarIds.size(); //check this gets updated
+	if (varCount > 0) {
+		int resume = outputFile->tellp();
+		outputFile->seekp(fnStartAddr);
+		cout << "\n[patch]: ";
+		writeByte(varCount);
+		outputFile->seekp(resume);
+	}
+	if (lastOp != opReturn && lastOp != opReturnTrue)
+		writeOp(opReturnTrue);
+	globalFuncIds[name].addr = fnStartAddr; 
+	global = true;
+	setOutputFile(globalByteCode);
+
+}
+
+

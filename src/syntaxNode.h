@@ -33,6 +33,11 @@ public:
 	std::vector<int> membersToCheck;
 };
 
+struct TGlobalFn {
+	int id;
+	int addr;
+};
+
 /** Basic syntax node. */
 class COptionNode;
 class CMemberDeclNode;
@@ -45,9 +50,10 @@ public:
 	virtual std::string& getText() { std::string nul;  return nul; };
 	int getEventId(std::string& identifier); //TO DO still needed?
 	int getGlobalVarId(std::string & identifier);
-	int getLocalVarId(std::string & identifier);
+	int getVarId(std::string & identifier);
 	int getMemberId(std::string & identifier);
 	int getObjectId(std::string & identifier);
+	int getGlobalFuncId(std::string& identifier);
 	static void setOutputFile(std::ofstream& file);
 	void writeOp(char byte);
 	void writeByte(char byte);
@@ -58,6 +64,7 @@ public:
 	void writeGlobalVarTable();
 	void writeObjectDefTable();
 	void writeMemberNameTable();
+	void writeGlobalFuncTable();
 	void writeHeader();
 
 	void killNodes();
@@ -110,6 +117,8 @@ public:
 	static int currentObj; ///<Current object being defined, if any.
 
 	static std::vector<int>* parentClassList;
+	static std::map<std::string, TGlobalFn> globalFuncIds; ///<Global function names and their ids.
+	static int nextGlobalFuncId;
 };
 
 enum TIdentType { local, globalVar, object };
@@ -389,6 +398,7 @@ public:
 	void encode();
 
 	int memberId;
+	bool isFnCall;
 };
 
 class CForEachNode : public CSyntaxNode {
@@ -410,4 +420,13 @@ public:
 	void encode();
 
 	TOpCode opCode;
+};
+
+class CGlobalFuncDeclNode : public CSyntaxNode {
+public: 
+	CGlobalFuncDeclNode(std::string* ident, CSyntaxNode* params, CSyntaxNode* code);
+	void encode();
+
+	std::string name;
+	int id;
 };

@@ -41,7 +41,7 @@
 %type <nPtr> memb_decl_identifier memb_function_def return_expr member_call
 %type <nPtr> array_init_expr constant_seq array_init_const array_element_expr array_index_expr array_init_list
 %type <nPtr> comparison_expr
-
+%type <nPtr> global_func_decl
 
 %token PRINT END RETURN
 %token EVENT OPTION
@@ -146,6 +146,7 @@ dec_statement:
 		| class_identifier obj_identifier optional_member_list ';'			{ $$ = new CObjDeclNode($2,$3,$1); }
 		| level  obj_identifier optional_member_list ';'				{ $$ = new CObjDeclNode($2,$3,NULL); }
 		| level class_identifier obj_identifier optional_member_list ';'	{ $$ = new CObjDeclNode($3,$4,$2); }
+		| global_func_decl ';'												{ $$ = $1; }
 		;
 
 
@@ -184,6 +185,10 @@ member_decl:
 
 memb_decl_identifier:
 		IDENTIFIER							{ $$ = new CMembDeclIdentNode($1); }
+		;
+
+global_func_decl:
+		IDENTIFIER '(' ')' code_block				{ $$ = new CGlobalFuncDeclNode($1,NULL,$4); }
 		;
 
 
@@ -251,8 +256,8 @@ member_expr:
 	;
 
 member_call:
-	 //obj_expr '.' IDENTIFIER	'(' ')'		{ $$ = new CMemberExprNode($1, $3); }
 	 obj_expr '.' IDENTIFIER	'(' ')'		{ $$ = new CMemberCallNode($1, $3,NULL); }
+	 | IDENTIFIER	'(' ')'					{ $$ = new CMemberCallNode(NULL, $1,NULL); }
 	;
 
 constant_expr:							//TO DO: float

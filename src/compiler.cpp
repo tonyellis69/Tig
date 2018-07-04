@@ -80,6 +80,7 @@ void CTigCompiler::encode(CSyntaxNode * node) {
 	node->writeGlobalVarTable();
 	node->writeObjectDefTable();
 	node->writeMemberNameTable();
+	node->writeGlobalFuncTable();
 	fullCode.close();
 
 	//write header
