@@ -1,8 +1,8 @@
 /* A Bison parser, made by GNU Bison 3.0.  */
 
-/* Bison interface for Yacc-like parsers in C
+/* Skeleton interface for Bison GLR parsers in C
 
-   Copyright (C) 1984, 1989-1990, 2000-2013 Free Software Foundation, Inc.
+   Copyright (C) 2002-2013 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -87,14 +87,14 @@ extern int yydebug;
 typedef union YYSTYPE YYSTYPE;
 union YYSTYPE
 {
-#line 26 "tig.y" /* yacc.c:1909  */
+#line 26 "tig.y" /* glr.c:2553  */
 				 						
     int iValue;                 // integer value - for numeric constants etc 
 	float fValue;				//float value - for floating-point constants
     CSyntaxNode *nPtr;          // node pointer - enables symbols to point to syntax nodes
 	 std::string* str;
 
-#line 98 "tigParse.hpp" /* yacc.c:1909  */
+#line 98 "tigParse.hpp" /* glr.c:2553  */
 };
 # define YYSTYPE_IS_TRIVIAL 1
 # define YYSTYPE_IS_DECLARED 1

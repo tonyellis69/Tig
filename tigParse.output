@@ -1,0 +1,3007 @@
+Terminals unused in grammar
+
+   EVENT
+   OPTION
+   OBJECT
+   ENDL
+   NE
+   OR
+   AND
+   '*'
+   '/'
+   '%'
+   UMINUS
+
+
+State 109 conflicts: 2 reduce/reduce
+
+
+Grammar
+
+    0 $accept: program $end
+
+    1 program: tigcode
+    2        | %empty
+
+    3 tigcode: statement
+    4        | tigcode statement
+    5        | dec_statement
+    6        | tigcode dec_statement
+
+    7 statement: PRINT expression ';'
+    8          | assignment ';'
+    9          | '{' statement_list '}'
+   10          | END ';'
+   11          | string_statement ';'
+   12          | START_TIMER ';'
+   13          | START_EVENT event_identifier AT INTEGER ';'
+   14          | member_call ';'
+   15          | func_call ';'
+   16          | HOT STRING IDENTIFIER ';'
+   17          | RETURN return_expr ';'
+   18          | IF '(' expression ')' statement
+   19          | IF '(' expression ')' statement ELSE statement
+   20          | FOR EACH var_or_obj_memb IN obj_expr statement
+   21          | var_or_obj_memb ADD_ASSIGN expression ';'
+
+   22 return_expr: expression
+   23            | %empty
+
+   24 assignment: var_or_obj_memb '=' expression
+
+   25 var_or_obj_memb: variable_assignee
+   26                | obj_member_assignee
+   27                | element_assignee
+
+   28 variable_assignee: IDENTIFIER
+
+   29 obj_member_assignee: obj_expr '.' IDENTIFIER
+
+   30 obj_expr: IDENTIFIER
+   31         | member_expr
+   32         | SELF
+
+   33 element_assignee: var_or_obj_memb '[' array_index_expr ']'
+
+   34 string_statement: string_literal
+   35                 | string_literal '+' expression
+
+   36 dec_statement: obj_identifier optional_member_list ';'
+   37              | class_identifier obj_identifier optional_member_list ';'
+   38              | level obj_identifier optional_member_list ';'
+   39              | level class_identifier obj_identifier optional_member_list ';'
+   40              | global_func_decl ';'
+
+   41 level: ARROW
+   42      | level ARROW
+
+   43 obj_identifier: IDENTIFIER
+
+   44 class_identifier: IDENTIFIER
+   45                 | class_identifier IDENTIFIER
+
+   46 $@1: %empty
+
+   47 optional_member_list: HAS $@1 member_decl_list
+   48                     | %empty
+
+   49 member_decl_list: member_decl
+   50                 | member_decl_list ',' member_decl
+
+   51 member_decl: memb_decl_identifier
+   52            | memb_decl_identifier '=' init_expr
+   53            | memb_decl_identifier init_expr
+
+   54 memb_decl_identifier: IDENTIFIER
+
+   55 global_func_decl: IDENTIFIER '(' param_decl_list ')' code_block
+   56                 | IDENTIFIER '(' ')' code_block
+
+   57 param_decl_list: IDENTIFIER
+   58                | param_decl_list ',' IDENTIFIER
+
+   59 init_expr: STRING
+   60          | INTEGER
+   61          | memb_function_def
+   62          | obj_identifier
+   63          | array_init_list
+
+   64 memb_function_def: code_block
+
+   65 statement_list: statement
+   66               | statement_list statement
+
+   67 string_literal: STRING
+
+   68 event_identifier: IDENTIFIER
+
+   69 code_block: '{' statement_list '}'
+
+   70 expression: variable_expr
+   71           | GETSTRING
+   72           | expression '+' expression
+   73           | expression '-' expression
+   74           | member_expr
+   75           | member_call
+   76           | func_call
+   77           | constant_expr
+   78           | array_init_expr
+   79           | array_element_expr
+   80           | comparison_expr
+   81           | '(' expression ')'
+   82           | SELF
+   83           | CHILDREN '(' obj_expr ')'
+   84           | MAKE_HOT '(' expression ',' expression ',' expression ')'
+
+   85 variable_expr: IDENTIFIER
+
+   86 member_expr: obj_expr '.' IDENTIFIER
+
+   87 member_call: obj_expr '.' IDENTIFIER '(' param_list ')'
+   88            | obj_expr '.' IDENTIFIER '(' ')'
+
+   89 func_call: IDENTIFIER '(' param_list ')'
+   90          | IDENTIFIER '(' ')'
+
+   91 param_list: expression
+   92           | param_list ',' expression
+
+   93 constant_expr: integer_constant
+   94              | STRING
+
+   95 integer_constant: INTEGER
+
+   96 array_init_expr: '[' constant_seq ']'
+
+   97 array_init_list: '[' constant_seq ']'
+
+   98 constant_seq: array_init_const
+   99             | constant_seq ',' array_init_const
+
+  100 array_init_const: STRING
+  101                 | INTEGER
+  102                 | obj_identifier
+
+  103 array_element_expr: var_or_obj_memb '[' array_index_expr ']'
+
+  104 array_index_expr: variable_expr
+  105                 | integer_constant
+
+  106 comparison_expr: expression EQ expression
+  107                | expression '<' expression
+  108                | expression LE expression
+  109                | expression '>' expression
+  110                | expression GE expression
+
+
+Terminals, with rules where they appear
+
+$end (0) 0
+'%' (37)
+'(' (40) 18 19 55 56 81 83 84 87 88 89 90
+')' (41) 18 19 55 56 81 83 84 87 88 89 90
+'*' (42)
+'+' (43) 35 72
+',' (44) 50 58 84 92 99
+'-' (45) 73
+'.' (46) 29 86 87 88
+'/' (47)
+';' (59) 7 8 10 11 12 13 14 15 16 17 21 36 37 38 39 40
+'<' (60) 107
+'=' (61) 24 52
+'>' (62) 109
+'[' (91) 33 96 97 103
+']' (93) 33 96 97 103
+'{' (123) 9 69
+'}' (125) 9 69
+error (256)
+PRINT (258) 7
+END (259) 10
+RETURN (260) 17
+EVENT (261)
+OPTION (262)
+OBJECT (263)
+HAS (264) 47
+ARROW (265) 41 42
+GETSTRING (266) 71
+HOT (267) 16
+START_TIMER (268) 12
+START_EVENT (269) 13
+AT (270) 13
+INTEGER (271) 13 60 95 101
+IDENTIFIER (272) 16 28 29 30 43 44 45 54 55 56 57 58 68 85 86 87 88
+    89 90
+STRING (273) 16 59 67 94 100
+ENDL (274)
+IF (275) 18 19
+FOR (276) 20
+EACH (277) 20
+IN (278) 20
+SELF (279) 32 82
+CHILDREN (280) 83
+ADD_ASSIGN (281) 21
+MAKE_HOT (282) 84
+EQ (283) 106
+NE (284)
+GE (285) 110
+LE (286) 108
+OR (287)
+AND (288)
+UMINUS (289)
+IFX (290)
+ELSE (291) 19
+
+
+Nonterminals, with rules where they appear
+
+$accept (54)
+    on left: 0
+program (55)
+    on left: 1 2, on right: 0
+tigcode (56)
+    on left: 3 4 5 6, on right: 1 4 6
+statement (57)
+    on left: 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21, on right: 3
+    4 18 19 20 65 66
+return_expr (58)
+    on left: 22 23, on right: 17
+assignment (59)
+    on left: 24, on right: 8
+var_or_obj_memb (60)
+    on left: 25 26 27, on right: 20 21 24 33 103
+variable_assignee (61)
+    on left: 28, on right: 25
+obj_member_assignee (62)
+    on left: 29, on right: 26
+obj_expr (63)
+    on left: 30 31 32, on right: 20 29 83 86 87 88
+element_assignee (64)
+    on left: 33, on right: 27
+string_statement (65)
+    on left: 34 35, on right: 11
+dec_statement (66)
+    on left: 36 37 38 39 40, on right: 5 6
+level (67)
+    on left: 41 42, on right: 38 39 42
+obj_identifier (68)
+    on left: 43, on right: 36 37 38 39 62 102
+class_identifier (69)
+    on left: 44 45, on right: 37 39 45
+optional_member_list (70)
+    on left: 47 48, on right: 36 37 38 39
+$@1 (71)
+    on left: 46, on right: 47
+member_decl_list (72)
+    on left: 49 50, on right: 47 50
+member_decl (73)
+    on left: 51 52 53, on right: 49 50
+memb_decl_identifier (74)
+    on left: 54, on right: 51 52 53
+global_func_decl (75)
+    on left: 55 56, on right: 40
+param_decl_list (76)
+    on left: 57 58, on right: 55 58
+init_expr (77)
+    on left: 59 60 61 62 63, on right: 52 53
+memb_function_def (78)
+    on left: 64, on right: 61
+statement_list (79)
+    on left: 65 66, on right: 9 66 69
+string_literal (80)
+    on left: 67, on right: 34 35
+event_identifier (81)
+    on left: 68, on right: 13
+code_block (82)
+    on left: 69, on right: 55 56 64
+expression (83)
+    on left: 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84, on right:
+    7 18 19 21 22 24 35 72 73 81 84 91 92 106 107 108 109 110
+variable_expr (84)
+    on left: 85, on right: 70 104
+member_expr (85)
+    on left: 86, on right: 31 74
+member_call (86)
+    on left: 87 88, on right: 14 75
+func_call (87)
+    on left: 89 90, on right: 15 76
+param_list (88)
+    on left: 91 92, on right: 87 89 92
+constant_expr (89)
+    on left: 93 94, on right: 77
+integer_constant (90)
+    on left: 95, on right: 93 105
+array_init_expr (91)
+    on left: 96, on right: 78
+array_init_list (92)
+    on left: 97, on right: 63
+constant_seq (93)
+    on left: 98 99, on right: 96 97 99
+array_init_const (94)
+    on left: 100 101 102, on right: 98 99
+array_element_expr (95)
+    on left: 103, on right: 79
+array_index_expr (96)
+    on left: 104 105, on right: 33 103
+comparison_expr (97)
+    on left: 106 107 108 109 110, on right: 80
+
+
+State 0
+
+    0 $accept: . program $end
+
+    PRINT        shift, and go to state 1
+    END          shift, and go to state 2
+    RETURN       shift, and go to state 3
+    ARROW        shift, and go to state 4
+    HOT          shift, and go to state 5
+    START_TIMER  shift, and go to state 6
+    START_EVENT  shift, and go to state 7
+    IDENTIFIER   shift, and go to state 8
+    STRING       shift, and go to state 9
+    IF           shift, and go to state 10
+    FOR          shift, and go to state 11
+    SELF         shift, and go to state 12
+    '{'          shift, and go to state 13
+
+    $default  reduce using rule 2 (program)
+
+    program              go to state 14
+    tigcode              go to state 15
+    statement            go to state 16
+    assignment           go to state 17
+    var_or_obj_memb      go to state 18
+    variable_assignee    go to state 19
+    obj_member_assignee  go to state 20
+    obj_expr             go to state 21
+    element_assignee     go to state 22
+    string_statement     go to state 23
+    dec_statement        go to state 24
+    level                go to state 25
+    obj_identifier       go to state 26
+    class_identifier     go to state 27
+    global_func_decl     go to state 28
+    string_literal       go to state 29
+    member_expr          go to state 30
+    member_call          go to state 31
+    func_call            go to state 32
+
+
+State 1
+
+    7 statement: PRINT . expression ';'
+
+    GETSTRING   shift, and go to state 33
+    INTEGER     shift, and go to state 34
+    IDENTIFIER  shift, and go to state 35
+    STRING      shift, and go to state 36
+    SELF        shift, and go to state 37
+    CHILDREN    shift, and go to state 38
+    MAKE_HOT    shift, and go to state 39
+    '('         shift, and go to state 40
+    '['         shift, and go to state 41
+
+    var_or_obj_memb      go to state 42
+    variable_assignee    go to state 19
+    obj_member_assignee  go to state 20
+    obj_expr             go to state 21
+    element_assignee     go to state 22
+    expression           go to state 43
+    variable_expr        go to state 44
+    member_expr          go to state 45
+    member_call          go to state 46
+    func_call            go to state 47
+    constant_expr        go to state 48
+    integer_constant     go to state 49
+    array_init_expr      go to state 50
+    array_element_expr   go to state 51
+    comparison_expr      go to state 52
+
+
+State 2
+
+   10 statement: END . ';'
+
+    ';'  shift, and go to state 53
+
+
+State 3
+
+   17 statement: RETURN . return_expr ';'
+
+    GETSTRING   shift, and go to state 33
+    INTEGER     shift, and go to state 34
+    IDENTIFIER  shift, and go to state 35
+    STRING      shift, and go to state 36
+    SELF        shift, and go to state 37
+    CHILDREN    shift, and go to state 38
+    MAKE_HOT    shift, and go to state 39
+    '('         shift, and go to state 40
+    '['         shift, and go to state 41
+
+    $default  reduce using rule 23 (return_expr)
+
+    return_expr          go to state 54
+    var_or_obj_memb      go to state 42
+    variable_assignee    go to state 19
+    obj_member_assignee  go to state 20
+    obj_expr             go to state 21
+    element_assignee     go to state 22
+    expression           go to state 55
+    variable_expr        go to state 44
+    member_expr          go to state 45
+    member_call          go to state 46
+    func_call            go to state 47
+    constant_expr        go to state 48
+    integer_constant     go to state 49
+    array_init_expr      go to state 50
+    array_element_expr   go to state 51
+    comparison_expr      go to state 52
+
+
+State 4
+
+   41 level: ARROW .
+
+    $default  reduce using rule 41 (level)
+
+
+State 5
+
+   16 statement: HOT . STRING IDENTIFIER ';'
+
+    STRING  shift, and go to state 56
+
+
+State 6
+
+   12 statement: START_TIMER . ';'
+
+    ';'  shift, and go to state 57
+
+
+State 7
+
+   13 statement: START_EVENT . event_identifier AT INTEGER ';'
+
+    IDENTIFIER  shift, and go to state 58
+
+    event_identifier  go to state 59
+
+
+State 8
+
+   28 variable_assignee: IDENTIFIER .
+   30 obj_expr: IDENTIFIER .
+   43 obj_identifier: IDENTIFIER .
+   44 class_identifier: IDENTIFIER .
+   55 global_func_decl: IDENTIFIER . '(' param_decl_list ')' code_block
+   56                 | IDENTIFIER . '(' ')' code_block
+   89 func_call: IDENTIFIER . '(' param_list ')'
+   90          | IDENTIFIER . '(' ')'
+
+    '('  shift, and go to state 60
+
+    HAS         reduce using rule 43 (obj_identifier)
+    IDENTIFIER  reduce using rule 44 (class_identifier)
+    ';'         reduce using rule 43 (obj_identifier)
+    '.'         reduce using rule 30 (obj_expr)
+    $default    reduce using rule 28 (variable_assignee)
+
+
+State 9
+
+   67 string_literal: STRING .
+
+    $default  reduce using rule 67 (string_literal)
+
+
+State 10
+
+   18 statement: IF . '(' expression ')' statement
+   19          | IF . '(' expression ')' statement ELSE statement
+
+    '('  shift, and go to state 61
+
+
+State 11
+
+   20 statement: FOR . EACH var_or_obj_memb IN obj_expr statement
+
+    EACH  shift, and go to state 62
+
+
+State 12
+
+   32 obj_expr: SELF .
+
+    $default  reduce using rule 32 (obj_expr)
+
+
+State 13
+
+    9 statement: '{' . statement_list '}'
+
+    PRINT        shift, and go to state 1
+    END          shift, and go to state 2
+    RETURN       shift, and go to state 3
+    HOT          shift, and go to state 5
+    START_TIMER  shift, and go to state 6
+    START_EVENT  shift, and go to state 7
+    IDENTIFIER   shift, and go to state 63
+    STRING       shift, and go to state 9
+    IF           shift, and go to state 10
+    FOR          shift, and go to state 11
+    SELF         shift, and go to state 12
+    '{'          shift, and go to state 13
+
+    statement            go to state 64
+    assignment           go to state 17
+    var_or_obj_memb      go to state 18
+    variable_assignee    go to state 19
+    obj_member_assignee  go to state 20
+    obj_expr             go to state 21
+    element_assignee     go to state 22
+    string_statement     go to state 23
+    statement_list       go to state 65
+    string_literal       go to state 29
+    member_expr          go to state 30
+    member_call          go to state 31
+    func_call            go to state 32
+
+
+State 14
+
+    0 $accept: program . $end
+
+    $end  shift, and go to state 66
+
+
+State 15
+
+    1 program: tigcode .
+    4 tigcode: tigcode . statement
+    6        | tigcode . dec_statement
+
+    PRINT        shift, and go to state 1
+    END          shift, and go to state 2
+    RETURN       shift, and go to state 3
+    ARROW        shift, and go to state 4
+    HOT          shift, and go to state 5
+    START_TIMER  shift, and go to state 6
+    START_EVENT  shift, and go to state 7
+    IDENTIFIER   shift, and go to state 8
+    STRING       shift, and go to state 9
+    IF           shift, and go to state 10
+    FOR          shift, and go to state 11
+    SELF         shift, and go to state 12
+    '{'          shift, and go to state 13
+
+    $default  reduce using rule 1 (program)
+
+    statement            go to state 67
+    assignment           go to state 17
+    var_or_obj_memb      go to state 18
+    variable_assignee    go to state 19
+    obj_member_assignee  go to state 20
+    obj_expr             go to state 21
+    element_assignee     go to state 22
+    string_statement     go to state 23
+    dec_statement        go to state 68
+    level                go to state 25
+    obj_identifier       go to state 26
+    class_identifier     go to state 27
+    global_func_decl     go to state 28
+    string_literal       go to state 29
+    member_expr          go to state 30
+    member_call          go to state 31
+    func_call            go to state 32
+
+
+State 16
+
+    3 tigcode: statement .
+
+    $default  reduce using rule 3 (tigcode)
+
+
+State 17
+
+    8 statement: assignment . ';'
+
+    ';'  shift, and go to state 69
+
+
+State 18
+
+   21 statement: var_or_obj_memb . ADD_ASSIGN expression ';'
+   24 assignment: var_or_obj_memb . '=' expression
+   33 element_assignee: var_or_obj_memb . '[' array_index_expr ']'
+
+    ADD_ASSIGN  shift, and go to state 70
+    '='         shift, and go to state 71
+    '['         shift, and go to state 72
+
+
+State 19
+
+   25 var_or_obj_memb: variable_assignee .
+
+    $default  reduce using rule 25 (var_or_obj_memb)
+
+
+State 20
+
+   26 var_or_obj_memb: obj_member_assignee .
+
+    $default  reduce using rule 26 (var_or_obj_memb)
+
+
+State 21
+
+   29 obj_member_assignee: obj_expr . '.' IDENTIFIER
+   86 member_expr: obj_expr . '.' IDENTIFIER
+   87 member_call: obj_expr . '.' IDENTIFIER '(' param_list ')'
+   88            | obj_expr . '.' IDENTIFIER '(' ')'
+
+    '.'  shift, and go to state 73
+
+
+State 22
+
+   27 var_or_obj_memb: element_assignee .
+
+    $default  reduce using rule 27 (var_or_obj_memb)
+
+
+State 23
+
+   11 statement: string_statement . ';'
+
+    ';'  shift, and go to state 74
+
+
+State 24
+
+    5 tigcode: dec_statement .
+
+    $default  reduce using rule 5 (tigcode)
+
+
+State 25
+
+   38 dec_statement: level . obj_identifier optional_member_list ';'
+   39              | level . class_identifier obj_identifier optional_member_list ';'
+   42 level: level . ARROW
+
+    ARROW       shift, and go to state 75
+    IDENTIFIER  shift, and go to state 76
+
+    obj_identifier    go to state 77
+    class_identifier  go to state 78
+
+
+State 26
+
+   36 dec_statement: obj_identifier . optional_member_list ';'
+
+    HAS  shift, and go to state 79
+
+    $default  reduce using rule 48 (optional_member_list)
+
+    optional_member_list  go to state 80
+
+
+State 27
+
+   37 dec_statement: class_identifier . obj_identifier optional_member_list ';'
+   45 class_identifier: class_identifier . IDENTIFIER
+
+    IDENTIFIER  shift, and go to state 81
+
+    obj_identifier  go to state 82
+
+
+State 28
+
+   40 dec_statement: global_func_decl . ';'
+
+    ';'  shift, and go to state 83
+
+
+State 29
+
+   34 string_statement: string_literal .
+   35                 | string_literal . '+' expression
+
+    '+'  shift, and go to state 84
+
+    $default  reduce using rule 34 (string_statement)
+
+
+State 30
+
+   31 obj_expr: member_expr .
+
+    $default  reduce using rule 31 (obj_expr)
+
+
+State 31
+
+   14 statement: member_call . ';'
+
+    ';'  shift, and go to state 85
+
+
+State 32
+
+   15 statement: func_call . ';'
+
+    ';'  shift, and go to state 86
+
+
+State 33
+
+   71 expression: GETSTRING .
+
+    $default  reduce using rule 71 (expression)
+
+
+State 34
+
+   95 integer_constant: INTEGER .
+
+    $default  reduce using rule 95 (integer_constant)
+
+
+State 35
+
+   28 variable_assignee: IDENTIFIER .
+   30 obj_expr: IDENTIFIER .
+   85 variable_expr: IDENTIFIER .
+   89 func_call: IDENTIFIER . '(' param_list ')'
+   90          | IDENTIFIER . '(' ')'
+
+    '('  shift, and go to state 87
+
+    '.'       reduce using rule 30 (obj_expr)
+    '['       reduce using rule 28 (variable_assignee)
+    $default  reduce using rule 85 (variable_expr)
+
+
+State 36
+
+   94 constant_expr: STRING .
+
+    $default  reduce using rule 94 (constant_expr)
+
+
+State 37
+
+   32 obj_expr: SELF .
+   82 expression: SELF .
+
+    '.'       reduce using rule 32 (obj_expr)
+    $default  reduce using rule 82 (expression)
+
+
+State 38
+
+   83 expression: CHILDREN . '(' obj_expr ')'
+
+    '('  shift, and go to state 88
+
+
+State 39
+
+   84 expression: MAKE_HOT . '(' expression ',' expression ',' expression ')'
+
+    '('  shift, and go to state 89
+
+
+State 40
+
+   81 expression: '(' . expression ')'
+
+    GETSTRING   shift, and go to state 33
+    INTEGER     shift, and go to state 34
+    IDENTIFIER  shift, and go to state 35
+    STRING      shift, and go to state 36
+    SELF        shift, and go to state 37
+    CHILDREN    shift, and go to state 38
+    MAKE_HOT    shift, and go to state 39
+    '('         shift, and go to state 40
+    '['         shift, and go to state 41
+
+    var_or_obj_memb      go to state 42
+    variable_assignee    go to state 19
+    obj_member_assignee  go to state 20
+    obj_expr             go to state 21
+    element_assignee     go to state 22
+    expression           go to state 90
+    variable_expr        go to state 44
+    member_expr          go to state 45
+    member_call          go to state 46
+    func_call            go to state 47
+    constant_expr        go to state 48
+    integer_constant     go to state 49
+    array_init_expr      go to state 50
+    array_element_expr   go to state 51
+    comparison_expr      go to state 52
+
+
+State 41
+
+   96 array_init_expr: '[' . constant_seq ']'
+
+    INTEGER     shift, and go to state 91
+    IDENTIFIER  shift, and go to state 92
+    STRING      shift, and go to state 93
+
+    obj_identifier    go to state 94
+    constant_seq      go to state 95
+    array_init_const  go to state 96
+
+
+State 42
+
+   33 element_assignee: var_or_obj_memb . '[' array_index_expr ']'
+  103 array_element_expr: var_or_obj_memb . '[' array_index_expr ']'
+
+    '['  shift, and go to state 97
+
+
+State 43
+
+    7 statement: PRINT expression . ';'
+   72 expression: expression . '+' expression
+   73           | expression . '-' expression
+  106 comparison_expr: expression . EQ expression
+  107                | expression . '<' expression
+  108                | expression . LE expression
+  109                | expression . '>' expression
+  110                | expression . GE expression
+
+    EQ   shift, and go to state 98
+    GE   shift, and go to state 99
+    '>'  shift, and go to state 100
+    LE   shift, and go to state 101
+    '<'  shift, and go to state 102
+    '+'  shift, and go to state 103
+    '-'  shift, and go to state 104
+    ';'  shift, and go to state 105
+
+
+State 44
+
+   70 expression: variable_expr .
+
+    $default  reduce using rule 70 (expression)
+
+
+State 45
+
+   31 obj_expr: member_expr .
+   74 expression: member_expr .
+
+    '.'       reduce using rule 31 (obj_expr)
+    $default  reduce using rule 74 (expression)
+
+
+State 46
+
+   75 expression: member_call .
+
+    $default  reduce using rule 75 (expression)
+
+
+State 47
+
+   76 expression: func_call .
+
+    $default  reduce using rule 76 (expression)
+
+
+State 48
+
+   77 expression: constant_expr .
+
+    $default  reduce using rule 77 (expression)
+
+
+State 49
+
+   93 constant_expr: integer_constant .
+
+    $default  reduce using rule 93 (constant_expr)
+
+
+State 50
+
+   78 expression: array_init_expr .
+
+    $default  reduce using rule 78 (expression)
+
+
+State 51
+
+   79 expression: array_element_expr .
+
+    $default  reduce using rule 79 (expression)
+
+
+State 52
+
+   80 expression: comparison_expr .
+
+    $default  reduce using rule 80 (expression)
+
+
+State 53
+
+   10 statement: END ';' .
+
+    $default  reduce using rule 10 (statement)
+
+
+State 54
+
+   17 statement: RETURN return_expr . ';'
+
+    ';'  shift, and go to state 106
+
+
+State 55
+
+   22 return_expr: expression .
+   72 expression: expression . '+' expression
+   73           | expression . '-' expression
+  106 comparison_expr: expression . EQ expression
+  107                | expression . '<' expression
+  108                | expression . LE expression
+  109                | expression . '>' expression
+  110                | expression . GE expression
+
+    EQ   shift, and go to state 98
+    GE   shift, and go to state 99
+    '>'  shift, and go to state 100
+    LE   shift, and go to state 101
+    '<'  shift, and go to state 102
+    '+'  shift, and go to state 103
+    '-'  shift, and go to state 104
+
+    $default  reduce using rule 22 (return_expr)
+
+
+State 56
+
+   16 statement: HOT STRING . IDENTIFIER ';'
+
+    IDENTIFIER  shift, and go to state 107
+
+
+State 57
+
+   12 statement: START_TIMER ';' .
+
+    $default  reduce using rule 12 (statement)
+
+
+State 58
+
+   68 event_identifier: IDENTIFIER .
+
+    $default  reduce using rule 68 (event_identifier)
+
+
+State 59
+
+   13 statement: START_EVENT event_identifier . AT INTEGER ';'
+
+    AT  shift, and go to state 108
+
+
+State 60
+
+   55 global_func_decl: IDENTIFIER '(' . param_decl_list ')' code_block
+   56                 | IDENTIFIER '(' . ')' code_block
+   89 func_call: IDENTIFIER '(' . param_list ')'
+   90          | IDENTIFIER '(' . ')'
+
+    GETSTRING   shift, and go to state 33
+    INTEGER     shift, and go to state 34
+    IDENTIFIER  shift, and go to state 109
+    STRING      shift, and go to state 36
+    SELF        shift, and go to state 37
+    CHILDREN    shift, and go to state 38
+    MAKE_HOT    shift, and go to state 39
+    '('         shift, and go to state 40
+    ')'         shift, and go to state 110
+    '['         shift, and go to state 41
+
+    var_or_obj_memb      go to state 42
+    variable_assignee    go to state 19
+    obj_member_assignee  go to state 20
+    obj_expr             go to state 21
+    element_assignee     go to state 22
+    param_decl_list      go to state 111
+    expression           go to state 112
+    variable_expr        go to state 44
+    member_expr          go to state 45
+    member_call          go to state 46
+    func_call            go to state 47
+    param_list           go to state 113
+    constant_expr        go to state 48
+    integer_constant     go to state 49
+    array_init_expr      go to state 50
+    array_element_expr   go to state 51
+    comparison_expr      go to state 52
+
+
+State 61
+
+   18 statement: IF '(' . expression ')' statement
+   19          | IF '(' . expression ')' statement ELSE statement
+
+    GETSTRING   shift, and go to state 33
+    INTEGER     shift, and go to state 34
+    IDENTIFIER  shift, and go to state 35
+    STRING      shift, and go to state 36
+    SELF        shift, and go to state 37
+    CHILDREN    shift, and go to state 38
+    MAKE_HOT    shift, and go to state 39
+    '('         shift, and go to state 40
+    '['         shift, and go to state 41
+
+    var_or_obj_memb      go to state 42
+    variable_assignee    go to state 19
+    obj_member_assignee  go to state 20
+    obj_expr             go to state 21
+    element_assignee     go to state 22
+    expression           go to state 114
+    variable_expr        go to state 44
+    member_expr          go to state 45
+    member_call          go to state 46
+    func_call            go to state 47
+    constant_expr        go to state 48
+    integer_constant     go to state 49
+    array_init_expr      go to state 50
+    array_element_expr   go to state 51
+    comparison_expr      go to state 52
+
+
+State 62
+
+   20 statement: FOR EACH . var_or_obj_memb IN obj_expr statement
+
+    IDENTIFIER  shift, and go to state 115
+    SELF        shift, and go to state 12
+
+    var_or_obj_memb      go to state 116
+    variable_assignee    go to state 19
+    obj_member_assignee  go to state 20
+    obj_expr             go to state 117
+    element_assignee     go to state 22
+    member_expr          go to state 30
+
+
+State 63
+
+   28 variable_assignee: IDENTIFIER .
+   30 obj_expr: IDENTIFIER .
+   89 func_call: IDENTIFIER . '(' param_list ')'
+   90          | IDENTIFIER . '(' ')'
+
+    '('  shift, and go to state 87
+
+    '.'       reduce using rule 30 (obj_expr)
+    $default  reduce using rule 28 (variable_assignee)
+
+
+State 64
+
+   65 statement_list: statement .
+
+    $default  reduce using rule 65 (statement_list)
+
+
+State 65
+
+    9 statement: '{' statement_list . '}'
+   66 statement_list: statement_list . statement
+
+    PRINT        shift, and go to state 1
+    END          shift, and go to state 2
+    RETURN       shift, and go to state 3
+    HOT          shift, and go to state 5
+    START_TIMER  shift, and go to state 6
+    START_EVENT  shift, and go to state 7
+    IDENTIFIER   shift, and go to state 63
+    STRING       shift, and go to state 9
+    IF           shift, and go to state 10
+    FOR          shift, and go to state 11
+    SELF         shift, and go to state 12
+    '{'          shift, and go to state 13
+    '}'          shift, and go to state 118
+
+    statement            go to state 119
+    assignment           go to state 17
+    var_or_obj_memb      go to state 18
+    variable_assignee    go to state 19
+    obj_member_assignee  go to state 20
+    obj_expr             go to state 21
+    element_assignee     go to state 22
+    string_statement     go to state 23
+    string_literal       go to state 29
+    member_expr          go to state 30
+    member_call          go to state 31
+    func_call            go to state 32
+
+
+State 66
+
+    0 $accept: program $end .
+
+    $default  accept
+
+
+State 67
+
+    4 tigcode: tigcode statement .
+
+    $default  reduce using rule 4 (tigcode)
+
+
+State 68
+
+    6 tigcode: tigcode dec_statement .
+
+    $default  reduce using rule 6 (tigcode)
+
+
+State 69
+
+    8 statement: assignment ';' .
+
+    $default  reduce using rule 8 (statement)
+
+
+State 70
+
+   21 statement: var_or_obj_memb ADD_ASSIGN . expression ';'
+
+    GETSTRING   shift, and go to state 33
+    INTEGER     shift, and go to state 34
+    IDENTIFIER  shift, and go to state 35
+    STRING      shift, and go to state 36
+    SELF        shift, and go to state 37
+    CHILDREN    shift, and go to state 38
+    MAKE_HOT    shift, and go to state 39
+    '('         shift, and go to state 40
+    '['         shift, and go to state 41
+
+    var_or_obj_memb      go to state 42
+    variable_assignee    go to state 19
+    obj_member_assignee  go to state 20
+    obj_expr             go to state 21
+    element_assignee     go to state 22
+    expression           go to state 120
+    variable_expr        go to state 44
+    member_expr          go to state 45
+    member_call          go to state 46
+    func_call            go to state 47
+    constant_expr        go to state 48
+    integer_constant     go to state 49
+    array_init_expr      go to state 50
+    array_element_expr   go to state 51
+    comparison_expr      go to state 52
+
+
+State 71
+
+   24 assignment: var_or_obj_memb '=' . expression
+
+    GETSTRING   shift, and go to state 33
+    INTEGER     shift, and go to state 34
+    IDENTIFIER  shift, and go to state 35
+    STRING      shift, and go to state 36
+    SELF        shift, and go to state 37
+    CHILDREN    shift, and go to state 38
+    MAKE_HOT    shift, and go to state 39
+    '('         shift, and go to state 40
+    '['         shift, and go to state 41
+
+    var_or_obj_memb      go to state 42
+    variable_assignee    go to state 19
+    obj_member_assignee  go to state 20
+    obj_expr             go to state 21
+    element_assignee     go to state 22
+    expression           go to state 121
+    variable_expr        go to state 44
+    member_expr          go to state 45
+    member_call          go to state 46
+    func_call            go to state 47
+    constant_expr        go to state 48
+    integer_constant     go to state 49
+    array_init_expr      go to state 50
+    array_element_expr   go to state 51
+    comparison_expr      go to state 52
+
+
+State 72
+
+   33 element_assignee: var_or_obj_memb '[' . array_index_expr ']'
+
+    INTEGER     shift, and go to state 34
+    IDENTIFIER  shift, and go to state 122
+
+    variable_expr     go to state 123
+    integer_constant  go to state 124
+    array_index_expr  go to state 125
+
+
+State 73
+
+   29 obj_member_assignee: obj_expr '.' . IDENTIFIER
+   86 member_expr: obj_expr '.' . IDENTIFIER
+   87 member_call: obj_expr '.' . IDENTIFIER '(' param_list ')'
+   88            | obj_expr '.' . IDENTIFIER '(' ')'
+
+    IDENTIFIER  shift, and go to state 126
+
+
+State 74
+
+   11 statement: string_statement ';' .
+
+    $default  reduce using rule 11 (statement)
+
+
+State 75
+
+   42 level: level ARROW .
+
+    $default  reduce using rule 42 (level)
+
+
+State 76
+
+   43 obj_identifier: IDENTIFIER .
+   44 class_identifier: IDENTIFIER .
+
+    IDENTIFIER  reduce using rule 44 (class_identifier)
+    $default    reduce using rule 43 (obj_identifier)
+
+
+State 77
+
+   38 dec_statement: level obj_identifier . optional_member_list ';'
+
+    HAS  shift, and go to state 79
+
+    $default  reduce using rule 48 (optional_member_list)
+
+    optional_member_list  go to state 127
+
+
+State 78
+
+   39 dec_statement: level class_identifier . obj_identifier optional_member_list ';'
+   45 class_identifier: class_identifier . IDENTIFIER
+
+    IDENTIFIER  shift, and go to state 81
+
+    obj_identifier  go to state 128
+
+
+State 79
+
+   47 optional_member_list: HAS . $@1 member_decl_list
+
+    $default  reduce using rule 46 ($@1)
+
+    $@1  go to state 129
+
+
+State 80
+
+   36 dec_statement: obj_identifier optional_member_list . ';'
+
+    ';'  shift, and go to state 130
+
+
+State 81
+
+   43 obj_identifier: IDENTIFIER .
+   45 class_identifier: class_identifier IDENTIFIER .
+
+    IDENTIFIER  reduce using rule 45 (class_identifier)
+    $default    reduce using rule 43 (obj_identifier)
+
+
+State 82
+
+   37 dec_statement: class_identifier obj_identifier . optional_member_list ';'
+
+    HAS  shift, and go to state 79
+
+    $default  reduce using rule 48 (optional_member_list)
+
+    optional_member_list  go to state 131
+
+
+State 83
+
+   40 dec_statement: global_func_decl ';' .
+
+    $default  reduce using rule 40 (dec_statement)
+
+
+State 84
+
+   35 string_statement: string_literal '+' . expression
+
+    GETSTRING   shift, and go to state 33
+    INTEGER     shift, and go to state 34
+    IDENTIFIER  shift, and go to state 35
+    STRING      shift, and go to state 36
+    SELF        shift, and go to state 37
+    CHILDREN    shift, and go to state 38
+    MAKE_HOT    shift, and go to state 39
+    '('         shift, and go to state 40
+    '['         shift, and go to state 41
+
+    var_or_obj_memb      go to state 42
+    variable_assignee    go to state 19
+    obj_member_assignee  go to state 20
+    obj_expr             go to state 21
+    element_assignee     go to state 22
+    expression           go to state 132
+    variable_expr        go to state 44
+    member_expr          go to state 45
+    member_call          go to state 46
+    func_call            go to state 47
+    constant_expr        go to state 48
+    integer_constant     go to state 49
+    array_init_expr      go to state 50
+    array_element_expr   go to state 51
+    comparison_expr      go to state 52
+
+
+State 85
+
+   14 statement: member_call ';' .
+
+    $default  reduce using rule 14 (statement)
+
+
+State 86
+
+   15 statement: func_call ';' .
+
+    $default  reduce using rule 15 (statement)
+
+
+State 87
+
+   89 func_call: IDENTIFIER '(' . param_list ')'
+   90          | IDENTIFIER '(' . ')'
+
+    GETSTRING   shift, and go to state 33
+    INTEGER     shift, and go to state 34
+    IDENTIFIER  shift, and go to state 35
+    STRING      shift, and go to state 36
+    SELF        shift, and go to state 37
+    CHILDREN    shift, and go to state 38
+    MAKE_HOT    shift, and go to state 39
+    '('         shift, and go to state 40
+    ')'         shift, and go to state 133
+    '['         shift, and go to state 41
+
+    var_or_obj_memb      go to state 42
+    variable_assignee    go to state 19
+    obj_member_assignee  go to state 20
+    obj_expr             go to state 21
+    element_assignee     go to state 22
+    expression           go to state 112
+    variable_expr        go to state 44
+    member_expr          go to state 45
+    member_call          go to state 46
+    func_call            go to state 47
+    param_list           go to state 113
+    constant_expr        go to state 48
+    integer_constant     go to state 49
+    array_init_expr      go to state 50
+    array_element_expr   go to state 51
+    comparison_expr      go to state 52
+
+
+State 88
+
+   83 expression: CHILDREN '(' . obj_expr ')'
+
+    IDENTIFIER  shift, and go to state 134
+    SELF        shift, and go to state 12
+
+    obj_expr     go to state 135
+    member_expr  go to state 30
+
+
+State 89
+
+   84 expression: MAKE_HOT '(' . expression ',' expression ',' expression ')'
+
+    GETSTRING   shift, and go to state 33
+    INTEGER     shift, and go to state 34
+    IDENTIFIER  shift, and go to state 35
+    STRING      shift, and go to state 36
+    SELF        shift, and go to state 37
+    CHILDREN    shift, and go to state 38
+    MAKE_HOT    shift, and go to state 39
+    '('         shift, and go to state 40
+    '['         shift, and go to state 41
+
+    var_or_obj_memb      go to state 42
+    variable_assignee    go to state 19
+    obj_member_assignee  go to state 20
+    obj_expr             go to state 21
+    element_assignee     go to state 22
+    expression           go to state 136
+    variable_expr        go to state 44
+    member_expr          go to state 45
+    member_call          go to state 46
+    func_call            go to state 47
+    constant_expr        go to state 48
+    integer_constant     go to state 49
+    array_init_expr      go to state 50
+    array_element_expr   go to state 51
+    comparison_expr      go to state 52
+
+
+State 90
+
+   72 expression: expression . '+' expression
+   73           | expression . '-' expression
+   81           | '(' expression . ')'
+  106 comparison_expr: expression . EQ expression
+  107                | expression . '<' expression
+  108                | expression . LE expression
+  109                | expression . '>' expression
+  110                | expression . GE expression
+
+    EQ   shift, and go to state 98
+    GE   shift, and go to state 99
+    '>'  shift, and go to state 100
+    LE   shift, and go to state 101
+    '<'  shift, and go to state 102
+    '+'  shift, and go to state 103
+    '-'  shift, and go to state 104
+    ')'  shift, and go to state 137
+
+
+State 91
+
+  101 array_init_const: INTEGER .
+
+    $default  reduce using rule 101 (array_init_const)
+
+
+State 92
+
+   43 obj_identifier: IDENTIFIER .
+
+    $default  reduce using rule 43 (obj_identifier)
+
+
+State 93
+
+  100 array_init_const: STRING .
+
+    $default  reduce using rule 100 (array_init_const)
+
+
+State 94
+
+  102 array_init_const: obj_identifier .
+
+    $default  reduce using rule 102 (array_init_const)
+
+
+State 95
+
+   96 array_init_expr: '[' constant_seq . ']'
+   99 constant_seq: constant_seq . ',' array_init_const
+
+    ']'  shift, and go to state 138
+    ','  shift, and go to state 139
+
+
+State 96
+
+   98 constant_seq: array_init_const .
+
+    $default  reduce using rule 98 (constant_seq)
+
+
+State 97
+
+   33 element_assignee: var_or_obj_memb '[' . array_index_expr ']'
+  103 array_element_expr: var_or_obj_memb '[' . array_index_expr ']'
+
+    INTEGER     shift, and go to state 34
+    IDENTIFIER  shift, and go to state 122
+
+    variable_expr     go to state 123
+    integer_constant  go to state 124
+    array_index_expr  go to state 140
+
+
+State 98
+
+  106 comparison_expr: expression EQ . expression
+
+    GETSTRING   shift, and go to state 33
+    INTEGER     shift, and go to state 34
+    IDENTIFIER  shift, and go to state 35
+    STRING      shift, and go to state 36
+    SELF        shift, and go to state 37
+    CHILDREN    shift, and go to state 38
+    MAKE_HOT    shift, and go to state 39
+    '('         shift, and go to state 40
+    '['         shift, and go to state 41
+
+    var_or_obj_memb      go to state 42
+    variable_assignee    go to state 19
+    obj_member_assignee  go to state 20
+    obj_expr             go to state 21
+    element_assignee     go to state 22
+    expression           go to state 141
+    variable_expr        go to state 44
+    member_expr          go to state 45
+    member_call          go to state 46
+    func_call            go to state 47
+    constant_expr        go to state 48
+    integer_constant     go to state 49
+    array_init_expr      go to state 50
+    array_element_expr   go to state 51
+    comparison_expr      go to state 52
+
+
+State 99
+
+  110 comparison_expr: expression GE . expression
+
+    GETSTRING   shift, and go to state 33
+    INTEGER     shift, and go to state 34
+    IDENTIFIER  shift, and go to state 35
+    STRING      shift, and go to state 36
+    SELF        shift, and go to state 37
+    CHILDREN    shift, and go to state 38
+    MAKE_HOT    shift, and go to state 39
+    '('         shift, and go to state 40
+    '['         shift, and go to state 41
+
+    var_or_obj_memb      go to state 42
+    variable_assignee    go to state 19
+    obj_member_assignee  go to state 20
+    obj_expr             go to state 21
+    element_assignee     go to state 22
+    expression           go to state 142
+    variable_expr        go to state 44
+    member_expr          go to state 45
+    member_call          go to state 46
+    func_call            go to state 47
+    constant_expr        go to state 48
+    integer_constant     go to state 49
+    array_init_expr      go to state 50
+    array_element_expr   go to state 51
+    comparison_expr      go to state 52
+
+
+State 100
+
+  109 comparison_expr: expression '>' . expression
+
+    GETSTRING   shift, and go to state 33
+    INTEGER     shift, and go to state 34
+    IDENTIFIER  shift, and go to state 35
+    STRING      shift, and go to state 36
+    SELF        shift, and go to state 37
+    CHILDREN    shift, and go to state 38
+    MAKE_HOT    shift, and go to state 39
+    '('         shift, and go to state 40
+    '['         shift, and go to state 41
+
+    var_or_obj_memb      go to state 42
+    variable_assignee    go to state 19
+    obj_member_assignee  go to state 20
+    obj_expr             go to state 21
+    element_assignee     go to state 22
+    expression           go to state 143
+    variable_expr        go to state 44
+    member_expr          go to state 45
+    member_call          go to state 46
+    func_call            go to state 47
+    constant_expr        go to state 48
+    integer_constant     go to state 49
+    array_init_expr      go to state 50
+    array_element_expr   go to state 51
+    comparison_expr      go to state 52
+
+
+State 101
+
+  108 comparison_expr: expression LE . expression
+
+    GETSTRING   shift, and go to state 33
+    INTEGER     shift, and go to state 34
+    IDENTIFIER  shift, and go to state 35
+    STRING      shift, and go to state 36
+    SELF        shift, and go to state 37
+    CHILDREN    shift, and go to state 38
+    MAKE_HOT    shift, and go to state 39
+    '('         shift, and go to state 40
+    '['         shift, and go to state 41
+
+    var_or_obj_memb      go to state 42
+    variable_assignee    go to state 19
+    obj_member_assignee  go to state 20
+    obj_expr             go to state 21
+    element_assignee     go to state 22
+    expression           go to state 144
+    variable_expr        go to state 44
+    member_expr          go to state 45
+    member_call          go to state 46
+    func_call            go to state 47
+    constant_expr        go to state 48
+    integer_constant     go to state 49
+    array_init_expr      go to state 50
+    array_element_expr   go to state 51
+    comparison_expr      go to state 52
+
+
+State 102
+
+  107 comparison_expr: expression '<' . expression
+
+    GETSTRING   shift, and go to state 33
+    INTEGER     shift, and go to state 34
+    IDENTIFIER  shift, and go to state 35
+    STRING      shift, and go to state 36
+    SELF        shift, and go to state 37
+    CHILDREN    shift, and go to state 38
+    MAKE_HOT    shift, and go to state 39
+    '('         shift, and go to state 40
+    '['         shift, and go to state 41
+
+    var_or_obj_memb      go to state 42
+    variable_assignee    go to state 19
+    obj_member_assignee  go to state 20
+    obj_expr             go to state 21
+    element_assignee     go to state 22
+    expression           go to state 145
+    variable_expr        go to state 44
+    member_expr          go to state 45
+    member_call          go to state 46
+    func_call            go to state 47
+    constant_expr        go to state 48
+    integer_constant     go to state 49
+    array_init_expr      go to state 50
+    array_element_expr   go to state 51
+    comparison_expr      go to state 52
+
+
+State 103
+
+   72 expression: expression '+' . expression
+
+    GETSTRING   shift, and go to state 33
+    INTEGER     shift, and go to state 34
+    IDENTIFIER  shift, and go to state 35
+    STRING      shift, and go to state 36
+    SELF        shift, and go to state 37
+    CHILDREN    shift, and go to state 38
+    MAKE_HOT    shift, and go to state 39
+    '('         shift, and go to state 40
+    '['         shift, and go to state 41
+
+    var_or_obj_memb      go to state 42
+    variable_assignee    go to state 19
+    obj_member_assignee  go to state 20
+    obj_expr             go to state 21
+    element_assignee     go to state 22
+    expression           go to state 146
+    variable_expr        go to state 44
+    member_expr          go to state 45
+    member_call          go to state 46
+    func_call            go to state 47
+    constant_expr        go to state 48
+    integer_constant     go to state 49
+    array_init_expr      go to state 50
+    array_element_expr   go to state 51
+    comparison_expr      go to state 52
+
+
+State 104
+
+   73 expression: expression '-' . expression
+
+    GETSTRING   shift, and go to state 33
+    INTEGER     shift, and go to state 34
+    IDENTIFIER  shift, and go to state 35
+    STRING      shift, and go to state 36
+    SELF        shift, and go to state 37
+    CHILDREN    shift, and go to state 38
+    MAKE_HOT    shift, and go to state 39
+    '('         shift, and go to state 40
+    '['         shift, and go to state 41
+
+    var_or_obj_memb      go to state 42
+    variable_assignee    go to state 19
+    obj_member_assignee  go to state 20
+    obj_expr             go to state 21
+    element_assignee     go to state 22
+    expression           go to state 147
+    variable_expr        go to state 44
+    member_expr          go to state 45
+    member_call          go to state 46
+    func_call            go to state 47
+    constant_expr        go to state 48
+    integer_constant     go to state 49
+    array_init_expr      go to state 50
+    array_element_expr   go to state 51
+    comparison_expr      go to state 52
+
+
+State 105
+
+    7 statement: PRINT expression ';' .
+
+    $default  reduce using rule 7 (statement)
+
+
+State 106
+
+   17 statement: RETURN return_expr ';' .
+
+    $default  reduce using rule 17 (statement)
+
+
+State 107
+
+   16 statement: HOT STRING IDENTIFIER . ';'
+
+    ';'  shift, and go to state 148
+
+
+State 108
+
+   13 statement: START_EVENT event_identifier AT . INTEGER ';'
+
+    INTEGER  shift, and go to state 149
+
+
+State 109
+
+   28 variable_assignee: IDENTIFIER .
+   30 obj_expr: IDENTIFIER .
+   57 param_decl_list: IDENTIFIER .
+   85 variable_expr: IDENTIFIER .
+   89 func_call: IDENTIFIER . '(' param_list ')'
+   90          | IDENTIFIER . '(' ')'
+
+    '('  shift, and go to state 87
+
+    ')'       reduce using rule 57 (param_decl_list)
+    ')'       [reduce using rule 85 (variable_expr)]
+    '.'       reduce using rule 30 (obj_expr)
+    '['       reduce using rule 28 (variable_assignee)
+    ','       reduce using rule 57 (param_decl_list)
+    ','       [reduce using rule 85 (variable_expr)]
+    $default  reduce using rule 85 (variable_expr)
+
+
+State 110
+
+   56 global_func_decl: IDENTIFIER '(' ')' . code_block
+   90 func_call: IDENTIFIER '(' ')' .
+
+    '{'  shift, and go to state 150
+
+    $default  reduce using rule 90 (func_call)
+
+    code_block  go to state 151
+
+
+State 111
+
+   55 global_func_decl: IDENTIFIER '(' param_decl_list . ')' code_block
+   58 param_decl_list: param_decl_list . ',' IDENTIFIER
+
+    ')'  shift, and go to state 152
+    ','  shift, and go to state 153
+
+
+State 112
+
+   72 expression: expression . '+' expression
+   73           | expression . '-' expression
+   91 param_list: expression .
+  106 comparison_expr: expression . EQ expression
+  107                | expression . '<' expression
+  108                | expression . LE expression
+  109                | expression . '>' expression
+  110                | expression . GE expression
+
+    EQ   shift, and go to state 98
+    GE   shift, and go to state 99
+    '>'  shift, and go to state 100
+    LE   shift, and go to state 101
+    '<'  shift, and go to state 102
+    '+'  shift, and go to state 103
+    '-'  shift, and go to state 104
+
+    $default  reduce using rule 91 (param_list)
+
+
+State 113
+
+   89 func_call: IDENTIFIER '(' param_list . ')'
+   92 param_list: param_list . ',' expression
+
+    ')'  shift, and go to state 154
+    ','  shift, and go to state 155
+
+
+State 114
+
+   18 statement: IF '(' expression . ')' statement
+   19          | IF '(' expression . ')' statement ELSE statement
+   72 expression: expression . '+' expression
+   73           | expression . '-' expression
+  106 comparison_expr: expression . EQ expression
+  107                | expression . '<' expression
+  108                | expression . LE expression
+  109                | expression . '>' expression
+  110                | expression . GE expression
+
+    EQ   shift, and go to state 98
+    GE   shift, and go to state 99
+    '>'  shift, and go to state 100
+    LE   shift, and go to state 101
+    '<'  shift, and go to state 102
+    '+'  shift, and go to state 103
+    '-'  shift, and go to state 104
+    ')'  shift, and go to state 156
+
+
+State 115
+
+   28 variable_assignee: IDENTIFIER .
+   30 obj_expr: IDENTIFIER .
+
+    '.'       reduce using rule 30 (obj_expr)
+    $default  reduce using rule 28 (variable_assignee)
+
+
+State 116
+
+   20 statement: FOR EACH var_or_obj_memb . IN obj_expr statement
+   33 element_assignee: var_or_obj_memb . '[' array_index_expr ']'
+
+    IN   shift, and go to state 157
+    '['  shift, and go to state 72
+
+
+State 117
+
+   29 obj_member_assignee: obj_expr . '.' IDENTIFIER
+   86 member_expr: obj_expr . '.' IDENTIFIER
+
+    '.'  shift, and go to state 158
+
+
+State 118
+
+    9 statement: '{' statement_list '}' .
+
+    $default  reduce using rule 9 (statement)
+
+
+State 119
+
+   66 statement_list: statement_list statement .
+
+    $default  reduce using rule 66 (statement_list)
+
+
+State 120
+
+   21 statement: var_or_obj_memb ADD_ASSIGN expression . ';'
+   72 expression: expression . '+' expression
+   73           | expression . '-' expression
+  106 comparison_expr: expression . EQ expression
+  107                | expression . '<' expression
+  108                | expression . LE expression
+  109                | expression . '>' expression
+  110                | expression . GE expression
+
+    EQ   shift, and go to state 98
+    GE   shift, and go to state 99
+    '>'  shift, and go to state 100
+    LE   shift, and go to state 101
+    '<'  shift, and go to state 102
+    '+'  shift, and go to state 103
+    '-'  shift, and go to state 104
+    ';'  shift, and go to state 159
+
+
+State 121
+
+   24 assignment: var_or_obj_memb '=' expression .
+   72 expression: expression . '+' expression
+   73           | expression . '-' expression
+  106 comparison_expr: expression . EQ expression
+  107                | expression . '<' expression
+  108                | expression . LE expression
+  109                | expression . '>' expression
+  110                | expression . GE expression
+
+    EQ   shift, and go to state 98
+    GE   shift, and go to state 99
+    '>'  shift, and go to state 100
+    LE   shift, and go to state 101
+    '<'  shift, and go to state 102
+    '+'  shift, and go to state 103
+    '-'  shift, and go to state 104
+
+    $default  reduce using rule 24 (assignment)
+
+
+State 122
+
+   85 variable_expr: IDENTIFIER .
+
+    $default  reduce using rule 85 (variable_expr)
+
+
+State 123
+
+  104 array_index_expr: variable_expr .
+
+    $default  reduce using rule 104 (array_index_expr)
+
+
+State 124
+
+  105 array_index_expr: integer_constant .
+
+    $default  reduce using rule 105 (array_index_expr)
+
+
+State 125
+
+   33 element_assignee: var_or_obj_memb '[' array_index_expr . ']'
+
+    ']'  shift, and go to state 160
+
+
+State 126
+
+   29 obj_member_assignee: obj_expr '.' IDENTIFIER .
+   86 member_expr: obj_expr '.' IDENTIFIER .
+   87 member_call: obj_expr '.' IDENTIFIER . '(' param_list ')'
+   88            | obj_expr '.' IDENTIFIER . '(' ')'
+
+    '('  shift, and go to state 161
+
+    ADD_ASSIGN  reduce using rule 29 (obj_member_assignee)
+    '='         reduce using rule 29 (obj_member_assignee)
+    '['         reduce using rule 29 (obj_member_assignee)
+    $default    reduce using rule 86 (member_expr)
+
+
+State 127
+
+   38 dec_statement: level obj_identifier optional_member_list . ';'
+
+    ';'  shift, and go to state 162
+
+
+State 128
+
+   39 dec_statement: level class_identifier obj_identifier . optional_member_list ';'
+
+    HAS  shift, and go to state 79
+
+    $default  reduce using rule 48 (optional_member_list)
+
+    optional_member_list  go to state 163
+
+
+State 129
+
+   47 optional_member_list: HAS $@1 . member_decl_list
+
+    IDENTIFIER  shift, and go to state 164
+
+    member_decl_list      go to state 165
+    member_decl           go to state 166
+    memb_decl_identifier  go to state 167
+
+
+State 130
+
+   36 dec_statement: obj_identifier optional_member_list ';' .
+
+    $default  reduce using rule 36 (dec_statement)
+
+
+State 131
+
+   37 dec_statement: class_identifier obj_identifier optional_member_list . ';'
+
+    ';'  shift, and go to state 168
+
+
+State 132
+
+   35 string_statement: string_literal '+' expression .
+   72 expression: expression . '+' expression
+   73           | expression . '-' expression
+  106 comparison_expr: expression . EQ expression
+  107                | expression . '<' expression
+  108                | expression . LE expression
+  109                | expression . '>' expression
+  110                | expression . GE expression
+
+    EQ   shift, and go to state 98
+    GE   shift, and go to state 99
+    '>'  shift, and go to state 100
+    LE   shift, and go to state 101
+    '<'  shift, and go to state 102
+    '+'  shift, and go to state 103
+    '-'  shift, and go to state 104
+
+    $default  reduce using rule 35 (string_statement)
+
+
+State 133
+
+   90 func_call: IDENTIFIER '(' ')' .
+
+    $default  reduce using rule 90 (func_call)
+
+
+State 134
+
+   30 obj_expr: IDENTIFIER .
+
+    $default  reduce using rule 30 (obj_expr)
+
+
+State 135
+
+   83 expression: CHILDREN '(' obj_expr . ')'
+   86 member_expr: obj_expr . '.' IDENTIFIER
+
+    ')'  shift, and go to state 169
+    '.'  shift, and go to state 170
+
+
+State 136
+
+   72 expression: expression . '+' expression
+   73           | expression . '-' expression
+   84           | MAKE_HOT '(' expression . ',' expression ',' expression ')'
+  106 comparison_expr: expression . EQ expression
+  107                | expression . '<' expression
+  108                | expression . LE expression
+  109                | expression . '>' expression
+  110                | expression . GE expression
+
+    EQ   shift, and go to state 98
+    GE   shift, and go to state 99
+    '>'  shift, and go to state 100
+    LE   shift, and go to state 101
+    '<'  shift, and go to state 102
+    '+'  shift, and go to state 103
+    '-'  shift, and go to state 104
+    ','  shift, and go to state 171
+
+
+State 137
+
+   81 expression: '(' expression ')' .
+
+    $default  reduce using rule 81 (expression)
+
+
+State 138
+
+   96 array_init_expr: '[' constant_seq ']' .
+
+    $default  reduce using rule 96 (array_init_expr)
+
+
+State 139
+
+   99 constant_seq: constant_seq ',' . array_init_const
+
+    INTEGER     shift, and go to state 91
+    IDENTIFIER  shift, and go to state 92
+    STRING      shift, and go to state 93
+
+    obj_identifier    go to state 94
+    array_init_const  go to state 172
+
+
+State 140
+
+   33 element_assignee: var_or_obj_memb '[' array_index_expr . ']'
+  103 array_element_expr: var_or_obj_memb '[' array_index_expr . ']'
+
+    ']'  shift, and go to state 173
+
+
+State 141
+
+   72 expression: expression . '+' expression
+   73           | expression . '-' expression
+  106 comparison_expr: expression . EQ expression
+  106                | expression EQ expression .
+  107                | expression . '<' expression
+  108                | expression . LE expression
+  109                | expression . '>' expression
+  110                | expression . GE expression
+
+    '+'  shift, and go to state 103
+    '-'  shift, and go to state 104
+
+    $default  reduce using rule 106 (comparison_expr)
+
+
+State 142
+
+   72 expression: expression . '+' expression
+   73           | expression . '-' expression
+  106 comparison_expr: expression . EQ expression
+  107                | expression . '<' expression
+  108                | expression . LE expression
+  109                | expression . '>' expression
+  110                | expression . GE expression
+  110                | expression GE expression .
+
+    '+'  shift, and go to state 103
+    '-'  shift, and go to state 104
+
+    $default  reduce using rule 110 (comparison_expr)
+
+
+State 143
+
+   72 expression: expression . '+' expression
+   73           | expression . '-' expression
+  106 comparison_expr: expression . EQ expression
+  107                | expression . '<' expression
+  108                | expression . LE expression
+  109                | expression . '>' expression
+  109                | expression '>' expression .
+  110                | expression . GE expression
+
+    '+'  shift, and go to state 103
+    '-'  shift, and go to state 104
+
+    $default  reduce using rule 109 (comparison_expr)
+
+
+State 144
+
+   72 expression: expression . '+' expression
+   73           | expression . '-' expression
+  106 comparison_expr: expression . EQ expression
+  107                | expression . '<' expression
+  108                | expression . LE expression
+  108                | expression LE expression .
+  109                | expression . '>' expression
+  110                | expression . GE expression
+
+    '+'  shift, and go to state 103
+    '-'  shift, and go to state 104
+
+    $default  reduce using rule 108 (comparison_expr)
+
+
+State 145
+
+   72 expression: expression . '+' expression
+   73           | expression . '-' expression
+  106 comparison_expr: expression . EQ expression
+  107                | expression . '<' expression
+  107                | expression '<' expression .
+  108                | expression . LE expression
+  109                | expression . '>' expression
+  110                | expression . GE expression
+
+    '+'  shift, and go to state 103
+    '-'  shift, and go to state 104
+
+    $default  reduce using rule 107 (comparison_expr)
+
+
+State 146
+
+   72 expression: expression . '+' expression
+   72           | expression '+' expression .
+   73           | expression . '-' expression
+  106 comparison_expr: expression . EQ expression
+  107                | expression . '<' expression
+  108                | expression . LE expression
+  109                | expression . '>' expression
+  110                | expression . GE expression
+
+    $default  reduce using rule 72 (expression)
+
+
+State 147
+
+   72 expression: expression . '+' expression
+   73           | expression . '-' expression
+   73           | expression '-' expression .
+  106 comparison_expr: expression . EQ expression
+  107                | expression . '<' expression
+  108                | expression . LE expression
+  109                | expression . '>' expression
+  110                | expression . GE expression
+
+    $default  reduce using rule 73 (expression)
+
+
+State 148
+
+   16 statement: HOT STRING IDENTIFIER ';' .
+
+    $default  reduce using rule 16 (statement)
+
+
+State 149
+
+   13 statement: START_EVENT event_identifier AT INTEGER . ';'
+
+    ';'  shift, and go to state 174
+
+
+State 150
+
+   69 code_block: '{' . statement_list '}'
+
+    PRINT        shift, and go to state 1
+    END          shift, and go to state 2
+    RETURN       shift, and go to state 3
+    HOT          shift, and go to state 5
+    START_TIMER  shift, and go to state 6
+    START_EVENT  shift, and go to state 7
+    IDENTIFIER   shift, and go to state 63
+    STRING       shift, and go to state 9
+    IF           shift, and go to state 10
+    FOR          shift, and go to state 11
+    SELF         shift, and go to state 12
+    '{'          shift, and go to state 13
+
+    statement            go to state 64
+    assignment           go to state 17
+    var_or_obj_memb      go to state 18
+    variable_assignee    go to state 19
+    obj_member_assignee  go to state 20
+    obj_expr             go to state 21
+    element_assignee     go to state 22
+    string_statement     go to state 23
+    statement_list       go to state 175
+    string_literal       go to state 29
+    member_expr          go to state 30
+    member_call          go to state 31
+    func_call            go to state 32
+
+
+State 151
+
+   56 global_func_decl: IDENTIFIER '(' ')' code_block .
+
+    $default  reduce using rule 56 (global_func_decl)
+
+
+State 152
+
+   55 global_func_decl: IDENTIFIER '(' param_decl_list ')' . code_block
+
+    '{'  shift, and go to state 150
+
+    code_block  go to state 176
+
+
+State 153
+
+   58 param_decl_list: param_decl_list ',' . IDENTIFIER
+
+    IDENTIFIER  shift, and go to state 177
+
+
+State 154
+
+   89 func_call: IDENTIFIER '(' param_list ')' .
+
+    $default  reduce using rule 89 (func_call)
+
+
+State 155
+
+   92 param_list: param_list ',' . expression
+
+    GETSTRING   shift, and go to state 33
+    INTEGER     shift, and go to state 34
+    IDENTIFIER  shift, and go to state 35
+    STRING      shift, and go to state 36
+    SELF        shift, and go to state 37
+    CHILDREN    shift, and go to state 38
+    MAKE_HOT    shift, and go to state 39
+    '('         shift, and go to state 40
+    '['         shift, and go to state 41
+
+    var_or_obj_memb      go to state 42
+    variable_assignee    go to state 19
+    obj_member_assignee  go to state 20
+    obj_expr             go to state 21
+    element_assignee     go to state 22
+    expression           go to state 178
+    variable_expr        go to state 44
+    member_expr          go to state 45
+    member_call          go to state 46
+    func_call            go to state 47
+    constant_expr        go to state 48
+    integer_constant     go to state 49
+    array_init_expr      go to state 50
+    array_element_expr   go to state 51
+    comparison_expr      go to state 52
+
+
+State 156
+
+   18 statement: IF '(' expression ')' . statement
+   19          | IF '(' expression ')' . statement ELSE statement
+
+    PRINT        shift, and go to state 1
+    END          shift, and go to state 2
+    RETURN       shift, and go to state 3
+    HOT          shift, and go to state 5
+    START_TIMER  shift, and go to state 6
+    START_EVENT  shift, and go to state 7
+    IDENTIFIER   shift, and go to state 63
+    STRING       shift, and go to state 9
+    IF           shift, and go to state 10
+    FOR          shift, and go to state 11
+    SELF         shift, and go to state 12
+    '{'          shift, and go to state 13
+
+    statement            go to state 179
+    assignment           go to state 17
+    var_or_obj_memb      go to state 18
+    variable_assignee    go to state 19
+    obj_member_assignee  go to state 20
+    obj_expr             go to state 21
+    element_assignee     go to state 22
+    string_statement     go to state 23
+    string_literal       go to state 29
+    member_expr          go to state 30
+    member_call          go to state 31
+    func_call            go to state 32
+
+
+State 157
+
+   20 statement: FOR EACH var_or_obj_memb IN . obj_expr statement
+
+    IDENTIFIER  shift, and go to state 134
+    SELF        shift, and go to state 12
+
+    obj_expr     go to state 180
+    member_expr  go to state 30
+
+
+State 158
+
+   29 obj_member_assignee: obj_expr '.' . IDENTIFIER
+   86 member_expr: obj_expr '.' . IDENTIFIER
+
+    IDENTIFIER  shift, and go to state 181
+
+
+State 159
+
+   21 statement: var_or_obj_memb ADD_ASSIGN expression ';' .
+
+    $default  reduce using rule 21 (statement)
+
+
+State 160
+
+   33 element_assignee: var_or_obj_memb '[' array_index_expr ']' .
+
+    $default  reduce using rule 33 (element_assignee)
+
+
+State 161
+
+   87 member_call: obj_expr '.' IDENTIFIER '(' . param_list ')'
+   88            | obj_expr '.' IDENTIFIER '(' . ')'
+
+    GETSTRING   shift, and go to state 33
+    INTEGER     shift, and go to state 34
+    IDENTIFIER  shift, and go to state 35
+    STRING      shift, and go to state 36
+    SELF        shift, and go to state 37
+    CHILDREN    shift, and go to state 38
+    MAKE_HOT    shift, and go to state 39
+    '('         shift, and go to state 40
+    ')'         shift, and go to state 182
+    '['         shift, and go to state 41
+
+    var_or_obj_memb      go to state 42
+    variable_assignee    go to state 19
+    obj_member_assignee  go to state 20
+    obj_expr             go to state 21
+    element_assignee     go to state 22
+    expression           go to state 112
+    variable_expr        go to state 44
+    member_expr          go to state 45
+    member_call          go to state 46
+    func_call            go to state 47
+    param_list           go to state 183
+    constant_expr        go to state 48
+    integer_constant     go to state 49
+    array_init_expr      go to state 50
+    array_element_expr   go to state 51
+    comparison_expr      go to state 52
+
+
+State 162
+
+   38 dec_statement: level obj_identifier optional_member_list ';' .
+
+    $default  reduce using rule 38 (dec_statement)
+
+
+State 163
+
+   39 dec_statement: level class_identifier obj_identifier optional_member_list . ';'
+
+    ';'  shift, and go to state 184
+
+
+State 164
+
+   54 memb_decl_identifier: IDENTIFIER .
+
+    $default  reduce using rule 54 (memb_decl_identifier)
+
+
+State 165
+
+   47 optional_member_list: HAS $@1 member_decl_list .
+   50 member_decl_list: member_decl_list . ',' member_decl
+
+    ','  shift, and go to state 185
+
+    $default  reduce using rule 47 (optional_member_list)
+
+
+State 166
+
+   49 member_decl_list: member_decl .
+
+    $default  reduce using rule 49 (member_decl_list)
+
+
+State 167
+
+   51 member_decl: memb_decl_identifier .
+   52            | memb_decl_identifier . '=' init_expr
+   53            | memb_decl_identifier . init_expr
+
+    INTEGER     shift, and go to state 186
+    IDENTIFIER  shift, and go to state 92
+    STRING      shift, and go to state 187
+    '{'         shift, and go to state 150
+    '='         shift, and go to state 188
+    '['         shift, and go to state 189
+
+    $default  reduce using rule 51 (member_decl)
+
+    obj_identifier     go to state 190
+    init_expr          go to state 191
+    memb_function_def  go to state 192
+    code_block         go to state 193
+    array_init_list    go to state 194
+
+
+State 168
+
+   37 dec_statement: class_identifier obj_identifier optional_member_list ';' .
+
+    $default  reduce using rule 37 (dec_statement)
+
+
+State 169
+
+   83 expression: CHILDREN '(' obj_expr ')' .
+
+    $default  reduce using rule 83 (expression)
+
+
+State 170
+
+   86 member_expr: obj_expr '.' . IDENTIFIER
+
+    IDENTIFIER  shift, and go to state 195
+
+
+State 171
+
+   84 expression: MAKE_HOT '(' expression ',' . expression ',' expression ')'
+
+    GETSTRING   shift, and go to state 33
+    INTEGER     shift, and go to state 34
+    IDENTIFIER  shift, and go to state 35
+    STRING      shift, and go to state 36
+    SELF        shift, and go to state 37
+    CHILDREN    shift, and go to state 38
+    MAKE_HOT    shift, and go to state 39
+    '('         shift, and go to state 40
+    '['         shift, and go to state 41
+
+    var_or_obj_memb      go to state 42
+    variable_assignee    go to state 19
+    obj_member_assignee  go to state 20
+    obj_expr             go to state 21
+    element_assignee     go to state 22
+    expression           go to state 196
+    variable_expr        go to state 44
+    member_expr          go to state 45
+    member_call          go to state 46
+    func_call            go to state 47
+    constant_expr        go to state 48
+    integer_constant     go to state 49
+    array_init_expr      go to state 50
+    array_element_expr   go to state 51
+    comparison_expr      go to state 52
+
+
+State 172
+
+   99 constant_seq: constant_seq ',' array_init_const .
+
+    $default  reduce using rule 99 (constant_seq)
+
+
+State 173
+
+   33 element_assignee: var_or_obj_memb '[' array_index_expr ']' .
+  103 array_element_expr: var_or_obj_memb '[' array_index_expr ']' .
+
+    '['       reduce using rule 33 (element_assignee)
+    $default  reduce using rule 103 (array_element_expr)
+
+
+State 174
+
+   13 statement: START_EVENT event_identifier AT INTEGER ';' .
+
+    $default  reduce using rule 13 (statement)
+
+
+State 175
+
+   66 statement_list: statement_list . statement
+   69 code_block: '{' statement_list . '}'
+
+    PRINT        shift, and go to state 1
+    END          shift, and go to state 2
+    RETURN       shift, and go to state 3
+    HOT          shift, and go to state 5
+    START_TIMER  shift, and go to state 6
+    START_EVENT  shift, and go to state 7
+    IDENTIFIER   shift, and go to state 63
+    STRING       shift, and go to state 9
+    IF           shift, and go to state 10
+    FOR          shift, and go to state 11
+    SELF         shift, and go to state 12
+    '{'          shift, and go to state 13
+    '}'          shift, and go to state 197
+
+    statement            go to state 119
+    assignment           go to state 17
+    var_or_obj_memb      go to state 18
+    variable_assignee    go to state 19
+    obj_member_assignee  go to state 20
+    obj_expr             go to state 21
+    element_assignee     go to state 22
+    string_statement     go to state 23
+    string_literal       go to state 29
+    member_expr          go to state 30
+    member_call          go to state 31
+    func_call            go to state 32
+
+
+State 176
+
+   55 global_func_decl: IDENTIFIER '(' param_decl_list ')' code_block .
+
+    $default  reduce using rule 55 (global_func_decl)
+
+
+State 177
+
+   58 param_decl_list: param_decl_list ',' IDENTIFIER .
+
+    $default  reduce using rule 58 (param_decl_list)
+
+
+State 178
+
+   72 expression: expression . '+' expression
+   73           | expression . '-' expression
+   92 param_list: param_list ',' expression .
+  106 comparison_expr: expression . EQ expression
+  107                | expression . '<' expression
+  108                | expression . LE expression
+  109                | expression . '>' expression
+  110                | expression . GE expression
+
+    EQ   shift, and go to state 98
+    GE   shift, and go to state 99
+    '>'  shift, and go to state 100
+    LE   shift, and go to state 101
+    '<'  shift, and go to state 102
+    '+'  shift, and go to state 103
+    '-'  shift, and go to state 104
+
+    $default  reduce using rule 92 (param_list)
+
+
+State 179
+
+   18 statement: IF '(' expression ')' statement .
+   19          | IF '(' expression ')' statement . ELSE statement
+
+    ELSE  shift, and go to state 198
+
+    $default  reduce using rule 18 (statement)
+
+
+State 180
+
+   20 statement: FOR EACH var_or_obj_memb IN obj_expr . statement
+   86 member_expr: obj_expr . '.' IDENTIFIER
+
+    PRINT        shift, and go to state 1
+    END          shift, and go to state 2
+    RETURN       shift, and go to state 3
+    HOT          shift, and go to state 5
+    START_TIMER  shift, and go to state 6
+    START_EVENT  shift, and go to state 7
+    IDENTIFIER   shift, and go to state 63
+    STRING       shift, and go to state 9
+    IF           shift, and go to state 10
+    FOR          shift, and go to state 11
+    SELF         shift, and go to state 12
+    '{'          shift, and go to state 13
+    '.'          shift, and go to state 170
+
+    statement            go to state 199
+    assignment           go to state 17
+    var_or_obj_memb      go to state 18
+    variable_assignee    go to state 19
+    obj_member_assignee  go to state 20
+    obj_expr             go to state 21
+    element_assignee     go to state 22
+    string_statement     go to state 23
+    string_literal       go to state 29
+    member_expr          go to state 30
+    member_call          go to state 31
+    func_call            go to state 32
+
+
+State 181
+
+   29 obj_member_assignee: obj_expr '.' IDENTIFIER .
+   86 member_expr: obj_expr '.' IDENTIFIER .
+
+    '.'       reduce using rule 86 (member_expr)
+    $default  reduce using rule 29 (obj_member_assignee)
+
+
+State 182
+
+   88 member_call: obj_expr '.' IDENTIFIER '(' ')' .
+
+    $default  reduce using rule 88 (member_call)
+
+
+State 183
+
+   87 member_call: obj_expr '.' IDENTIFIER '(' param_list . ')'
+   92 param_list: param_list . ',' expression
+
+    ')'  shift, and go to state 200
+    ','  shift, and go to state 155
+
+
+State 184
+
+   39 dec_statement: level class_identifier obj_identifier optional_member_list ';' .
+
+    $default  reduce using rule 39 (dec_statement)
+
+
+State 185
+
+   50 member_decl_list: member_decl_list ',' . member_decl
+
+    IDENTIFIER  shift, and go to state 164
+
+    member_decl           go to state 201
+    memb_decl_identifier  go to state 167
+
+
+State 186
+
+   60 init_expr: INTEGER .
+
+    $default  reduce using rule 60 (init_expr)
+
+
+State 187
+
+   59 init_expr: STRING .
+
+    $default  reduce using rule 59 (init_expr)
+
+
+State 188
+
+   52 member_decl: memb_decl_identifier '=' . init_expr
+
+    INTEGER     shift, and go to state 186
+    IDENTIFIER  shift, and go to state 92
+    STRING      shift, and go to state 187
+    '{'         shift, and go to state 150
+    '['         shift, and go to state 189
+
+    obj_identifier     go to state 190
+    init_expr          go to state 202
+    memb_function_def  go to state 192
+    code_block         go to state 193
+    array_init_list    go to state 194
+
+
+State 189
+
+   97 array_init_list: '[' . constant_seq ']'
+
+    INTEGER     shift, and go to state 91
+    IDENTIFIER  shift, and go to state 92
+    STRING      shift, and go to state 93
+
+    obj_identifier    go to state 94
+    constant_seq      go to state 203
+    array_init_const  go to state 96
+
+
+State 190
+
+   62 init_expr: obj_identifier .
+
+    $default  reduce using rule 62 (init_expr)
+
+
+State 191
+
+   53 member_decl: memb_decl_identifier init_expr .
+
+    $default  reduce using rule 53 (member_decl)
+
+
+State 192
+
+   61 init_expr: memb_function_def .
+
+    $default  reduce using rule 61 (init_expr)
+
+
+State 193
+
+   64 memb_function_def: code_block .
+
+    $default  reduce using rule 64 (memb_function_def)
+
+
+State 194
+
+   63 init_expr: array_init_list .
+
+    $default  reduce using rule 63 (init_expr)
+
+
+State 195
+
+   86 member_expr: obj_expr '.' IDENTIFIER .
+
+    $default  reduce using rule 86 (member_expr)
+
+
+State 196
+
+   72 expression: expression . '+' expression
+   73           | expression . '-' expression
+   84           | MAKE_HOT '(' expression ',' expression . ',' expression ')'
+  106 comparison_expr: expression . EQ expression
+  107                | expression . '<' expression
+  108                | expression . LE expression
+  109                | expression . '>' expression
+  110                | expression . GE expression
+
+    EQ   shift, and go to state 98
+    GE   shift, and go to state 99
+    '>'  shift, and go to state 100
+    LE   shift, and go to state 101
+    '<'  shift, and go to state 102
+    '+'  shift, and go to state 103
+    '-'  shift, and go to state 104
+    ','  shift, and go to state 204
+
+
+State 197
+
+   69 code_block: '{' statement_list '}' .
+
+    $default  reduce using rule 69 (code_block)
+
+
+State 198
+
+   19 statement: IF '(' expression ')' statement ELSE . statement
+
+    PRINT        shift, and go to state 1
+    END          shift, and go to state 2
+    RETURN       shift, and go to state 3
+    HOT          shift, and go to state 5
+    START_TIMER  shift, and go to state 6
+    START_EVENT  shift, and go to state 7
+    IDENTIFIER   shift, and go to state 63
+    STRING       shift, and go to state 9
+    IF           shift, and go to state 10
+    FOR          shift, and go to state 11
+    SELF         shift, and go to state 12
+    '{'          shift, and go to state 13
+
+    statement            go to state 205
+    assignment           go to state 17
+    var_or_obj_memb      go to state 18
+    variable_assignee    go to state 19
+    obj_member_assignee  go to state 20
+    obj_expr             go to state 21
+    element_assignee     go to state 22
+    string_statement     go to state 23
+    string_literal       go to state 29
+    member_expr          go to state 30
+    member_call          go to state 31
+    func_call            go to state 32
+
+
+State 199
+
+   20 statement: FOR EACH var_or_obj_memb IN obj_expr statement .
+
+    $default  reduce using rule 20 (statement)
+
+
+State 200
+
+   87 member_call: obj_expr '.' IDENTIFIER '(' param_list ')' .
+
+    $default  reduce using rule 87 (member_call)
+
+
+State 201
+
+   50 member_decl_list: member_decl_list ',' member_decl .
+
+    $default  reduce using rule 50 (member_decl_list)
+
+
+State 202
+
+   52 member_decl: memb_decl_identifier '=' init_expr .
+
+    $default  reduce using rule 52 (member_decl)
+
+
+State 203
+
+   97 array_init_list: '[' constant_seq . ']'
+   99 constant_seq: constant_seq . ',' array_init_const
+
+    ']'  shift, and go to state 206
+    ','  shift, and go to state 139
+
+
+State 204
+
+   84 expression: MAKE_HOT '(' expression ',' expression ',' . expression ')'
+
+    GETSTRING   shift, and go to state 33
+    INTEGER     shift, and go to state 34
+    IDENTIFIER  shift, and go to state 35
+    STRING      shift, and go to state 36
+    SELF        shift, and go to state 37
+    CHILDREN    shift, and go to state 38
+    MAKE_HOT    shift, and go to state 39
+    '('         shift, and go to state 40
+    '['         shift, and go to state 41
+
+    var_or_obj_memb      go to state 42
+    variable_assignee    go to state 19
+    obj_member_assignee  go to state 20
+    obj_expr             go to state 21
+    element_assignee     go to state 22
+    expression           go to state 207
+    variable_expr        go to state 44
+    member_expr          go to state 45
+    member_call          go to state 46
+    func_call            go to state 47
+    constant_expr        go to state 48
+    integer_constant     go to state 49
+    array_init_expr      go to state 50
+    array_element_expr   go to state 51
+    comparison_expr      go to state 52
+
+
+State 205
+
+   19 statement: IF '(' expression ')' statement ELSE statement .
+
+    $default  reduce using rule 19 (statement)
+
+
+State 206
+
+   97 array_init_list: '[' constant_seq ']' .
+
+    $default  reduce using rule 97 (array_init_list)
+
+
+State 207
+
+   72 expression: expression . '+' expression
+   73           | expression . '-' expression
+   84           | MAKE_HOT '(' expression ',' expression ',' expression . ')'
+  106 comparison_expr: expression . EQ expression
+  107                | expression . '<' expression
+  108                | expression . LE expression
+  109                | expression . '>' expression
+  110                | expression . GE expression
+
+    EQ   shift, and go to state 98
+    GE   shift, and go to state 99
+    '>'  shift, and go to state 100
+    LE   shift, and go to state 101
+    '<'  shift, and go to state 102
+    '+'  shift, and go to state 103
+    '-'  shift, and go to state 104
+    ')'  shift, and go to state 208
+
+
+State 208
+
+   84 expression: MAKE_HOT '(' expression ',' expression ',' expression ')' .
+
+    $default  reduce using rule 84 (expression)

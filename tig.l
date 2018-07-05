@@ -13,7 +13,7 @@
 	
 	#include "tigParse.hpp"
 
-    void yyerror(char *);
+    void yyerror(const char *);
 	void trackLine();
 	
 	int lineNo = 1; ///<Keeps track of line numbers for error messages.

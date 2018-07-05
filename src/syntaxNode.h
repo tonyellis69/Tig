@@ -119,6 +119,8 @@ public:
 	static std::vector<int>* parentClassList;
 	static std::map<std::string, TGlobalFn> globalFuncIds; ///<Global function names and their ids.
 	static int nextGlobalFuncId;
+
+	static std::vector<unsigned char> paramCount;
 };
 
 enum TIdentType { local, globalVar, object };
@@ -429,4 +431,18 @@ public:
 
 	std::string name;
 	int id;
+};
+
+class CParamDeclNode : public CSyntaxNode {
+public:
+	CParamDeclNode(std::string* ident);
+	void encode();
+
+	std::string name;
+};
+
+class CParamExprNode : public CSyntaxNode {
+public:
+	CParamExprNode(CSyntaxNode* param);
+	void encode();
 };

@@ -32,7 +32,7 @@ int CSyntaxNode::currentObj = 0;
 std::vector<int>* CSyntaxNode::parentClassList = NULL;
 std::map<std::string, TGlobalFn> CSyntaxNode::globalFuncIds;
 int CSyntaxNode::nextGlobalFuncId = 0;
-
+std::vector<unsigned char> CSyntaxNode::paramCount;
 std::vector<CSyntaxNode*> CSyntaxNode::nodeList;
 
 CSyntaxNode::CSyntaxNode() {
@@ -1104,6 +1104,8 @@ void CIfNode::encode() {
 	outputFile->seekp(resumeAddr);
 }
 
+//TO DO: look into creating separate class for global func calls
+
 CMemberCallNode::CMemberCallNode(CSyntaxNode * object, std::string * memberName, CSyntaxNode * params) {
 	operands.push_back(object);
 	isFnCall = false;
@@ -1117,18 +1119,31 @@ CMemberCallNode::CMemberCallNode(CSyntaxNode * object, std::string * memberName,
 	operands.push_back(params);
 }
 
+
 void CMemberCallNode::encode() {
-	if (operands[0] == NULL) {
-		writeOp(opPushInt);
-		writeWord(selfObjId);
+
+	//write code to leave parameter value om stack
+	paramCount.push_back(0);
+	if (operands[1]) {
+		operands[1]->encode();
 	}
-	else
-		operands[0]->encode();
+
+	
+
 	if (isFnCall)
 		writeOp(opCallFn);
-	else
+	else {
+		if (operands[0] == NULL) {
+			writeOp(opPushInt);
+			writeWord(selfObjId);
+		}
+		else
+			operands[0]->encode();
 		writeOp(opCall);
+	}
 	writeWord(memberId);
+	writeByte(paramCount.back());
+	paramCount.pop_back();
 }
 
 
@@ -1206,12 +1221,12 @@ CGlobalFuncDeclNode::CGlobalFuncDeclNode(std::string * ident, CSyntaxNode * para
 }
 
 void CGlobalFuncDeclNode::encode() {
+	localVarIds.clear();
 	if (operands[0])
 		operands[0]->encode();
 	//should now know how many params
 	setOutputFile(fnByteCode);
 	global = false; 
-	localVarIds.clear();
 	int fnStartAddr = outputFile->tellp();
 	writeByte(0); //initial var count
 	operands[1]->encode(); //actual function code
@@ -1231,4 +1246,21 @@ void CGlobalFuncDeclNode::encode() {
 
 }
 
+/** Ensures declared parameters become part of this function's local variables. */
+CParamDeclNode::CParamDeclNode(std::string* ident) {
+	name = *ident;
+}
 
+void CParamDeclNode::encode() {
+	localVarIds.push_back(name);
+}
+
+/** Ensures the result of each parameter expression is on the stack.*/
+CParamExprNode::CParamExprNode(CSyntaxNode * param) {
+	operands.push_back(param);
+}
+
+void CParamExprNode::encode() {
+	operands[0]->encode(); 
+	paramCount.back()++;
+}

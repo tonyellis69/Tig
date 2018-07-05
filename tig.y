@@ -7,7 +7,7 @@
 	#include "syntaxNode.h"
 
 
-    void yyerror(char *);
+    void yyerror(const char *);
     int yylex(void);
 
 
@@ -32,8 +32,8 @@
 
 %type <nPtr> program tigcode statement expression constant_expr statement_list dec_statement
 %type <nPtr> integer_constant
-%type <nPtr> option string_literal event_identifier 
-%type <nPtr> code_block optional_code_block
+%type <nPtr>  string_literal event_identifier 
+%type <nPtr> code_block 
 %type <nPtr> variable_expr assignment variable_assignee obj_member_assignee element_assignee var_or_obj_memb
 %type <nPtr> string_statement
 %type <nPtr> obj_identifier class_identifier optional_member_list member_decl_list member_decl obj_expr init_expr member_expr 
@@ -41,7 +41,7 @@
 %type <nPtr> memb_decl_identifier memb_function_def return_expr member_call
 %type <nPtr> array_init_expr constant_seq array_init_const array_element_expr array_index_expr array_init_list
 %type <nPtr> comparison_expr
-%type <nPtr> global_func_decl
+%type <nPtr> global_func_decl param_decl_list  param_list  func_call 
 
 %token PRINT END RETURN
 %token EVENT OPTION
@@ -66,8 +66,9 @@
 %nonassoc IFX 
 %nonassoc ELSE
 
-//%verbose
-
+%verbose
+%glr-parser
+%expect-rr 2
 
 %%
 
@@ -88,11 +89,12 @@ statement:
 		| assignment ';'								{ $$ = $1; }
 		| '{' statement_list '}'						{ $$ = $2; }
 		| END ';'										{ $$ = new COpNode(opEnd);}
-		| option ';'									{ $$ = $1; }
+		//| option ';'									{ $$ = $1; }
 		| string_statement	';'							{ $$ = new CStrStatement($1);}
 		| START_TIMER	';'								{ $$ = new COpNode(opStartTimer); }
 		| START_EVENT event_identifier AT INTEGER ';'	{ $$ = new CTimedEventNode($2,$4); }
 		| member_call ';'								{ $$ = new CallDiscardNode($1); }
+		| func_call		';'								{ $$ = new CallDiscardNode($1); }
 		| HOT STRING IDENTIFIER	 ';'					{ $$ = new CHotTextNode($2,$3,NULL); }
 		| RETURN return_expr ';'						{ $$ = new CReturnNode($2); }
 		| IF '(' expression ')' statement %prec IFX			{ $$ = new CIfNode($3, $5, NULL); }	//$prec gives this rule the lesser precedence of dummy token IFX
@@ -100,6 +102,8 @@ statement:
 		| FOR EACH var_or_obj_memb IN obj_expr statement	{ $$ = new CForEachNode($3, $5, $6); }
 		| var_or_obj_memb ADD_ASSIGN expression ';'			{ $$ = new COpAssignNode(opAdd,$1,$3); }
         ;
+
+
 
 return_expr:
 		expression										{ $$ = $1; }
@@ -141,8 +145,8 @@ string_statement:
 		;
 
 dec_statement:
-		EVENT event_identifier code_block ';'								{ $$ = new CEventNode($2,$3); }	
-		| obj_identifier optional_member_list ';'							{ $$ = new CObjDeclNode($1,$2,NULL); }
+		//EVENT event_identifier code_block ';'								{ $$ = new CEventNode($2,$3); }	
+		 obj_identifier optional_member_list ';'							{ $$ = new CObjDeclNode($1,$2,NULL); }
 		| class_identifier obj_identifier optional_member_list ';'			{ $$ = new CObjDeclNode($2,$3,$1); }
 		| level  obj_identifier optional_member_list ';'				{ $$ = new CObjDeclNode($2,$3,NULL); }
 		| level class_identifier obj_identifier optional_member_list ';'	{ $$ = new CObjDeclNode($3,$4,$2); }
@@ -188,9 +192,16 @@ memb_decl_identifier:
 		;
 
 global_func_decl:
-		IDENTIFIER '(' ')' code_block				{ $$ = new CGlobalFuncDeclNode($1,NULL,$4); }
+		IDENTIFIER   '(' param_decl_list  ')' code_block		{ $$ = new CGlobalFuncDeclNode($1,$3,$5); }
+		| IDENTIFIER   '('   ')' code_block		{ $$ = new CGlobalFuncDeclNode($1,NULL,$4); }
 		;
 
+
+param_decl_list:
+		IDENTIFIER							{ $$ = new CParamDeclNode($1); }
+		| param_decl_list ',' IDENTIFIER	{ $$ = new CJointNode($1,new CParamDeclNode( $3)); }
+		//| 									{ $$ = NULL; }
+		;
 
 init_expr:
 		STRING						{ $$ = new CInitNode($1); }
@@ -217,14 +228,14 @@ event_identifier:
 		IDENTIFIER					   { $$ = new CEventIdentNode($1); }
 		;
 
-option:								
-		OPTION string_literal optional_code_block event_identifier	{ $$ = new COptionNode($2,$3,$4); }
-		;
+//option:								
+//		OPTION string_literal optional_code_block event_identifier	{ $$ = new COptionNode($2,$3,$4); }
+//		;
 
-optional_code_block:
-		code_block						{ $$ = $1; }
-		|								{ $$ = NULL; }
-		;
+//optional_code_block:
+//		code_block						{ $$ = $1; }
+//		|								{ $$ = NULL; }
+//		;
 
 code_block:
 		'{' statement_list	'}'			{ $$ = new CodeBlockNode($2); }
@@ -237,6 +248,7 @@ expression:
 	  | expression '-' expression		{ $$ = new COpNode(opSub, $1, $3); }
 	  | member_expr						{ $$ = $1; }
 	  | member_call						{ $$ = new COpNode(opCall, $1); }
+	  | func_call						{ $$ = new COpNode(opCallFn, $1); }
 	  | constant_expr					{ $$ = $1; }
 	  | array_init_expr					{ $$ = $1; }
 	  | array_element_expr				{ $$ = $1; }
@@ -256,8 +268,20 @@ member_expr:
 	;
 
 member_call:
-	 obj_expr '.' IDENTIFIER	'(' ')'		{ $$ = new CMemberCallNode($1, $3,NULL); }
-	 | IDENTIFIER	'(' ')'					{ $$ = new CMemberCallNode(NULL, $1,NULL); }
+	 obj_expr '.' IDENTIFIER '(' param_list ')'		{ $$ = new CMemberCallNode($1, $3, $5); }
+	 | obj_expr '.' IDENTIFIER '('  ')'			{ $$ = new CMemberCallNode($1, $3, NULL); }
+	// | IDENTIFIER '(' param_list ')'				{ $$ = new CMemberCallNode(NULL, $1, NULL); }
+	;
+
+func_call:
+	IDENTIFIER '(' param_list ')'				{ $$ = new CMemberCallNode(NULL, $1, $3); }
+	| IDENTIFIER '('  ')'				{ $$ = new CMemberCallNode(NULL, $1, NULL); }
+	;
+
+param_list:
+	expression								{ $$ = new CParamExprNode($1); }
+	| param_list ',' expression				{ $$ = new CJointNode($1,new CParamExprNode($3)); }
+//	|										{ $$ = NULL; }
 	;
 
 constant_expr:							//TO DO: float
@@ -309,7 +333,7 @@ comparison_expr:
 
 %%
 
-void yyerror(char *s) {
+void yyerror(const char *s) {
 	fprintf(stdout, "\n%s, unexpected '%s' on line %d:", s, yytext,lineNo);
 	rewind(yyin);
 	char buf[500];
