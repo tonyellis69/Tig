@@ -15,6 +15,8 @@
 
 extern int lineNo;
 
+const int variableExpression = 2001;
+
 class CSyntaxNode;
 struct TMemberRec {
 	int memberId;
@@ -121,6 +123,7 @@ public:
 	static int nextGlobalFuncId;
 
 	static std::vector<unsigned char> paramCount;
+	static bool paramDeclarationMode;
 };
 
 enum TIdentType { local, globalVar, object };
@@ -284,10 +287,13 @@ class CVarExprNode : public CSyntaxNode {
 public:
 	CVarExprNode(std::string* parsedString);
 	void encode();
+	int getId();
+	std::string& getText();
 
 	int varId;
-	std::string name; ///TO DO: can probably do without
+	std::string name; 
 	TIdentType identType;
+	int id;
 };
 
 
@@ -372,7 +378,7 @@ public:
 
 class CFunctionDefNode : public CSyntaxNode {
 public:
-	CFunctionDefNode(CSyntaxNode* codeBlock);
+	CFunctionDefNode(CSyntaxNode* params,CSyntaxNode* codeBlock);
 	void encode();
 };
 
@@ -396,7 +402,7 @@ public:
 
 class CMemberCallNode : public CSyntaxNode{
 public:
-	CMemberCallNode(CSyntaxNode* object, std::string* memberName, CSyntaxNode* params);
+	CMemberCallNode(CSyntaxNode* object, CSyntaxNode* funcName, CSyntaxNode* params);
 	void encode();
 
 	int memberId;
@@ -426,7 +432,7 @@ public:
 
 class CGlobalFuncDeclNode : public CSyntaxNode {
 public: 
-	CGlobalFuncDeclNode(std::string* ident, CSyntaxNode* params, CSyntaxNode* code);
+	CGlobalFuncDeclNode(CSyntaxNode* ident, CSyntaxNode* params, CSyntaxNode* code);
 	void encode();
 
 	std::string name;
@@ -445,4 +451,22 @@ class CParamExprNode : public CSyntaxNode {
 public:
 	CParamExprNode(CSyntaxNode* param);
 	void encode();
+};
+
+class CGlobalFnIdentNode : public CSyntaxNode {
+public:
+	CGlobalFnIdentNode(std::string* ident);
+	std::string& getText();
+
+	std::string name;
+	int id;
+};
+
+class CFuncIdentNode : public CSyntaxNode {
+public:
+	CFuncIdentNode(std::string* ident);
+	std::string& getText();
+
+	std::string name;
+	int id;
 };

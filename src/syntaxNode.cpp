@@ -34,6 +34,7 @@ std::map<std::string, TGlobalFn> CSyntaxNode::globalFuncIds;
 int CSyntaxNode::nextGlobalFuncId = 0;
 std::vector<unsigned char> CSyntaxNode::paramCount;
 std::vector<CSyntaxNode*> CSyntaxNode::nodeList;
+bool CSyntaxNode::paramDeclarationMode = false;
 
 CSyntaxNode::CSyntaxNode() {
 	nodeList.push_back(this);
@@ -751,6 +752,7 @@ void CMemberExprNode::encode() {
 
 /** Create a node identifying the named variable/object. */
 CVarExprNode::CVarExprNode(std::string * parsedString) {
+	id = variableExpression;
 	name = *parsedString;
 	//TO DO: check if this is a local variable
 
@@ -835,6 +837,14 @@ void CVarExprNode::encode() {
 //	writeWord(varId);
 }
 
+int CVarExprNode::getId() {
+	return id;
+}
+
+std::string& CVarExprNode::getText() {
+	return name;
+}
+ 
 /** Create a member-initialisation node initialising with a string. */
 CInitNode::CInitNode(std::string * parsedString) {
 	value.setStringValue(*parsedString);
@@ -1010,22 +1020,30 @@ std::string & CMembDeclIdentNode::getText() {
 }
 
 
-CFunctionDefNode::CFunctionDefNode(CSyntaxNode * codeBlock) {
+CFunctionDefNode::CFunctionDefNode(CSyntaxNode* params, CSyntaxNode * codeBlock) {
+	operands.push_back(params);
 	operands.push_back(codeBlock);
 }
 
 /** Write the function code, prefacing it with the number of local variables required. */
 void CFunctionDefNode::encode() {
+	localVarIds.clear();
+	paramDeclarationMode = true;
+	if (operands[0])
+		operands[0]->encode();
+	paramDeclarationMode = false;
+	//should now know how many params
+
 	setOutputFile(fnByteCode);
 	global = false;
-	localVarIds.clear();
 	int varCountAddr = outputFile->tellp();
 	writeByte(0);
-	operands[0]->encode();
+	operands[1]->encode();
 	char varCount = (char)localVarIds.size();
 	if (varCount > 0) {
 		int resume = outputFile->tellp();
 		outputFile->seekp(varCountAddr);
+		cerr << "\n[Patch variable count at " << varCountAddr << " to ";
 		writeByte(varCount);
 		outputFile->seekp(resume);
 	}
@@ -1106,16 +1124,16 @@ void CIfNode::encode() {
 
 //TO DO: look into creating separate class for global func calls
 
-CMemberCallNode::CMemberCallNode(CSyntaxNode * object, std::string * memberName, CSyntaxNode * params) {
+CMemberCallNode::CMemberCallNode(CSyntaxNode * object, CSyntaxNode * funcName, CSyntaxNode * params) {
 	operands.push_back(object);
 	isFnCall = false;
-	auto iter = globalFuncIds.find(*memberName);
+	auto iter = globalFuncIds.find(funcName->getText());
 	if (iter != globalFuncIds.end()) {
 		memberId = iter->second.id;
 		isFnCall = true;
 	}
 	else
-		memberId = getMemberId(*memberName);
+		memberId = getMemberId(funcName->getText());
 	operands.push_back(params);
 }
 
@@ -1127,8 +1145,6 @@ void CMemberCallNode::encode() {
 	if (operands[1]) {
 		operands[1]->encode();
 	}
-
-	
 
 	if (isFnCall)
 		writeOp(opCallFn);
@@ -1212,18 +1228,21 @@ void COpAssignNode::encode() {
 }
 
 
-CGlobalFuncDeclNode::CGlobalFuncDeclNode(std::string * ident, CSyntaxNode * params, CSyntaxNode * code) {
+CGlobalFuncDeclNode::CGlobalFuncDeclNode(CSyntaxNode * ident, CSyntaxNode * params, CSyntaxNode * code) {
 	//add name to list of global functions
-	id = getGlobalFuncId(*ident);
+//	id = getGlobalFuncId(*ident);
 	operands.push_back(params);
 	operands.push_back(code);
-	name = *ident;
+	name = ident->getText();
+	id = getGlobalFuncId(name);
 }
 
 void CGlobalFuncDeclNode::encode() {
+	paramDeclarationMode = true;
 	localVarIds.clear();
 	if (operands[0])
 		operands[0]->encode();
+	paramDeclarationMode = false;
 	//should now know how many params
 	setOutputFile(fnByteCode);
 	global = false; 
@@ -1246,6 +1265,15 @@ void CGlobalFuncDeclNode::encode() {
 
 }
 
+CGlobalFnIdentNode::CGlobalFnIdentNode(std::string* ident) {
+	name = *ident;
+	id = getGlobalFuncId(*ident);
+}
+
+std::string & CGlobalFnIdentNode::getText() {
+	return name;
+}
+
 /** Ensures declared parameters become part of this function's local variables. */
 CParamDeclNode::CParamDeclNode(std::string* ident) {
 	name = *ident;
@@ -1261,6 +1289,25 @@ CParamExprNode::CParamExprNode(CSyntaxNode * param) {
 }
 
 void CParamExprNode::encode() {
+	if (paramDeclarationMode) {
+		CSyntaxNode* paramNode = operands[0];
+		if (paramNode->getId() == variableExpression) {
+			localVarIds.push_back(paramNode->getText());
+			return;
+		}
+		else {
+			cerr << "\nError! Non-identifier used as parameter declaration.";
+			exit(1);
+		}
+	}
 	operands[0]->encode(); 
 	paramCount.back()++;
+}
+
+CFuncIdentNode::CFuncIdentNode(std::string * ident) {
+	name = *ident;
+}
+
+std::string & CFuncIdentNode::getText() {
+	return name;
 }

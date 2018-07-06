@@ -41,7 +41,7 @@
 %type <nPtr> memb_decl_identifier memb_function_def return_expr member_call
 %type <nPtr> array_init_expr constant_seq array_init_const array_element_expr array_index_expr array_init_list
 %type <nPtr> comparison_expr
-%type <nPtr> global_func_decl param_decl_list  param_list  func_call 
+%type <nPtr> global_func_decl   param_list  func_call func_indent
 
 %token PRINT END RETURN
 %token EVENT OPTION
@@ -67,8 +67,8 @@
 %nonassoc ELSE
 
 %verbose
-%glr-parser
-%expect-rr 2
+//%glr-parser
+//%expect-rr 2
 
 %%
 
@@ -192,16 +192,20 @@ memb_decl_identifier:
 		;
 
 global_func_decl:
-		IDENTIFIER   '(' param_decl_list  ')' code_block		{ $$ = new CGlobalFuncDeclNode($1,$3,$5); }
-		| IDENTIFIER   '('   ')' code_block		{ $$ = new CGlobalFuncDeclNode($1,NULL,$4); }
+		func_indent   '(' param_list  ')' code_block		{ $$ = new CGlobalFuncDeclNode($1,$3,$5); }
+		| func_indent   '('   ')' code_block		{ $$ = new CGlobalFuncDeclNode($1,NULL,$4); }
 		;
 
+//global_func_ident:
+//		IDENTIFIER								{ $$ = new CGlobalFnIdentNode($1); }
+//		;
 
-param_decl_list:
-		IDENTIFIER							{ $$ = new CParamDeclNode($1); }
-		| param_decl_list ',' IDENTIFIER	{ $$ = new CJointNode($1,new CParamDeclNode( $3)); }
+
+//param_decl_list:
+	//	IDENTIFIER							{ $$ = new CParamDeclNode($1); }
+	//	| param_decl_list ',' IDENTIFIER	{ $$ = new CJointNode($1,new CParamDeclNode( $3)); }
 		//| 									{ $$ = NULL; }
-		;
+	//	;
 
 init_expr:
 		STRING						{ $$ = new CInitNode($1); }
@@ -212,7 +216,8 @@ init_expr:
 		;
 
 memb_function_def:
-		code_block					{ $$ = new CFunctionDefNode($1); }
+		'(' param_list  ')' code_block					{ $$ = new CFunctionDefNode($2,$4); }
+		| code_block									{ $$ = new CFunctionDefNode(NULL,$1); }
 		;
 
 statement_list:
@@ -247,8 +252,8 @@ expression:
 	  | expression '+' expression		{ $$ = new COpNode(opAdd, $1, $3); }
 	  | expression '-' expression		{ $$ = new COpNode(opSub, $1, $3); }
 	  | member_expr						{ $$ = $1; }
-	  | member_call						{ $$ = new COpNode(opCall, $1); }
-	  | func_call						{ $$ = new COpNode(opCallFn, $1); }
+	  | member_call						{ $$ = $1; }
+	  | func_call						{ $$ = $1; }
 	  | constant_expr					{ $$ = $1; }
 	  | array_init_expr					{ $$ = $1; }
 	  | array_element_expr				{ $$ = $1; }
@@ -268,14 +273,18 @@ member_expr:
 	;
 
 member_call:
-	 obj_expr '.' IDENTIFIER '(' param_list ')'		{ $$ = new CMemberCallNode($1, $3, $5); }
-	 | obj_expr '.' IDENTIFIER '('  ')'			{ $$ = new CMemberCallNode($1, $3, NULL); }
+	 obj_expr '.' func_indent '(' param_list ')'		{ $$ = new CMemberCallNode($1, $3, $5); }
+	 | obj_expr '.' func_indent '('  ')'			{ $$ = new CMemberCallNode($1, $3, NULL); }
 	// | IDENTIFIER '(' param_list ')'				{ $$ = new CMemberCallNode(NULL, $1, NULL); }
 	;
 
 func_call:
-	IDENTIFIER '(' param_list ')'				{ $$ = new CMemberCallNode(NULL, $1, $3); }
-	| IDENTIFIER '('  ')'				{ $$ = new CMemberCallNode(NULL, $1, NULL); }
+	func_indent '(' param_list ')'				{ $$ = new CMemberCallNode(NULL, $1, $3); }
+	| func_indent '('  ')'				{ $$ = new CMemberCallNode(NULL, $1, NULL); }
+	;
+
+func_indent:
+	IDENTIFIER							{ $$ = new CFuncIdentNode($1); }
 	;
 
 param_list:
