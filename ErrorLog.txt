@@ -1,9 +1,9 @@
 
-object box parent: 873
-object box2 parent: 875
-object fromitz parent: 877
-object desk parent: 891
-object doll parent: 1394
-object bug parent: 1395
-[Patch variable count at 226 to 
-[Patch variable count at 704 to 
+object box parent: 877
+object box2 parent: 879
+object fromitz parent: 881
+object desk parent: 895
+object doll parent: 1398
+object bug parent: 1399
+object catwalk parent: 21155
+object crate parent: 21183

@@ -24,7 +24,10 @@ struct TMemberRec {
 	std::vector<CTigVar> arrayInitList;
 };
 
-
+struct TMemberCheck {
+	int lineNum;
+	int memberId;
+};
 
 class CObject {
 public:
@@ -32,13 +35,15 @@ public:
 	int objectId;
 	std::vector<int> classIds;
 	std::vector<TMemberRec> members;
-	std::vector<int> membersToCheck;
+	std::vector<TMemberCheck> localMembersToCheck;
 };
 
 struct TGlobalFn {
 	int id;
 	int addr;
 };
+
+enum TCodeDest {funcDest, globalDest, destNone};
 
 /** Basic syntax node. */
 class COptionNode;
@@ -77,10 +82,15 @@ public:
 	static void funcMode(bool onOff);
 
 	bool objectHasMember(int objId, int memberId);
-	void logMemberCheck(int objId, int memberId);
+	void logLocalMemberCheck(int objId, int memberId);
+	void logGlobalMemberCheck(int lineNum, int memberId);
 	std::string getMemberName(int memberId);
 
+	void setCodeDestination(TCodeDest dest);
+
 	std::vector<CSyntaxNode*> operands;
+
+	int sourceLine; //source code line from which this node was spawned.
 
 	static std::ofstream fnByteCode;
 	static std::ofstream globalByteCode;
@@ -124,6 +134,9 @@ public:
 
 	static std::vector<unsigned char> paramCount;
 	static bool paramDeclarationMode;
+	static std::vector<TMemberCheck> globalMembersToCheck;
+
+	static TCodeDest codeDestination;
 };
 
 enum TIdentType { local, globalVar, object };
@@ -469,4 +482,10 @@ public:
 
 	std::string name;
 	int id;
+};
+
+class CNothingNode : public CSyntaxNode {
+public:
+	void encode();
+
 };

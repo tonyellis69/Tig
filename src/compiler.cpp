@@ -46,12 +46,18 @@ COpNode * CTigCompiler::opNode(TOpCode opCode, CSyntaxNode* operand) {
 
 /** Convert the given syntax tree into bytecode, and write it to a file. */
 void CTigCompiler::encode(CSyntaxNode * node) {
+
+
 	node->fnByteCode.open("fnCode.tmp", ios::binary | ios::out );
 	node->globalByteCode.open("globalCode.tmp", ios::binary | ios::out );
 	
-	node->setOutputFile(node->globalByteCode);
+	//node->setOutputFile(node->globalByteCode); cerr << "\n[Global]";
+	node->codeDestination = destNone;
+	//node->setCodeDestination(funcDest);
 	node->encode();
-	cout << "\nend of encoding run";
+
+	if (!globalMemberChecksResolve(node))
+		exit(1);
 
 	node->fnByteCode.close();
 	node->globalByteCode.close();
@@ -75,7 +81,7 @@ void CTigCompiler::encode(CSyntaxNode * node) {
 	tmp = fullCode.tellp();
 
 	//add events table
-	node->setOutputFile(fullCode);
+	node->setOutputFile(fullCode); cerr << "\n\n[Tables]";
 	node->writeEventTable();
 	node->writeGlobalVarTable();
 	node->writeObjectDefTable();
@@ -85,7 +91,7 @@ void CTigCompiler::encode(CSyntaxNode * node) {
 
 	//write header
 	ofstream header("output.tig", ios::ate | ios::binary | ios::out);
-	node->setOutputFile(header);
+	node->setOutputFile(header); cerr << "\n\n[Header]";
 	node->writeHeader();
 	header.close();
 
@@ -99,6 +105,29 @@ void CTigCompiler::encode(CSyntaxNode * node) {
 	node->killNodes();
 	remove("fnCode.tmp");
 	remove("globalCode.tmp");
+}
+
+bool CTigCompiler::globalMemberChecksResolve(CSyntaxNode * node) {
+	bool resolve = true;
+	for (auto check : node->globalMembersToCheck) {
+		bool found = false;
+		for (auto obj : node->objects) {
+			for (auto objMember : obj.second.members) {
+				if (objMember.memberId == check.memberId) {
+					found = true;
+					break;
+				}
+			}
+			if (found)
+				break;
+		}
+		if (!found) {
+			resolve = false;
+			cerr << "\nError! Identifier \"" << node->getMemberName(check.memberId) << "\" used at line "
+				<< check.lineNum << " but never defined.";
+		}
+	}
+	return resolve;
 }
 
 

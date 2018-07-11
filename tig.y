@@ -47,7 +47,7 @@
 %token EVENT OPTION
 %token OBJECT HAS ARROW 
 %token GETSTRING
-%token HOT
+%token HOT MAKE_HOT PURGE
 %token START_TIMER START_EVENT AT
 %token <iValue> INTEGER
 %token <str> IDENTIFIER STRING
@@ -57,7 +57,9 @@
 %token SELF CHILDREN
 //CHILD SIBLING PARENT
 %token ADD_ASSIGN
-%token MAKE_HOT
+%token BREAK
+%token NOTHING
+%token MOVE TO
 %left EQ NE GE '>' LE '<'  OR AND     // '%left' makes these tokens left associative
 %left '+' '-'							 // this ensures that long complex sums are never ambiguous. 
 %left '*' '/' '%' 
@@ -96,11 +98,14 @@ statement:
 		| member_call ';'								{ $$ = new CallDiscardNode($1); }
 		| func_call		';'								{ $$ = new CallDiscardNode($1); }
 		| HOT STRING IDENTIFIER	 ';'					{ $$ = new CHotTextNode($2,$3,NULL); }
+		| PURGE expression  ',' expression ';'				{ $$ = new COpNode(opPurge,$2,$4); }
 		| RETURN return_expr ';'						{ $$ = new CReturnNode($2); }
 		| IF '(' expression ')' statement %prec IFX			{ $$ = new CIfNode($3, $5, NULL); }	//$prec gives this rule the lesser precedence of dummy token IFX
         | IF '(' expression ')' statement ELSE statement	{ $$ = new CIfNode($3, $5, $7); } //thus rule has the greater precedence of ELSE
 		| FOR EACH var_or_obj_memb IN obj_expr statement	{ $$ = new CForEachNode($3, $5, $6); }
 		| var_or_obj_memb ADD_ASSIGN expression ';'			{ $$ = new COpAssignNode(opAdd,$1,$3); }
+		| BREAK	';'										{ $$ = new COpNode(opBrk); }
+		| MOVE  obj_expr TO obj_expr ';'				{ $$ = new COpNode(opMove,$2,$4); }
         ;
 
 
@@ -193,7 +198,6 @@ memb_decl_identifier:
 
 global_func_decl:
 		func_indent   '(' param_list  ')' code_block		{ $$ = new CGlobalFuncDeclNode($1,$3,$5); }
-		| func_indent   '('   ')' code_block		{ $$ = new CGlobalFuncDeclNode($1,NULL,$4); }
 		;
 
 //global_func_ident:
@@ -262,6 +266,7 @@ expression:
 	  | SELF							{ $$ = new CSelfExprNode(); }
 	  | CHILDREN '(' obj_expr ')'		{ $$ = new COpNode(opChildren,$3); }
 	  | MAKE_HOT '(' expression ',' expression ',' expression ')' { $$ = new COpNode(opMakeHot,$3,$5,$7);}
+	  | NOTHING							{ $$ = new CNothingNode(); }
       ;
 
 variable_expr:
@@ -274,13 +279,13 @@ member_expr:
 
 member_call:
 	 obj_expr '.' func_indent '(' param_list ')'		{ $$ = new CMemberCallNode($1, $3, $5); }
-	 | obj_expr '.' func_indent '('  ')'			{ $$ = new CMemberCallNode($1, $3, NULL); }
+	 //| obj_expr '.' func_indent '('  ')'			{ $$ = new CMemberCallNode($1, $3, NULL); }
 	// | IDENTIFIER '(' param_list ')'				{ $$ = new CMemberCallNode(NULL, $1, NULL); }
 	;
 
 func_call:
 	func_indent '(' param_list ')'				{ $$ = new CMemberCallNode(NULL, $1, $3); }
-	| func_indent '('  ')'				{ $$ = new CMemberCallNode(NULL, $1, NULL); }
+	//| func_indent '('  ')'				{ $$ = new CMemberCallNode(NULL, $1, NULL); }
 	;
 
 func_indent:
@@ -290,7 +295,7 @@ func_indent:
 param_list:
 	expression								{ $$ = new CParamExprNode($1); }
 	| param_list ',' expression				{ $$ = new CJointNode($1,new CParamExprNode($3)); }
-//	|										{ $$ = NULL; }
+	|										{ $$ = NULL; }
 	;
 
 constant_expr:							//TO DO: float
@@ -338,6 +343,7 @@ comparison_expr:
 	| expression LE expression				{ $$ = new COpNode(opLE, $1, $3); }
 	| expression '>' expression				{ $$ = new COpNode(opGT, $1, $3); }
 	| expression GE expression				{ $$ = new COpNode(opGE, $1, $3); }
+	| expression NE expression				{ $$ = new COpNode(opNE, $1, $3); }
 	;
 
 %%

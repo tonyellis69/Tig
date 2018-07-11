@@ -33,7 +33,7 @@ int main(int argc, char* argv[]) {
 
 	tig->compile(homeDir + "test.txt");
 
-	std::getchar();
+	//std::getchar();
 
 	delete tig;
 	//_CrtSetBreakAlloc(120); // set breakpoint on a specific allocation number

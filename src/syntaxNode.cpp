@@ -35,9 +35,14 @@ int CSyntaxNode::nextGlobalFuncId = 0;
 std::vector<unsigned char> CSyntaxNode::paramCount;
 std::vector<CSyntaxNode*> CSyntaxNode::nodeList;
 bool CSyntaxNode::paramDeclarationMode = false;
+std::vector<TMemberCheck> CSyntaxNode::globalMembersToCheck;
+TCodeDest CSyntaxNode::codeDestination;
+
+extern int lineNo;
 
 CSyntaxNode::CSyntaxNode() {
 	nodeList.push_back(this);
+	sourceLine = lineNo;
 }
 
 /** Set the file the syntax tree writes to. */
@@ -156,9 +161,16 @@ void CSyntaxNode::writeMemberNameTable() {
 }
 
 void CSyntaxNode::writeGlobalFuncTable() {
-	writeWord(globalFuncIds.size());
-	//I don't *think* I need to order these
-	for (auto fn : globalFuncIds) {
+	std::vector<std::pair<std::string, TGlobalFn>> orderedFuncs;
+	for (auto func : globalFuncIds) {
+		orderedFuncs.push_back(func);
+	}
+	sort(orderedFuncs.begin(), orderedFuncs.end(),
+		[&](std::pair<std::string, TGlobalFn>& fn1, std::pair<std::string, TGlobalFn>& fn2) {return fn1.second.id <  fn2.second.id; });
+
+
+	writeWord(orderedFuncs.size());
+	for (auto fn : orderedFuncs) {
 		writeWord(fn.second.addr);
 	}
 }
@@ -215,9 +227,14 @@ bool CSyntaxNode::objectHasMember(int objId, int memberId) {
 	return false;
 }
 
-void CSyntaxNode::logMemberCheck(int objId, int memberId) {
+void CSyntaxNode::logLocalMemberCheck(int objId, int memberId) {
 	CObject* obj = getObject(objId);
-	obj->membersToCheck.push_back(memberId);
+	obj->localMembersToCheck.push_back({sourceLine,memberId});
+}
+
+
+void CSyntaxNode::logGlobalMemberCheck(int lineNum, int memberId) {
+	globalMembersToCheck.push_back({ lineNum, memberId });
 }
 
 std::string CSyntaxNode::getMemberName(int memberId) {
@@ -226,6 +243,21 @@ std::string CSyntaxNode::getMemberName(int memberId) {
 	if (it == memberIds.end())
 		return NULL;
 	return it->first;
+}
+
+void CSyntaxNode::setCodeDestination(TCodeDest dest) {
+	if (dest != codeDestination) {
+		codeDestination = dest;
+		if (codeDestination == funcDest) {
+			cerr << "\n\n[FUNCTION:]";
+			setOutputFile(fnByteCode);
+		}
+		else {
+			cerr << "\n\n[GLOBAL:]";
+			setOutputFile(globalByteCode);
+		}
+
+	}
 }
 
 
@@ -409,7 +441,8 @@ CEventNode::CEventNode(CSyntaxNode* identNode,  CSyntaxNode* codeBlock) {
 
 /** Write the bytecode for this event. */
 void CEventNode::encode() {
-	setOutputFile(fnByteCode);
+	//setOutputFile(fnByteCode); cerr << "\n\n[FUNCTION E]";
+	setCodeDestination(funcDest);
 	int currentAddress = outputFile->tellp();
 	eventTable[eventId] = currentAddress;
 
@@ -417,7 +450,8 @@ void CEventNode::encode() {
 
 	if (optionStack.size() == 0) {
 		writeOp(opEnd);
-		setOutputFile(globalByteCode);
+		//setOutputFile(globalByteCode); cerr << "\n\n[GLOBAL OP]";
+		setCodeDestination(globalDest);
 		return;
 	}
 
@@ -450,7 +484,8 @@ void CEventNode::encode() {
 	outputFile->seekp(resume);
 	
 	optionStack.clear();
-	setOutputFile(globalByteCode);
+	//setOutputFile(globalByteCode); cerr << "\n\n[GLOBAL]";
+	setCodeDestination(globalDest);
 }
 
 /** Create an identifier node for the given identifier string. */
@@ -656,13 +691,13 @@ void CObjDeclNode::encode() {
 		parentObjChildMemb->value.setObjId(thisObj->objectId);
 	}
 
-	for (auto member : thisObj->membersToCheck) {
-		if (!objectHasMember(thisObj->objectId, member)) {
-			std::cerr << "\nError! Referal to non-existent member \"" << getMemberName(member) << "\" of object \"" << name << "\"";
+	for (auto check : thisObj->localMembersToCheck) {
+		if (!objectHasMember(thisObj->objectId, check.memberId)) {
+			std::cerr << "\nError, line " << check.lineNum << ": reference to unrecognised identifier \"" << getMemberName(check.memberId) << "\" in object \"" << name << "\"";
 			exit(1);
 		}
 	}
-	thisObj->membersToCheck.clear();
+	thisObj->localMembersToCheck.clear();
 }
 
 /** Create a node representing an object's member reference. */
@@ -690,7 +725,7 @@ void CObjMemberAssigneeNode::encode() {
 
 /** Create a node representing a reference to an object - either named or in a variable. */
 CObjRefNode::CObjRefNode(std::string * parsedString) {
-	auto iter = objects.find(*parsedString);
+/*uto iter = objects.find(*parsedString);
 	if (iter != objects.end()) {
 		refId = iter->second.objectId;
 		identType = object;
@@ -702,30 +737,45 @@ CObjRefNode::CObjRefNode(std::string * parsedString) {
 		identType = globalVar;
 		return;
 	}
+	*/
 
 	//still here? may be a local variable
 	name = *parsedString;
 }
 
-/** Tell the VM to push the object id on the stack . */
+/** Tell the VM to push the referenced object id on the stack . */
 void CObjRefNode::encode() {
-	if (identType == object) { //absolute reference to an object
-		writeOp(opPushInt);
-		writeWord(refId);
+	////////////////////Do checking here
+	auto iter = objects.find(name);
+	if (iter != objects.end()) { //absolute reference to an object
+		writeOp(opPushObj);
+		writeWord(iter->second.objectId);
+		return;
 	}
-	else {
-		//check for local
-		auto it = std::find_if(localVarIds.begin(), localVarIds.end(),
-			[&](auto& varName) { return varName == name; });
-		if (it == localVarIds.end()) {
-			std::cout << "\nError! No object or variable named " << name << " exists.";
-			exit(1);
-		}
-		refId = it - localVarIds.begin();
 
-		writeOp(opPushVar); //object id is stored in a variable
-		writeWord(refId);
+	//TO DO!!!!!!!!!! check for local member.
+
+	//check for local variable
+	auto it = std::find_if(localVarIds.begin(), localVarIds.end(),
+		[&](auto& varName) { return varName == name; });
+	if (it != localVarIds.end()) {
+		writeOp(opPushVar);
+		writeWord(it - localVarIds.begin());
+		return;
 	}
+
+	//check for global variable
+	auto globIt =  std::find_if(globalVarIds.begin(), globalVarIds.end(),
+		[&](const std::pair<std::string, int>& var) { return var.first == name; });
+	if (globIt != globalVarIds.end()) {
+		writeOp(opPushVar);
+		writeWord(globIt->second);
+		return;
+	}
+
+		
+	std::cout << "\nError, line " << sourceLine << ". No object or variable named \"" << name << "\" exists.";
+	exit(1);
 }
 
 //TO DO: identical to CObjMemberAssigneeNode - definitely room for refactoring.
@@ -735,11 +785,13 @@ CMemberExprNode::CMemberExprNode(CSyntaxNode * parent, std::string * parsedStrin
 	//identify member
 	auto iter = memberIds.find(*parsedString);
 	if (iter == memberIds.end()) {
-		std::cout << "\nError! No member named " << *parsedString << " exists.";
-		exit(1);
+		//std::cout << "\nError, line " << line << "! No member named " << *parsedString << " exists.";
+		//exit(1);
+		memberId = getMemberId(*parsedString);
+		logGlobalMemberCheck(sourceLine, memberId);
+		return;
 	}
 	memberId = iter->second;
-
 }
 
 /** Tell the VM to put the value expressed by this member on the stack. */
@@ -817,7 +869,7 @@ void CVarExprNode::encode() {
 		//treat it as a member expression
 
 		//does the current object actually have this member?
-		logMemberCheck(currentObj, memberId);
+		logLocalMemberCheck(currentObj, memberId);
 
 		writeOp(opPushInt);
 		writeWord(selfObjId);
@@ -827,7 +879,7 @@ void CVarExprNode::encode() {
 	}
 
 
-	std::cerr << "\nError! Identifier " << name << " not recognised.";
+	std::cerr << "\nError! Identifier \"" << name << "\" not recognised on line " << sourceLine << ". ";
 	exit(1);
 	//if (identType == globalVar)
 //		writeOp(opPushVar);
@@ -876,8 +928,8 @@ CInitNode::CInitNode() {
 /** Throw the value of this initialiser on the stack to use when writing the object table. */
 void CInitNode::encode() {
 	if (value.type == tigFunc) {
-		setOutputFile(fnByteCode);
-		int codeStart = outputFile->tellp();
+		//setOutputFile(fnByteCode); cerr << "\n\n[FUNCTION INIT]";
+		int codeStart = fnByteCode.tellp();
 		operands[0]->encode();
 		//writeOp(opReturn);
 		value.setFuncAddr(codeStart);
@@ -901,7 +953,7 @@ ClassIdentNode::ClassIdentNode(std::string * parsedString) {
 		classId = iter->second.objectId;
 		return;
 	}
-	std::cout << "\nError! No object named " << *parsedString << " exists.";
+	std::cout << "\nError, line: " << sourceLine << " No object named \"" << *parsedString << "\" exists.";
 	exit(1);
 }
 
@@ -920,7 +972,7 @@ CodeBlockNode::CodeBlockNode(CSyntaxNode * codeBlock) {
 }
 
 void CodeBlockNode::encode() {
-	setOutputFile(fnByteCode); //TO DO: scrap and catch code inside function definitions instead
+	//setOutputFile(fnByteCode); cerr << "\n\nFUNCTION code block"; //TO DO: scrap and catch code inside function definitions instead
 	operands[0]->encode();
 	//setOutputFile(globalByteCode);
 }
@@ -1034,7 +1086,8 @@ void CFunctionDefNode::encode() {
 	paramDeclarationMode = false;
 	//should now know how many params
 
-	setOutputFile(fnByteCode);
+	//setOutputFile(fnByteCode); cerr << "\n\n[FUNCTION write funcDef]";
+	setCodeDestination(funcDest);
 	global = false;
 	int varCountAddr = outputFile->tellp();
 	writeByte(0);
@@ -1050,7 +1103,8 @@ void CFunctionDefNode::encode() {
 	if (lastOp != opReturn && lastOp != opReturnTrue)
 		writeOp(opReturnTrue); 
 	global = true;
-	setOutputFile(globalByteCode);
+	//setOutputFile(globalByteCode); cerr << "\n\n[GLOBAL] end of func def";
+	setCodeDestination(globalDest);
 }
 
 
@@ -1122,7 +1176,7 @@ void CIfNode::encode() {
 	outputFile->seekp(resumeAddr);
 }
 
-//TO DO: look into creating separate class for global func calls
+
 
 CMemberCallNode::CMemberCallNode(CSyntaxNode * object, CSyntaxNode * funcName, CSyntaxNode * params) {
 	operands.push_back(object);
@@ -1132,15 +1186,17 @@ CMemberCallNode::CMemberCallNode(CSyntaxNode * object, CSyntaxNode * funcName, C
 		memberId = iter->second.id;
 		isFnCall = true;
 	}
-	else
+	else { 
 		memberId = getMemberId(funcName->getText());
+		logGlobalMemberCheck(sourceLine, memberId);
+	}
 	operands.push_back(params);
 }
 
 
 void CMemberCallNode::encode() {
 
-	//write code to leave parameter value om stack
+	//write code to leave parameter value on stack
 	paramCount.push_back(0);
 	if (operands[1]) {
 		operands[1]->encode();
@@ -1238,13 +1294,15 @@ CGlobalFuncDeclNode::CGlobalFuncDeclNode(CSyntaxNode * ident, CSyntaxNode * para
 }
 
 void CGlobalFuncDeclNode::encode() {
+	currentObj = 0;
 	paramDeclarationMode = true;
 	localVarIds.clear();
 	if (operands[0])
 		operands[0]->encode();
 	paramDeclarationMode = false;
 	//should now know how many params
-	setOutputFile(fnByteCode);
+	//setOutputFile(fnByteCode); cerr << "\n\n[FUNCTION write global def]";
+	setCodeDestination(funcDest);
 	global = false; 
 	int fnStartAddr = outputFile->tellp();
 	writeByte(0); //initial var count
@@ -1261,7 +1319,8 @@ void CGlobalFuncDeclNode::encode() {
 		writeOp(opReturnTrue);
 	globalFuncIds[name].addr = fnStartAddr; 
 	global = true;
-	setOutputFile(globalByteCode);
+	//setOutputFile(globalByteCode); cerr << "\n\n[GLOBAL] end of global func def";
+	setCodeDestination(globalDest);
 
 }
 
@@ -1310,4 +1369,10 @@ CFuncIdentNode::CFuncIdentNode(std::string * ident) {
 
 std::string & CFuncIdentNode::getText() {
 	return name;
+}
+
+
+void CNothingNode::encode() {
+	writeOp(opPushObj);
+	writeWord(0);
 }

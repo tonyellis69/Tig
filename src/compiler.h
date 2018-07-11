@@ -16,9 +16,7 @@ public:
 	~CTigCompiler();
 	void compile(std::string filename);
 	COpNode* opNode(TOpCode opCode, CSyntaxNode* operand);
-
-
 	void encode(CSyntaxNode* node);
-
+	bool globalMemberChecksResolve(CSyntaxNode* node);
 
 };
