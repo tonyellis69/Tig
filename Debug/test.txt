@@ -1,18 +1,19 @@
-CGameObj has parent = 0, child = 0, sibling = 0, shortName,  initial, moved, 
-take {
-	purge 0, self; 
-	"\n\nI picked up the " + makeHot(name,0,self) + ". ";
-	move self to player;
-	moved = true;
-}, drop, examine;
+//tron;
 
-globalX = 77;
 
-CGameObj CRoom;
-CGameObj CCorridor has shortName "corridor";
-CGameObj CStaticObj;
-CStaticObj CScenery;
+mainWindow = 0;
+invWindow = 1;
 
+updateInventory() {
+	setWindow(invWindow);
+	clearWindow;
+	"Inventory:";
+	result = "";
+	for each item in player {
+		print makeHot("\nA " + item.name,0,item); 
+	}
+	setWindow(mainWindow);
+};
 
 listChildren(parentObj) {
 	count = 0; result = "";
@@ -29,6 +30,19 @@ listChildren(parentObj) {
 	return result;
 };
 
+CGameObj has parent = 0, child = 0, sibling = 0, shortName,  initial, moved, 
+take {
+	purge 0, self; 
+	"\n\nI picked up the " + makeHot(name,0,self) + ". ";
+	move self to player;
+	moved = true;
+	updateInventory();
+}, drop, examine;
+
+CGameObj CRoom;
+CGameObj CCorridor has shortName "corridor";
+CGameObj CStaticObj;
+CStaticObj CScenery;
 
 CSupporter has search {
 	result = listChildren(self);
@@ -68,7 +82,7 @@ only a thin trickle of light. It fell on mouldering couches, plastic tables and 
 desk. Swathes of 
 dust-choked cobweb hung from the ceiling like grey,
 motheaten banners. It didn't look as if the place had been abandoned for years: 
-it looked more like centuries. " + globalX; 
+it looked more like centuries. "; 
 
 }, 	
 northTo = broadCorridor;
@@ -109,7 +123,7 @@ had come to the south.",
 shortName "broad corridor",
 northTo = octHall, southTo = foyer;
 
-startRoom = foyer;//turbineHall;
+startRoom = foyer; //turbineHall;
 playerObj = player;
 
 CGameObj octHall has description = "I came to a large, octagonal hall, as dead and dusty as
@@ -137,6 +151,7 @@ in the building. Enormous cyclindrical machines rose into the dark, towering ove
 discarded here. A network of pipes snaked among the spaces in between them, as
 did a maintenance catwalk.",
 eastTo junction;
+
 
 -> CScenery catwalk has name "maintenance catwalk", description "Too high to reach, it led off tantalisingly
 into the dark.",
@@ -178,8 +193,10 @@ push {
 		pushed = true;
 		return "\n\nWith a lot of swearing, I pushed one of the crates under the catwalk.";
 	} else { 
+		
 		return "\n\nThere was no point pushing the crate any further.";
 	}
+	
 };
 
 CGameObj maintenance has description = "The maintenance room was full of old, corroded machinery and 

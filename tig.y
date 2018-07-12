@@ -43,7 +43,7 @@
 %type <nPtr> comparison_expr
 %type <nPtr> global_func_decl   param_list  func_call func_indent
 
-%token PRINT END RETURN
+%token PRINT SET_WINDOW CLEAR_WINDOW END RETURN
 %token EVENT OPTION
 %token OBJECT HAS ARROW 
 %token GETSTRING
@@ -57,7 +57,7 @@
 %token SELF CHILDREN
 //CHILD SIBLING PARENT
 %token ADD_ASSIGN
-%token BREAK
+%token BREAK TRON TROFF
 %token NOTHING
 %token MOVE TO
 %left EQ NE GE '>' LE '<'  OR AND     // '%left' makes these tokens left associative
@@ -106,6 +106,10 @@ statement:
 		| var_or_obj_memb ADD_ASSIGN expression ';'			{ $$ = new COpAssignNode(opAdd,$1,$3); }
 		| BREAK	';'										{ $$ = new COpNode(opBrk); }
 		| MOVE  obj_expr TO obj_expr ';'				{ $$ = new COpNode(opMove,$2,$4); }
+		| TRON	';'										{ $$ = new CTronNode(true); }
+		| TROFF	';'										{ $$ = new CTronNode(false); }
+		| SET_WINDOW '(' expression ')' ';'				{ $$ = new COpNode(opWin,$3); }
+		| CLEAR_WINDOW ';'								{ $$ = new COpNode(opClr); }
         ;
 
 

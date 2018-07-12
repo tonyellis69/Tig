@@ -28,7 +28,7 @@ void CTigCompiler::compile(std::string filename) {
 		std::cout << "\nFile not found";
 		return;
 	}
-	
+	outputFile = "output.tig";
 
 	tigC = this;
 	//yydebug = 1;
@@ -47,13 +47,13 @@ COpNode * CTigCompiler::opNode(TOpCode opCode, CSyntaxNode* operand) {
 /** Convert the given syntax tree into bytecode, and write it to a file. */
 void CTigCompiler::encode(CSyntaxNode * node) {
 
-
+	node->tron = false;// true;
 	node->fnByteCode.open("fnCode.tmp", ios::binary | ios::out );
 	node->globalByteCode.open("globalCode.tmp", ios::binary | ios::out );
 	
 	//node->setOutputFile(node->globalByteCode); cerr << "\n[Global]";
 	node->codeDestination = destNone;
-	//node->setCodeDestination(funcDest);
+	node->setCodeDestination(globalDest);
 	node->encode();
 
 	if (!globalMemberChecksResolve(node))
@@ -80,8 +80,9 @@ void CTigCompiler::encode(CSyntaxNode * node) {
 	//fullCode.seekp(0, ios::end);
 	tmp = fullCode.tellp();
 
+	node->tron = false;
 	//add events table
-	node->setOutputFile(fullCode); cerr << "\n\n[Tables]";
+	node->setOutputFile(fullCode); if (node->tron) cout << "\n\n[Tables]\n";
 	node->writeEventTable();
 	node->writeGlobalVarTable();
 	node->writeObjectDefTable();
@@ -90,21 +91,25 @@ void CTigCompiler::encode(CSyntaxNode * node) {
 	fullCode.close();
 
 	//write header
-	ofstream header("output.tig", ios::ate | ios::binary | ios::out);
-	node->setOutputFile(header); cerr << "\n\n[Header]";
+	ofstream main(outputFile, ios::ate | ios::binary | ios::out);
+	node->setOutputFile(main); if (node->tron) cout << "\n\n[Header]\n";
 	node->writeHeader();
-	header.close();
+	main.close();
 
 	//stitch together
-	ofstream final("output.tig", ios::binary | ios::out | ios::app);
+	main.open(outputFile, ios::binary | ios::out | ios::app);
 	ifstream tempFile("fnCode.tmp", ios::binary | ios::in);
 
-	final << tempFile.rdbuf();
-	final.close();
+	main << tempFile.rdbuf();
+	main.close();
+
+	cout  << outputFile << " compiled successfully!";
+
 	tempFile.close();
 	node->killNodes();
 	remove("fnCode.tmp");
 	remove("globalCode.tmp");
+
 }
 
 bool CTigCompiler::globalMemberChecksResolve(CSyntaxNode * node) {
@@ -129,7 +134,6 @@ bool CTigCompiler::globalMemberChecksResolve(CSyntaxNode * node) {
 	}
 	return resolve;
 }
-
 
 
 

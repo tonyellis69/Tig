@@ -19,4 +19,5 @@ public:
 	void encode(CSyntaxNode* node);
 	bool globalMemberChecksResolve(CSyntaxNode* node);
 
+	std::string outputFile;
 };

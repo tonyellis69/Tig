@@ -37,6 +37,7 @@ std::vector<CSyntaxNode*> CSyntaxNode::nodeList;
 bool CSyntaxNode::paramDeclarationMode = false;
 std::vector<TMemberCheck> CSyntaxNode::globalMembersToCheck;
 TCodeDest CSyntaxNode::codeDestination;
+bool CSyntaxNode::tron;
 
 extern int lineNo;
 
@@ -51,27 +52,36 @@ void CSyntaxNode::setOutputFile(std::ofstream& file) {
 }
 
 void CSyntaxNode::writeOp(char byte) {
-	int addr = outputFile->tellp();
+	if (tron) {
+		int addr = outputFile->tellp();
+		cout << "\n" << (codeDestination == funcDest ? "F " : "G ") << " " << addr << " " << opCode[byte];
+	}
 	outputFile->write(&byte, 1);
-	cout << "\n" << outputFile << " " << addr << " " << opCode[byte];
 	lastOp = byte;
 }
 
 void CSyntaxNode::writeByte(char byte) {
-	int addr = outputFile->tellp();
+	if (tron) {
+		int addr = outputFile->tellp();
+		cout << "\n" << (codeDestination == funcDest ? "F " : "G ") << " " << addr << " [writeByte] " << (int)byte;
+	}
 	outputFile->write(&byte, 1);
-	cout << "\n" << outputFile << " " << addr << " [writeByte] " << (int)byte;
 }
 
 void CSyntaxNode::writeWord(unsigned int word) {
 	outputFile->write((char*)&word, 4);
-	cout << " " << word;
+	if (tron)
+		cout << " " << word;
 }
 
 void CSyntaxNode::writeString(const std::string & text) {
 	writeWord(text.size());
 	*outputFile << text.c_str();
-	cout << " " << text.substr(0, 20);
+	if (tron) {
+		std::string trim = text;
+		trim.erase(trim.begin(), find_if_not(trim.begin(), trim.end(), [](int c) {return isspace(c); }));
+		cout << " " << trim.substr(0, 20);
+	}
 }
 
 void CSyntaxNode::writeCString(const std::string & text) {
@@ -249,14 +259,11 @@ void CSyntaxNode::setCodeDestination(TCodeDest dest) {
 	if (dest != codeDestination) {
 		codeDestination = dest;
 		if (codeDestination == funcDest) {
-			cerr << "\n\n[FUNCTION:]";
 			setOutputFile(fnByteCode);
 		}
 		else {
-			cerr << "\n\n[GLOBAL:]";
 			setOutputFile(globalByteCode);
 		}
-
 	}
 }
 
@@ -630,7 +637,7 @@ CObjDeclNode::CObjDeclNode(CSyntaxNode * identifier, CSyntaxNode * memberList, C
 	//maintain object tree 
 	parentList[childLevel] = identNode->getId();
 	if (parentList.find(childLevel - 1) != parentList.end()) {
-		std::cerr << "\nobject " << identifier->getText() << " parent: " << parentList[childLevel - 1] << lineNo;
+	//	std::cerr << "\nobject " << identifier->getText() << " parent: " << parentList[childLevel - 1] << lineNo;
 		parentId = parentList[childLevel - 1];
 	}
 	else {
@@ -1096,11 +1103,12 @@ void CFunctionDefNode::encode() {
 	if (varCount > 0) {
 		int resume = outputFile->tellp();
 		outputFile->seekp(varCountAddr);
-		cerr << "\n[Patch variable count at " << varCountAddr << " to ";
+		if (tron)
+			cout << "\npatched " << varCountAddr << " to ";
 		writeByte(varCount);
 		outputFile->seekp(resume);
 	}
-	if (lastOp != opReturn && lastOp != opReturnTrue)
+//	if (lastOp != opReturn && lastOp != opReturnTrue)
 		writeOp(opReturnTrue); 
 	global = true;
 	//setOutputFile(globalByteCode); cerr << "\n\n[GLOBAL] end of func def";
@@ -1159,8 +1167,10 @@ void CIfNode::encode() {
 		writeWord(0xFFFFFFFF);
 		int elseAddr = outputFile->tellp();
 		outputFile->seekp(patchAddr);
-		cout << "\n[patch] " << patchAddr << " to ";
-		writeWord(elseAddr);
+		if (tron) {
+			cout << "\npatched " << patchAddr << " to";
+		}
+		writeWord(elseAddr); 
 		outputFile->seekp(elseAddr);
 		patchAddr = patch2Addr;
 		operands[2]->encode();
@@ -1170,7 +1180,8 @@ void CIfNode::encode() {
 	int resumeAddr = outputFile->tellp();
 
 	outputFile->seekp(patchAddr);
-	cout << "\n[patch] " << patchAddr << " to ";
+	if (tron)
+		cout << "\npatched " << patchAddr << " to";
 	writeWord(resumeAddr);
 
 	outputFile->seekp(resumeAddr);
@@ -1257,7 +1268,8 @@ void CForEachNode::encode() {
 
 	int resumeAddr = outputFile->tellp();
 	outputFile->seekp(patchAddr);
-	cout << "\n[patch] " << patchAddr << " to ";
+	if (tron)
+		cout << "\npatched " << patchAddr << " to";
 	writeWord(resumeAddr);
 	outputFile->seekp(resumeAddr);
 }
@@ -1285,8 +1297,6 @@ void COpAssignNode::encode() {
 
 
 CGlobalFuncDeclNode::CGlobalFuncDeclNode(CSyntaxNode * ident, CSyntaxNode * params, CSyntaxNode * code) {
-	//add name to list of global functions
-//	id = getGlobalFuncId(*ident);
 	operands.push_back(params);
 	operands.push_back(code);
 	name = ident->getText();
@@ -1311,17 +1321,17 @@ void CGlobalFuncDeclNode::encode() {
 	if (varCount > 0) {
 		int resume = outputFile->tellp();
 		outputFile->seekp(fnStartAddr);
-		cout << "\n[patch]: ";
+		if (tron)
+			cout << "\npatched " << fnStartAddr << "to ";
 		writeByte(varCount);
 		outputFile->seekp(resume);
 	}
-	if (lastOp != opReturn && lastOp != opReturnTrue)
+	//if (lastOp != opReturn && lastOp != opReturnTrue)
 		writeOp(opReturnTrue);
 	globalFuncIds[name].addr = fnStartAddr; 
 	global = true;
 	//setOutputFile(globalByteCode); cerr << "\n\n[GLOBAL] end of global func def";
 	setCodeDestination(globalDest);
-
 }
 
 CGlobalFnIdentNode::CGlobalFnIdentNode(std::string* ident) {

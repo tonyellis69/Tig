@@ -137,6 +137,7 @@ public:
 	static std::vector<TMemberCheck> globalMembersToCheck;
 
 	static TCodeDest codeDestination;
+	static bool tron;
 };
 
 enum TIdentType { local, globalVar, object };
@@ -488,4 +489,12 @@ class CNothingNode : public CSyntaxNode {
 public:
 	void encode();
 
+};
+
+class CTronNode : public CSyntaxNode {
+public:
+	CTronNode(bool onOff) { mTron = onOff;}
+	void encode() { tron = mTron;}
+
+	bool mTron;
 };

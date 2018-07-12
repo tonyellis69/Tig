@@ -1,9 +1,0 @@
-
-object box parent: 877
-object box2 parent: 879
-object fromitz parent: 881
-object desk parent: 895
-object doll parent: 1398
-object bug parent: 1399
-object catwalk parent: 21155
-object crate parent: 21183

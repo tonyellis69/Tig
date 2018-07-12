@@ -63,6 +63,8 @@ IDENT    {LETTER}({LETTER}|{DIGIT})*
 "||"					return OR;
 "+="					return ADD_ASSIGN;
 "brk"					return BREAK;
+"tron"					return TRON;
+"troff"					return TROFF;
 "print"         		return PRINT;
 "end"					return END;
 "event"					return EVENT;
@@ -90,6 +92,8 @@ IDENT    {LETTER}({LETTER}|{DIGIT})*
 "nothing"				return NOTHING;
 "move"					return MOVE;
 "to"					return TO;
+"setWindow"				return SET_WINDOW;
+"clearWindow"			return CLEAR_WINDOW;
 {IDENT}					{	identBufs[currentIdentBuf].clear(); 
 							identBufs[currentIdentBuf].assign(yytext,yyleng);
 							yylval.str = &identBufs[currentIdentBuf];
