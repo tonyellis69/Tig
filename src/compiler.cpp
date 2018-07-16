@@ -46,7 +46,7 @@ COpNode * CTigCompiler::opNode(TOpCode opCode, CSyntaxNode* operand) {
 
 /** Convert the given syntax tree into bytecode, and write it to a file. */
 void CTigCompiler::encode(CSyntaxNode * node) {
-
+	node->objects[""] = CObject();
 	node->tron = false;// true;
 	node->fnByteCode.open("fnCode.tmp", ios::binary | ios::out );
 	node->globalByteCode.open("globalCode.tmp", ios::binary | ios::out );
@@ -84,10 +84,10 @@ void CTigCompiler::encode(CSyntaxNode * node) {
 	//add events table
 	node->setOutputFile(fullCode); if (node->tron) cout << "\n\n[Tables]\n";
 	node->writeEventTable();
-	node->writeGlobalVarTable();
+	//node->writeGlobalVarTable();
 	node->writeObjectDefTable();
 	node->writeMemberNameTable();
-	node->writeGlobalFuncTable();
+	//node->writeGlobalFuncTable();
 	fullCode.close();
 
 	//write header
@@ -103,7 +103,7 @@ void CTigCompiler::encode(CSyntaxNode * node) {
 	main << tempFile.rdbuf();
 	main.close();
 
-	cout  << outputFile << " compiled successfully!";
+	cout  << "\n" << outputFile << " compiled successfully!";
 
 	tempFile.close();
 	node->killNodes();
@@ -116,7 +116,7 @@ bool CTigCompiler::globalMemberChecksResolve(CSyntaxNode * node) {
 	bool resolve = true;
 	for (auto check : node->globalMembersToCheck) {
 		bool found = false;
-		for (auto obj : node->objects) {
+		for (auto obj : node->objects) { //1. check if this member was ever defined in an object
 			for (auto objMember : obj.second.members) {
 				if (objMember.memberId == check.memberId) {
 					found = true;
@@ -126,9 +126,10 @@ bool CTigCompiler::globalMemberChecksResolve(CSyntaxNode * node) {
 			if (found)
 				break;
 		}
+		
 		if (!found) {
 			resolve = false;
-			cerr << "\nError! Identifier \"" << node->getMemberName(check.memberId) << "\" used at line "
+			cerr << "\nError!!!! Identifier \"" << node->getMemberName(check.memberId) << "\" used at line "
 				<< check.lineNum << " but never defined.";
 		}
 	}

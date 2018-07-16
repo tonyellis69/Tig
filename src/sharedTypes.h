@@ -3,7 +3,7 @@
 enum TOpCode { opNop, opPrint, opGiveOptions, opOption, opJumpEvent, opEnd,
 	opAssign,  opPushStr, opPushInt, 
 	opPushVar, opGetString, opAdd, opSub, opStartTimer, opTimedEvent,
-	opExpressVar, opPushObj, opCall, opCallFn, opReturn, opReturnTrue, opHot,
+	opExpressVar, opPushObj, opPushSelf, opCall, opCallFn, opReturn, opReturnTrue, opHot,
 	opPurge, opInitArray,
 	opPushElem, opAssignElem, opPop, opEq, opNE, opLT, opLE, opGT, opGE,
 	opJumpFalse, opJump, opChild, opSibling, opGetVar, opChildren, opMakeHot, opBrk,
@@ -27,6 +27,7 @@ static char* opCode[] = { "opNop\0",
 	"opTimedEvent\0",
 	"opExpressVar\0",
 	"opPushObj\0",
+	"opPushSelf\0",
 	"opCall\0",
 	"opCallFn\0",
 	"opReturn\0",
@@ -60,5 +61,6 @@ static char* opCode[] = { "opNop\0",
 const int memberIdStart = 1000;
 const int globalVarStart = 100;
 const int selfObjId = 0; ///<The object id that stands for 'this current object.'
+const int zeroObject = 0;
 
 enum TigVarType { tigUndefined, tigString, tigInt, tigFloat, tigObj, tigFunc, tigArray };

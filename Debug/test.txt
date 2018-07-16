@@ -1,19 +1,28 @@
 //tron;
 
-
 mainWindow = 0;
 invWindow = 1;
+
+CGameObj has parent = 0, child = 0, sibling = 0, shortName,  initial, moved, 
+take {
+	purge 0, self; 
+	"\n\nI picked up the " + makeHot(name,0,self) + ". ";
+	move self to player;
+	moved = true;
+	updateInventory();
+}, drop, examine;
 
 updateInventory() {
 	setWindow(invWindow);
 	clearWindow;
 	"Inventory:";
-	result = "";
 	for each item in player {
 		print makeHot("\nA " + item.name,0,item); 
 	}
 	setWindow(mainWindow);
 };
+
+
 
 listChildren(parentObj) {
 	count = 0; result = "";
@@ -30,14 +39,7 @@ listChildren(parentObj) {
 	return result;
 };
 
-CGameObj has parent = 0, child = 0, sibling = 0, shortName,  initial, moved, 
-take {
-	purge 0, self; 
-	"\n\nI picked up the " + makeHot(name,0,self) + ". ";
-	move self to player;
-	moved = true;
-	updateInventory();
-}, drop, examine;
+
 
 CGameObj CRoom;
 CGameObj CCorridor has shortName "corridor";
@@ -74,16 +76,21 @@ hot "down" downTo;
 hot "in" inTo; 
 hot "out" outTo; 
 
+gArray = [5,6,7]; //1 strong ref
 
-
-CRoom foyer has name "foyer", description = { 
+CRoom foyer has name "foyer",  description = { 
+tron;
+//testArray = [1,2,3];
+brk;
+testArray = gArray; 
+gArray[1] = 77;
+print testArray[1];
 return "I was in what had once been a luxurious reception area. Algae encrusted the windows, admitting 
 only a thin trickle of light. It fell on mouldering couches, plastic tables and an imposing reception
 desk. Swathes of 
 dust-choked cobweb hung from the ceiling like grey,
 motheaten banners. It didn't look as if the place had been abandoned for years: 
 it looked more like centuries. "; 
-
 }, 	
 northTo = broadCorridor;
 
@@ -161,7 +168,7 @@ climb {
 	}
 	if (player.onObject == crate) {
 		if (crate.pushed == true) {
-			player.onObject = false;
+			player.onObject = nothing;
 			return "\n\nStanding on the crate, I was able to climb onto the catwalk.";
 		} else { 
 			return "\n\nAlthough I was higher, the crate was nowhere near the catwalk.";
@@ -178,6 +185,8 @@ climb {
 	return result;
 },
 climb {  
+tron;
+brk;
 	if (player.onObject == self) {
 		player.onObject = nothing;
 		return "\n\nI climbed off the crate.";

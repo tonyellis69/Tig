@@ -121,13 +121,13 @@ return_expr:
 
 assignment:
 		var_or_obj_memb '=' expression					{ $$ = new COpNode(opAssign,$1,$3); }
-		//| element_assignee '=' expression				{ $$ = new COpNode(opAssign,$1,$3); }
+		| element_assignee '=' expression				{ $$ = new COpNode(opAssignElem,$1,$3); }
 		;
 
 var_or_obj_memb:
 		variable_assignee								{ $$ = $1; }
 		| obj_member_assignee							{ $$ = $1; }
-		| element_assignee								{ $$ = $1; }
+		//| element_assignee								{ $$ = $1; }
 		;
 
 variable_assignee:
@@ -141,7 +141,7 @@ obj_member_assignee:
 obj_expr:												
 		IDENTIFIER										{ $$ = new CObjRefNode($1); }
 		| member_expr									{ $$ = $1; }
-		| SELF											{ $$ = new CSelfExprNode(); }
+		| SELF											{ $$ = new COpNode(opPushSelf); }
 		;
 
 element_assignee:
@@ -267,7 +267,7 @@ expression:
 	  | array_element_expr				{ $$ = $1; }
 	  | comparison_expr					{ $$ = $1; }
 	  | '(' expression ')'				{ $$ = $2; }
-	  | SELF							{ $$ = new CSelfExprNode(); }
+	  | SELF							{ $$ = new COpNode(opPushSelf); }
 	  | CHILDREN '(' obj_expr ')'		{ $$ = new COpNode(opChildren,$3); }
 	  | MAKE_HOT '(' expression ',' expression ',' expression ')' { $$ = new COpNode(opMakeHot,$3,$5,$7);}
 	  | NOTHING							{ $$ = new CNothingNode(); }
