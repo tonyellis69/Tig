@@ -77,6 +77,7 @@ IDENT    {LETTER}({LETTER}|{DIGIT})*
 "has"					return HAS;
 "hot"					return HOT;
 "purge"					return PURGE;
+"clear"					return CLEAR;
 "->"					return ARROW;
 "return"				return RETURN;
 "if"					return IF;
@@ -84,6 +85,7 @@ IDENT    {LETTER}({LETTER}|{DIGIT})*
 "for"					return FOR;
 "each"					return EACH;
 "in"					return IN;
+"of"					return OF;
 "self"					return SELF;
 "children"				return CHILDREN;
 "makeHot"				return MAKE_HOT;
@@ -94,6 +96,10 @@ IDENT    {LETTER}({LETTER}|{DIGIT})*
 "to"					return TO;
 "setWindow"				return SET_WINDOW;
 "clearWindow"			return CLEAR_WINDOW;
+"style"					return STYLE;
+"cap"					return CAP;
+"inherits"				return INHERITS;
+"::"					return SUPERCLASS;
 {IDENT}					{	identBufs[currentIdentBuf].clear(); 
 							identBufs[currentIdentBuf].assign(yytext,yyleng);
 							yylval.str = &identBufs[currentIdentBuf];

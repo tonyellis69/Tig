@@ -126,6 +126,12 @@ bool CTigCompiler::globalMemberChecksResolve(CSyntaxNode * node) {
 			if (found)
 				break;
 		}
+		for (auto globalVar : node->globalVarIds) {
+			if (globalVar == check.memberId) {
+				found = true;
+				break;
+			}
+		}
 		
 		if (!found) {
 			resolve = false;

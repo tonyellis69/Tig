@@ -2,21 +2,34 @@
 
 mainWindow = 0;
 invWindow = 1;
+tron;
+directions = [northTo,neTo,eastTo,seTo,southTo,swTo,westTo,nwTo,upTo,downTo,inTo,outTo]; 
+troff;
+directionNames = ["north","northeast","east","southeast","south","southwest","west","northwest","up","down","in","out"]; 
 
-CGameObj has parent = 0, child = 0, sibling = 0, shortName,  initial, moved, 
+
+CGameObj has parent = 0, child = 0, sibling = 0, shortName,  initial, moved, click, 
 take {
 	purge 0, self; 
 	"\n\nI picked up the " + makeHot(name,0,self) + ". ";
 	move self to player;
 	moved = true;
 	updateInventory();
-}, drop, examine;
+}, 
+drop {
+	purge 0, self;
+	"\n\nI dropped the " + makeHot(name,0,self) + ". ";
+	move self to player.parent;
+	updateInventory();
+}, examine {
+	return style("popHeader") + cap(name) + style("popBody") + "\n" + description();
+};
 
 updateInventory() {
 	setWindow(invWindow);
 	clearWindow;
 	"Inventory:";
-	for each item in player {
+	for each item of player {
 		print makeHot("\nA " + item.name,0,item); 
 	}
 	setWindow(mainWindow);
@@ -27,10 +40,9 @@ updateInventory() {
 listChildren(parentObj) {
 	count = 0; result = "";
 	numChildren = children(parentObj); 
-	for each x in parentObj { 
+	for each x of parentObj { 
 		result += " a " + makeHot(x.name,0,x); 
 		count += 1;
-		brk;
 		if (count < numChildren -2)
 			result = result + ",";
 		if (count == numChildren -1)
@@ -41,8 +53,38 @@ listChildren(parentObj) {
 
 
 
-CGameObj CRoom;
-CGameObj CCorridor has shortName "corridor";
+CGameObj CRoom has 
+registerHotText {
+	x = 0;
+	for each dir in directions {
+		if (*dir) 
+			hot directionNames[x], dir, self;
+		x = x +1;
+	}
+	troff;
+	
+	//register hot text for any scenery
+	for each item of self {
+		if (item inherits CScenery) {
+			hot item.name , click, item;
+		}
+	}
+},
+look {
+	registerHotText();
+	print description(); //TO DO: should really be called describe.
+	
+	//list other exits
+	//'if (!hot dir written)' ...
+	
+	hot clear;
+},northTo,neTo,eastTo,seTo,southTo,swTo,westTo,nwTo,upTo,downTo,inTo,outTo;
+
+
+
+
+
+CRoom CCorridor has shortName "corridor";
 CGameObj CStaticObj;
 CStaticObj CScenery;
 
@@ -52,6 +94,9 @@ CSupporter has search {
 		result = "On it I could see" + result + ".";
 	}
 	return result;
+},
+examine {
+	return CGameObj::examine() + search();
 };
 
 roomClassId = CRoom;
@@ -62,29 +107,10 @@ sceneryClassId = CScenery;
 
 CGameObj player has onObject;
 
-//global hot text. Maybe think of these as verbs.
-hot "north" northTo;
-hot "northeast" neTo;
-hot "east" eastTo;
-hot "southeast" seTo;
-hot "south" southTo;
-hot "southwest" swTo;
-hot "west" westTo;
-hot "northwest" nwTo; 
-hot "up" upTo; 
-hot "down" downTo; 
-hot "in" inTo; 
-hot "out" outTo; 
 
-gArray = [5,6,7]; //1 strong ref
+
 
 CRoom foyer has name "foyer",  description = { 
-tron;
-//testArray = [1,2,3];
-brk;
-testArray = gArray; 
-gArray[1] = 77;
-print testArray[1];
 return "I was in what had once been a luxurious reception area. Algae encrusted the windows, admitting 
 only a thin trickle of light. It fell on mouldering couches, plastic tables and an imposing reception
 desk. Swathes of 
@@ -102,16 +128,16 @@ description "Made from a dull, black-but-not-really-black plastic.";
 description "It looked like every other fromitz board I'd ever seen.";
 
 -> CScenery  CSupporter desk has name "reception desk", pushed = 0, initial { text = "A formidable reception desk stretched
-almost the length of the room.";
+almost the length of the room. ";
 if (pushed == 1)
 	text = text + " It had recently been pushed.";
 return text;
 }
 ,  description "An imposing block of moulded plastic, now as 
-dusty as everything else.", 
+dusty as everything else. ", 
 push {  
 	pushed = 1;
-	return "\n\nStraining my back, I managed to push the desk a few centimetres.";
+	"\n\nStraining my back, I managed to push the desk a few centimetres.";
 	
 };
 
@@ -130,10 +156,11 @@ had come to the south.",
 shortName "broad corridor",
 northTo = octHall, southTo = foyer;
 
-startRoom = foyer; //turbineHall;
+startRoom = foyer;
+currentRoom = startRoom;
 playerObj = player;
 
-CGameObj octHall has description = "I came to a large, octagonal hall, as dead and dusty as
+CRoom octHall has description = "I came to a large, octagonal hall, as dead and dusty as
 everywhere else. An imposingly large door blocked the way north.",
 westTo = westPassage, neTo = nePassage, southTo = broadCorridor;
 
@@ -141,7 +168,7 @@ CCorridor westPassage has description = "I ventured down the east-west passagewa
 me little glimpses of decayed surfaces.",
 westTo pipeRoom, eastTo octHall;
 
-CGameObj pipeRoom has description = "I emerged in a room as large as any I had seen so far. It
+CRoom pipeRoom has description = "I emerged in a room as large as any I had seen so far. It
 was dominated by inumerable outsized pipes, emerging from the shadows, walls, floor and ceiling to converge
 in a major piece of machinery in the centre of the room. Whatever purpose it had once served, it was
 lifeless now.",
@@ -150,13 +177,14 @@ eastTo westPassage;
 CCorridor nePassage has description = "I ventured down the passageway... I could go northeast or southwest.",
 swTo octHall, neTo junction;
 
-CGameObj junction has description = "I found myself at the end of the passage.",
+CRoom junction has description = "I found myself at the end of the passage.",
 westTo turbineHall, eastTo maintenance, swTo nePassage;
 
-CGameObj turbineHall has description = "I found myself at the bottom of a vertical chamber that must have filled most of the remaining space
+CRoom turbineHall has description {
+"I found myself at the bottom of a vertical chamber that must have filled most of the remaining space
 in the building. Enormous cyclindrical machines rose into the dark, towering over me and the rusty metal crates that lay
 discarded here. A network of pipes snaked among the spaces in between them, as
-did a maintenance catwalk.",
+did a maintenance catwalk. ";},
 eastTo junction;
 
 
@@ -164,14 +192,14 @@ eastTo junction;
 into the dark.",
 climb {
 	if (player.onObject != crate) {
-		return "\n\nThe catwalk was too high to reach.";
+		"\n\nThe catwalk was too high to reach.";
 	}
 	if (player.onObject == crate) {
 		if (crate.pushed == true) {
 			player.onObject = nothing;
-			return "\n\nStanding on the crate, I was able to climb onto the catwalk.";
+			"\n\nStanding on the crate, I was able to climb onto the catwalk.";
 		} else { 
-			return "\n\nAlthough I was higher, the crate was nowhere near the catwalk.";
+			"\n\nAlthough I was higher, the crate was nowhere near the catwalk.";
 		}
 	}
 };
@@ -185,30 +213,29 @@ climb {
 	return result;
 },
 climb {  
-tron;
-brk;
 	if (player.onObject == self) {
 		player.onObject = nothing;
-		return "\n\nI climbed off the crate.";
+		"\n\nI climbed off the crate.";
 	} else {
 		player.onObject = self;
-		return "\n\nI climbed onto one of the crates.";
+		"\n\nI climbed onto one of the crates.";
 	}
 },
 push {
 	if (pushed == false) {
-		if (player.onObject == self)
-			return "\n\nThat was never going to happen while I was standing on it.";
+		if (player.onObject == self) {
+			"\n\nThat was never going to happen while I was standing on it.";
+			return;
+		}
 		pushed = true;
-		return "\n\nWith a lot of swearing, I pushed one of the crates under the catwalk.";
+		"\n\nWith a lot of swearing, I pushed one of the crates under the catwalk.";
 	} else { 
-		
-		return "\n\nThere was no point pushing the crate any further.";
+		 "\n\nThere was no point pushing the crate any further.";
 	}
 	
 };
 
-CGameObj maintenance has description = "The maintenance room was full of old, corroded machinery and 
+CRoom maintenance has description = "The maintenance room was full of old, corroded machinery and 
 rusty tools.",
 westTo junction;
 

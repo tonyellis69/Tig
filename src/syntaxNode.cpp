@@ -38,6 +38,7 @@ bool CSyntaxNode::paramDeclarationMode = false;
 std::vector<TMemberCheck> CSyntaxNode::globalMembersToCheck;
 TCodeDest CSyntaxNode::codeDestination;
 bool CSyntaxNode::tron;
+set<int> CSyntaxNode::globalVarIds;
 
 extern int lineNo;
 
@@ -205,6 +206,7 @@ TMemberRec * CSyntaxNode::getObjectMember(CObject & obj, std::string  membName) 
 		[&](auto& memberRec) { return memberRec.memberId == membId; });
 	if (it == obj.members.end())
 		return NULL;
+
 	return &*it;
 }
 
@@ -236,6 +238,10 @@ void CSyntaxNode::logLocalMemberCheck(int objId, int memberId) {
 
 
 void CSyntaxNode::logGlobalMemberCheck(int lineNum, int memberId) {
+	for (auto globalRef : globalMembersToCheck) {
+		if (globalRef.memberId == memberId) //only need one check
+			return;
+	}
 	globalMembersToCheck.push_back({ lineNum, memberId });
 }
 
@@ -504,14 +510,16 @@ CVarAssigneeNode::CVarAssigneeNode(std::string * parsedString) {
 /** Tell the VM to push this variable's identifier on to the stack. */
 void CVarAssigneeNode::encode() {
 	writeOp(opPushInt); //TO DO make pushObj where necessary
-		//check if it's an existing data member first.
+		//check if it's an existing data member or global variable.
 		auto iter = memberIds.find(name);
 		if (iter != memberIds.end()) {
-			//treat as assignment to a member
 			int memberId = iter->second;
 			writeWord(zeroObject); //tells VM to resolve whether global or local at runtime
 			writeOp(opPushInt);
 			writeWord(memberId);
+			if (global) {
+				globalVarIds.insert(memberId);
+			}
 			return;
 		}
 
@@ -529,6 +537,7 @@ void CVarAssigneeNode::encode() {
 			writeWord(zeroObject);
 			writeOp(opPushInt);
 			varId = getMemberId(name);// getGlobalVarId(name);
+			globalVarIds.insert( varId );
 		}
 		else
 			varId = getVarId(name); //local
@@ -720,7 +729,6 @@ CObjRefNode::CObjRefNode(std::string * parsedString) {
 
 /** Tell the VM to push the referenced object id on the stack . */
 void CObjRefNode::encode() {
-	////////////////////Do checking here
 	auto iter = objects.find(name);
 	if (iter != objects.end()) { //absolute reference to an object
 		writeOp(opPushObj);
@@ -740,14 +748,23 @@ void CObjRefNode::encode() {
 	}
 
 
-	//check for global variable/local member
+	//check for existing global variable/local member
 	auto memb = memberIds.find(name);
 	if (memb != memberIds.end()) {
 		writeOp(opPushInt); //TO DO pushObj?
 		writeWord(zeroObject);
 		writeOp(opPushVar);
 		writeWord(memb->second);
+		return;
 	}
+
+	//NO? Then assume this is a forward-reference to a global variable
+	int id = getMemberId(name);
+	writeOp(opPushInt); //TO DO pushObj?
+	writeWord(zeroObject);
+	writeOp(opPushVar);
+	writeWord(id);
+	logGlobalMemberCheck(sourceLine, id);
 
 	//check for global variable
 //	auto globIt =  std::find_if(globalVarIds.begin(), globalVarIds.end(),
@@ -759,8 +776,8 @@ void CObjRefNode::encode() {
 //	}
 
 		
-	std::cout << "\nError, line " << sourceLine << ". No object or variable named \"" << name << "\" exists.";
-	exit(1);
+	//std::cout << "\nError, line " << sourceLine << ". No object or variable named \"" << name << "\" exists.";
+	//exit(1);
 }
 
 //TO DO: identical to CObjMemberAssigneeNode - definitely room for refactoring.
@@ -917,9 +934,13 @@ CInitNode::CInitNode(CSyntaxNode * codeBlock){
 	operands.push_back(codeBlock);
 }
 
-CInitNode::CInitNode(CObjIdentNode * objIdent) {
-	value.setObjId(objIdent->getId());
+CInitNode::CInitNode(CMemberIdNode * membIdent) {
+	value.setIntValue(membIdent->getId());
 }
+
+CInitNode::CInitNode(CObjIdentNode * objIdent) {//
+	value.setObjId(objIdent->getId());//
+}//
 
 CInitNode::CInitNode(CArrayInitListNode * arrayInitList) {
 	value.type = tigArray;
@@ -953,6 +974,10 @@ void CInitNode::encode() {
 
 
 ClassIdentNode::ClassIdentNode(std::string * parsedString) {
+	//classId = getObjectId(*parsedString);
+//	return;
+
+	//TO DO: maybe replace this with the above?
 	auto iter = objects.find(*parsedString);
 	if (iter != objects.end()) {
 		classId = iter->second.objectId;
@@ -983,23 +1008,27 @@ void CodeBlockNode::encode() {
 }
 
 
-CHotTextNode::CHotTextNode(std::string * hotText, std::string* member, CSyntaxNode* object) {
-	text = *hotText;
-	memberId = getMemberId(*member);
+CHotTextNode::CHotTextNode(CSyntaxNode* hotText, CSyntaxNode* member, CSyntaxNode* object) {
+	operands.push_back(hotText);
+	//text = *hotText;
+	//memberId = getMemberId(*member);
+	operands.push_back(member);
 	if (object)
 		operands.push_back(object);
 }
 
 void CHotTextNode::encode() {
-	if (operands.size() > 0 )
-		operands[0]->encode(); 
+	operands[0]->encode(); //get hot text string
+	operands[1]->encode(); //get memberId
+	if (operands.size() > 2 )
+		operands[2]->encode(); //get object
 	else {
-		writeOp(opPushInt);
-		writeWord(selfObjId);
+		writeOp(opPushSelf);
+		//writeWord(selfObjId);
 	}
 	writeOp(opHot);
-	writeString(text);
-	writeWord(memberId);
+	//writeString(text);
+	//writeWord(memberId);
 }
 
 void CArrayInitConstNode::encode() {
@@ -1187,44 +1216,52 @@ void CIfNode::encode() {
 
 CMemberCallNode::CMemberCallNode(CSyntaxNode * object, CSyntaxNode * funcName, CSyntaxNode * params) {
 	operands.push_back(object);
-	isFnCall = false;
-	//auto iter = globalFuncIds.find(funcName->getText());
-//	if (iter != globalFuncIds.end()) {
-//		memberId = iter->second.id;
-	//	isFnCall = true;
-//	}
-//	else { 
-		memberId = getMemberId(funcName->getText());
-		//this may still be a call to a global function as yet undefined
-		logGlobalMemberCheck(sourceLine, memberId); //makes a note to check if this function was ever found
-	//}
+	memberId = getMemberId(funcName->getText());
+	//this may still be a call to a global function as yet undefined
+	logGlobalMemberCheck(sourceLine, memberId); //makes a note to check if this function was ever found
+
 	operands.push_back(params);
 }
 
 
 void CMemberCallNode::encode() {
-
-	//write code to leave parameter value on stack
+	//write code to leave parameter values on stack
 	paramCount.push_back(0);
 	if (operands[1]) {
 		operands[1]->encode();
 	}
 
-	//if (isFnCall)
-	//	writeOp(opCallFn);
-//	else {
-		if (operands[0] == NULL) {
-			writeOp(opPushInt); //TO DO pushObj , surely
-			writeWord(zeroObject);
-		}
-		else
-			operands[0]->encode();
-		writeOp(opCall);
-	//}
+	if (operands[0] == NULL) { //object, if any
+		writeOp(opPushInt); //TO DO pushObj , surely
+		writeWord(zeroObject);
+	}
+	else
+		operands[0]->encode();
+	writeOp(opCall);
+
 	writeWord(memberId);
 	writeByte(paramCount.back());
 	paramCount.pop_back();
 }
+
+CDerefMemberCallNode::CDerefMemberCallNode(CSyntaxNode * pointer, CSyntaxNode * params) {
+	operands.push_back(pointer);
+	operands.push_back(params);
+}
+
+void CDerefMemberCallNode::encode() {
+	paramCount.push_back(0);
+	if (operands[1]) {
+		operands[1]->encode();
+	}
+
+	operands[0]->encode(); //this will leave memberId on stack.
+	writeOp(opCallDeref);
+
+	writeByte(paramCount.back());
+	paramCount.pop_back();
+}
+
 
 
 CForEachNode::CForEachNode(CSyntaxNode* variable, CSyntaxNode * containerObj, CSyntaxNode * code) {
@@ -1234,12 +1271,13 @@ CForEachNode::CForEachNode(CSyntaxNode* variable, CSyntaxNode * containerObj, CS
 }
 
 void CForEachNode::encode() {
-	operands[0]->encode(); //write code to put variable identifier on the stack
+	//operands[0]->encode(); //write code to put variable identifier on the stack
 	operands[1]->encode(); //write code to put parent object identifier on the stack
 	//initialise var with first child of container
 		//get child of container object
 		writeOp(opChild);
 		//assign to variable
+		operands[0]->encode(); //write code to put variable identifier on the stack
 		writeOp(opAssign);
 	//:start
 	int loopAddr = outputFile->tellp();
@@ -1253,10 +1291,11 @@ void CForEachNode::encode() {
 	//otherwise do code
 	operands[2]->encode();
 	//set var to sibling of currently assigned object
-	operands[0]->encode(); //put variable identifier on stack
+	//operands[0]->encode(); //put variable identifier on stack
 	operands[0]->encode(); //put variable identifier on stack
 	writeOp(opGetVar); //resolve to an object identifier
 	writeOp(opSibling); //get sibling on stack
+	operands[0]->encode(); //put variable identifier on stack
 	writeOp(opAssign); //assign to variable
 	//loop to start
 	writeOp(opJump);
@@ -1271,6 +1310,47 @@ void CForEachNode::encode() {
 	outputFile->seekp(resumeAddr);
 }
 
+CForEachElementNode::CForEachElementNode(CSyntaxNode * variable, CSyntaxNode * containerObj, CSyntaxNode * code) {
+	operands.push_back(variable);
+	operands.push_back(containerObj);
+	operands.push_back(code);
+}
+
+void CForEachElementNode::encode() {
+	
+	writeOp(opPushInt); 
+	writeWord(0); //put 0 on the stack as index
+	operands[1]->encode(); //write code to put array on the stack
+
+	//loop:
+	int loopAddr = outputFile->tellp();
+	writeOp(opArrayIt);
+	int patchAddr = outputFile->tellp();
+	writeWord(0xFFFFFFFF); //jump to resume if index = array size
+	//otherwise, element n is now on the stack
+	operands[0]->encode(); //write code to put variable identifier on the stack					   
+	writeOp(opAssign); //assign value on stack to the variable
+
+	//do code code
+	operands[2]->encode();
+	
+	//jump to loop:
+	writeOp(opJump);
+	writeWord(loopAddr);
+
+	int resumeAddr = outputFile->tellp();
+	outputFile->seekp(patchAddr);
+	if (tron)
+		cout << "\npatched " << patchAddr << " to";
+	writeWord(resumeAddr);
+	outputFile->seekp(resumeAddr);
+
+	//resume:
+
+
+}
+
+
 void CSelfExprNode::encode() {
 	//TO DO: if this is global code, just throw an error.
 	writeOp(opPushObj);
@@ -1284,11 +1364,12 @@ COpAssignNode::COpAssignNode(TOpCode code, CSyntaxNode * assignee, CSyntaxNode *
 }
 
 void COpAssignNode::encode() {
-	operands[0]->encode(); 
+	//operands[0]->encode();
 	operands[0]->encode();
 	writeOp(opGetVar);
 	operands[1]->encode();
 	writeOp(opCode); //sum values on stack
+	operands[0]->encode();
 	writeOp(opAssign); //leave result in the assignee
 }
 
@@ -1384,8 +1465,61 @@ std::string & CFuncIdentNode::getText() {
 	return name;
 }
 
-
+/** Tell the VM to put the zero object on the stack. */
 void CNothingNode::encode() {
 	writeOp(opPushObj);
 	writeWord(0);
+}
+
+/**	Tell the VM to call the superclass version of this function.  */
+CSuperCallNode::CSuperCallNode(CSyntaxNode * super, CSyntaxNode * funcName, CSyntaxNode * params) {
+	operands.push_back(super);
+	memberId = getMemberId(funcName->getText());
+	logGlobalMemberCheck(sourceLine, memberId); //makes a note to check if this function was ever found										//}
+	operands.push_back(params);
+}
+
+void CSuperCallNode::encode() {
+	//write code to leave parameter value on stack
+	paramCount.push_back(0);
+	if (operands[1]) {
+		operands[1]->encode();
+	}
+
+	writeOp(opPushInt); ///TO DO push obj!!!
+	writeWord(operands[0]->getId());
+	writeOp(opSuperCall);
+	writeWord(memberId);
+	writeByte(paramCount.back());
+	paramCount.pop_back();
+}
+
+
+CMemberIdNode::CMemberIdNode(std::string * membName) {
+	if (membName)
+		name = *membName;
+}
+
+int CMemberIdNode::getId() {
+	return getMemberId(name);
+}
+
+void CMemberIdNode::encode() {
+	writeOp(opPushInt);
+	if (name.size() > 0) {
+		int memberId = getMemberId(name);
+		writeWord(memberId);
+	}
+	else
+		writeWord(0);
+}
+
+CDerefVarNode::CDerefVarNode(CSyntaxNode * var) {
+	operands.push_back(var);
+}
+
+void CDerefVarNode::encode() {
+	writeOp(opPushSelf);
+	operands[0]->encode(); //should leave the memberId in var on the stack.
+	writeOp(opGetVar); //leave value in local member on stack
 }

@@ -3,11 +3,11 @@
 enum TOpCode { opNop, opPrint, opGiveOptions, opOption, opJumpEvent, opEnd,
 	opAssign,  opPushStr, opPushInt, 
 	opPushVar, opGetString, opAdd, opSub, opStartTimer, opTimedEvent,
-	opExpressVar, opPushObj, opPushSelf, opCall, opCallFn, opReturn, opReturnTrue, opHot,
+	opExpressVar, opPushObj, opPushSelf, opCall, opCallDeref, opSuperCall, opReturn, opReturnTrue, opHot,
 	opPurge, opInitArray,
 	opPushElem, opAssignElem, opPop, opEq, opNE, opLT, opLE, opGT, opGE,
 	opJumpFalse, opJump, opChild, opSibling, opGetVar, opChildren, opMakeHot, opBrk,
-	opMove, opWin, opClr
+	opMove, opWin, opClr, opStyle, opCap, opInherits, opHotClr, opArrayIt
 };
 
 static char* opCode[] = { "opNop\0",
@@ -29,7 +29,8 @@ static char* opCode[] = { "opNop\0",
 	"opPushObj\0",
 	"opPushSelf\0",
 	"opCall\0",
-	"opCallFn\0",
+	"opCallDeref\0",
+	"opSuperCall\0",
 	"opReturn\0",
 	"opReturnTrue\0",
 	"opHot\0",
@@ -54,7 +55,12 @@ static char* opCode[] = { "opNop\0",
 	"opBrk\0",
 	"opMove\0",
 	"opWin\0",
-	"opClr\0"
+	"opClr\0",
+	"opStyle\0",
+	"opCap\0",
+	"opInherits\0",
+	"opHotClr\0",
+	"opArrayIt\0"
 
 };
 

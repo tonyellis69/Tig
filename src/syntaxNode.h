@@ -8,6 +8,7 @@
 #include <vector>
 #include <fstream>
 #include <map>
+#include <set>
 
 
 #include "sharedTypes.h"
@@ -136,6 +137,8 @@ public:
 
 	static TCodeDest codeDestination;
 	static bool tron;
+
+	static std::set<int> globalVarIds; ///<Set of member ids that reperesent global variables.
 };
 
 enum TIdentType { local, globalVar, object };
@@ -310,12 +313,14 @@ public:
 
 
 class CArrayInitListNode;
+class CMemberIdNode;
 class CInitNode : public CSyntaxNode {
 public:
 	CInitNode(std::string* parsedString);
 	CInitNode(int parsedInt);
 	CInitNode(CSyntaxNode* codeBlock);
-	CInitNode(CObjIdentNode* objIdent);
+	CInitNode(CMemberIdNode* membIdent);
+	CInitNode(CObjIdentNode* objIdent);//
 	CInitNode(CArrayInitListNode * arrayInitList);
 	CInitNode();
 	void encode();
@@ -342,7 +347,7 @@ public:
 
 class CHotTextNode : public CSyntaxNode {
 public:
-	CHotTextNode(std::string * hotText, std::string* action, CSyntaxNode* object);
+	CHotTextNode(CSyntaxNode* hotText, CSyntaxNode* member, CSyntaxNode* object);
 	void encode();
 
 	std::string text;
@@ -428,6 +433,14 @@ public:
 
 };
 
+class CForEachElementNode : public CSyntaxNode {
+public:
+	CForEachElementNode(CSyntaxNode* variable, CSyntaxNode* containerObj, CSyntaxNode* code);
+	void encode();
+
+};
+
+
 class CSelfExprNode : public CSyntaxNode {
 public:
 	CSelfExprNode() {};
@@ -495,4 +508,34 @@ public:
 	void encode() { tron = mTron;}
 
 	bool mTron;
+};
+
+class CSuperCallNode : public CSyntaxNode {
+public:
+	CSuperCallNode(CSyntaxNode* super, CSyntaxNode* funcName, CSyntaxNode * params);
+	void encode();
+
+	int memberId;
+};
+
+class CMemberIdNode : public CSyntaxNode {
+public:
+	CMemberIdNode(std::string* membName);
+	int getId();
+	void encode();
+
+	std::string name;
+};
+
+class CDerefMemberCallNode : public CSyntaxNode {
+public:
+	CDerefMemberCallNode(CSyntaxNode* pointer, CSyntaxNode* params);
+	void encode();
+};
+
+class CDerefVarNode : public CSyntaxNode {
+public:
+	CDerefVarNode(CSyntaxNode* var);
+	void encode();
+
 };
