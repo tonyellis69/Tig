@@ -39,6 +39,7 @@ std::vector<TMemberCheck> CSyntaxNode::globalMembersToCheck;
 TCodeDest CSyntaxNode::codeDestination;
 bool CSyntaxNode::tron;
 set<int> CSyntaxNode::globalVarIds;
+std::vector<int> CSyntaxNode::arrayInitCount;
 
 extern int lineNo;
 
@@ -966,7 +967,9 @@ void CInitNode::encode() {
 	if (value.type == tigArray) {
 		operands[0]->encode(); //encodes arrayInitListNode, values left in arrayStack
 		memberStack2.back().arrayInitList = arrayStack;
+		memberStack2.back().value.setArray();
 		arrayStack.clear();
+		return;
 	}
 
 	memberStack2.back().value = value;
@@ -1037,15 +1040,23 @@ void CArrayInitConstNode::encode() {
 }
 
 
-CArrayInitNode::CArrayInitNode(CSyntaxNode * initList) {
+CArrayDynInitNode::CArrayDynInitNode(CSyntaxNode * initList) {
 	operands.push_back(initList);
 }
 
-void CArrayInitNode::encode() {
-	writeOp(opInitArray);
+void CArrayDynInitNode::encode() {
+	
 
-	arrayStack.clear();
-	operands[0]->encode(); //get all the initialisation values on the array stack
+	//arrayStack.clear();
+	arrayInitCount.push_back(0);
+	operands[0]->encode(); //get all the initialisation values on the //array// stack
+	writeOp(opInitArray);
+	writeWord(arrayInitCount.back());
+	arrayInitCount.pop_back();
+	return;
+
+
+
 	//now write those values as bytecode for the VM to pick up.
 	writeWord(arrayStack.size());
 	for (auto initValue : arrayStack) {
@@ -1346,7 +1357,8 @@ void CForEachElementNode::encode() {
 	outputFile->seekp(resumeAddr);
 
 	//resume:
-
+	//writeOp(opPop); //VM does this internally
+	//writeOp(opPop);
 
 }
 
@@ -1522,4 +1534,23 @@ void CDerefVarNode::encode() {
 	writeOp(opPushSelf);
 	operands[0]->encode(); //should leave the memberId in var on the stack.
 	writeOp(opGetVar); //leave value in local member on stack
+}
+
+CVarIdNode::CVarIdNode(std::string * ident) {
+	name = *ident;
+}
+
+void CVarIdNode::encode() {
+	writeOp(opPushInt);
+	int memberId = getMemberId(name);
+	writeWord(memberId);
+}
+
+CArrayDynInitElem::CArrayDynInitElem(CSyntaxNode * element) {
+	operands.push_back(element);
+}
+
+void CArrayDynInitElem::encode() {
+	arrayInitCount.back()++;
+	operands[0]->encode();
 }

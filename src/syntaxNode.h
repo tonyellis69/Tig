@@ -113,6 +113,7 @@ public:
 
 	static std::vector<TMemberRec> memberStack2; ///<Temporary tracker of all the members of an object.
 	static std::vector<CTigVar> arrayStack; ///<Temporary tracker of values used to initialise an array.
+	static std::vector<int> arrayInitCount; 
 
 	static std::vector<CSyntaxNode*> nodeList;
 
@@ -360,9 +361,9 @@ public:
 	void encode();
 };
 
-class CArrayInitNode : public CSyntaxNode {
+class CArrayDynInitNode : public CSyntaxNode {
 public:
-	CArrayInitNode(CSyntaxNode* initList);
+	CArrayDynInitNode(CSyntaxNode* initList);
 	void encode();
 };
 
@@ -538,4 +539,18 @@ public:
 	CDerefVarNode(CSyntaxNode* var);
 	void encode();
 
+};
+
+class CVarIdNode : public CSyntaxNode {
+public:
+	CVarIdNode(std::string * ident);
+	void encode();
+
+	std::string name;
+};
+
+class CArrayDynInitElem : public CSyntaxNode {
+public:
+	CArrayDynInitElem(CSyntaxNode* element);
+	void encode();
 };

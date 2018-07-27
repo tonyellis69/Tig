@@ -34,13 +34,13 @@
 %type <nPtr> integer_constant
 %type <nPtr>  string_literal event_identifier 
 %type <nPtr> code_block 
-%type <nPtr> variable_expr assignment variable_assignee obj_member_assignee element_assignee var_or_obj_memb
+%type <nPtr> variable_expr assignment variable_assignee obj_member_assignee element_assignee var_or_obj_memb deref_variable_expr
 %type <nPtr> string_statement
 %type <nPtr> obj_identifier class_identifier optional_member_list member_decl_list member_decl obj_expr init_expr member_expr 
 %type <iValue> level
 %type <nPtr> memb_decl_identifier memb_function_def return_expr member_call
-%type <nPtr> array_init_expr constant_seq array_init_const array_element_expr array_index_expr array_init_list
-%type <nPtr> comparison_expr
+%type <nPtr> array_init_expr constant_seq array_init_const array_element_expr array_index_expr array_init_list expr_seq array_dyn_init_elem
+%type <nPtr> comparison_expr logic_expression
 %type <nPtr> global_func_decl   param_list  func_call func_indent
 %type <nPtr> memberId
 
@@ -48,7 +48,8 @@
 %token EVENT OPTION
 %token OBJECT HAS ARROW INHERITS SUPERCLASS
 %token GETSTRING
-%token HOT MAKE_HOT PURGE CLEAR STYLE CAP
+%token HOT MAKE_HOT PURGE CLEAR USED STYLE CAP
+%token ARRAY
 %token START_TIMER START_EVENT AT
 %token <iValue> INTEGER
 %token <str> IDENTIFIER STRING
@@ -65,7 +66,8 @@
 %left '+' '-'							 // this ensures that long complex sums are never ambiguous. 
 %left '*' '/' '%' 
 //%left ','
-%nonassoc UMINUS
+%right '!'
+%nonassoc UMINUS 
 %nonassoc IFX 
 %nonassoc ELSE
 
@@ -105,7 +107,7 @@ statement:
 		| IF '(' expression ')' statement %prec IFX			{ $$ = new CIfNode($3, $5, NULL); }	//$prec gives this rule the lesser precedence of dummy token IFX
         | IF '(' expression ')' statement ELSE statement	{ $$ = new CIfNode($3, $5, $7); } //thus rule has the greater precedence of ELSE
 		| FOR EACH var_or_obj_memb OF obj_expr statement	{ $$ = new CForEachNode($3, $5, $6); }
-		| FOR EACH var_or_obj_memb IN obj_expr statement	{ $$ = new CForEachElementNode($3, $5, $6); }
+		| FOR EACH var_or_obj_memb IN variable_expr statement	{ $$ = new CForEachElementNode($3, $5, $6); }
 		| var_or_obj_memb ADD_ASSIGN expression ';'			{ $$ = new COpAssignNode(opAdd,$1,$3); }
 		| BREAK	';'										{ $$ = new COpNode(opBrk); }
 		| MOVE  obj_expr TO obj_expr ';'				{ $$ = new COpNode(opMove,$2,$4); }
@@ -114,6 +116,7 @@ statement:
 		| SET_WINDOW '(' expression ')' ';'				{ $$ = new COpNode(opWin,$3); }
 		| CLEAR_WINDOW ';'								{ $$ = new COpNode(opClr); }
 		| HOT CLEAR ';'									{ $$ = new COpNode(opHotClr); }
+		| var_or_obj_memb ARRAY '=' expression	';'		{ $$ = new COpNode(opArrayPush,$4,$1); }
         ;
 
 memberId:
@@ -146,7 +149,9 @@ obj_member_assignee:
 		;
 
 obj_expr:												
-		IDENTIFIER										{ $$ = new CObjRefNode($1); }
+		//IDENTIFIER										{ $$ = new CObjRefNode($1); }
+		variable_expr										{ $$ = $1; }
+		//| deref_variable_expr							{ $$ = $1; }
 		| member_expr									{ $$ = $1; }
 		| SELF											{ $$ = new COpNode(opPushSelf); }
 		;
@@ -264,7 +269,8 @@ code_block:
 
 expression:
       variable_expr						{ $$ = $1; }
-	  | '*' variable_expr				{ $$ = new CDerefVarNode($2); }
+	  | deref_variable_expr				{ $$ = $1; }
+	  | '&' IDENTIFIER					{ $$ = new CVarIdNode($2); }
 	  | GETSTRING						{ $$ = new COpNode(opGetString); }
 	  | expression '+' expression		{ $$ = new COpNode(opAdd, $1, $3); }
 	  | expression '-' expression		{ $$ = new COpNode(opSub, $1, $3); }
@@ -283,11 +289,19 @@ expression:
 	  | STYLE '(' expression ')'		{ $$ = new COpNode(opStyle,$3); }
 	  | CAP '(' expression ')'			{ $$ = new COpNode(opCap,$3); }
 	  | obj_expr INHERITS obj_expr		{ $$ = new COpNode(opInherits,$1,$3); }
+	  | HOT expression USED				{ $$ = new COpNode(opHotCheck,$2); }
+	  | '!' expression					{ $$ = new COpNode(opNot,$2); }
+	  | logic_expression				{ $$ = $1; } 
       ;
 
 variable_expr:
 	IDENTIFIER							{ $$ = new CVarExprNode($1); }
 	| array_element_expr				{ $$ = $1; }
+	//| deref_variable_expr				{ $$ = $1; }
+	;
+
+deref_variable_expr:
+	'*' variable_expr				{ $$ = new CDerefVarNode($2); }
 	;
 
 member_expr:
@@ -301,7 +315,7 @@ member_call:
 
 func_call:
 	func_indent '(' param_list ')'				{ $$ = new CMemberCallNode(NULL, $1, $3); }
-	| '*' variable_expr '(' param_list ')'		{ $$ = new CDerefMemberCallNode( $2, $4); }
+	//| '*' variable_expr '(' param_list ')'		{ $$ = new CDerefMemberCallNode( $2, $4); }
 	;
 
 func_indent:
@@ -324,9 +338,18 @@ integer_constant:
 	;
 
 array_init_expr:
-	'[' constant_seq ']'				{ $$ = new CArrayInitNode($2); }
+	'[' expr_seq ']'				{ $$ = new CArrayDynInitNode($2); }
 	;
 	//TO DO: any reason this has to be constant_seq and not expressions?
+
+expr_seq:
+	array_dyn_init_elem							{ $$ = $1; }
+	| expr_seq ',' array_dyn_init_elem			{ $$ = new CJointNode($1,$3); }
+	;
+
+array_dyn_init_elem:						
+	expression									{ $$ = new CArrayDynInitElem($1); }
+	;
 
 array_init_list:
 	'[' constant_seq ']'				{ $$ = new CArrayInitListNode($2); }
@@ -362,6 +385,11 @@ comparison_expr:
 	| expression '>' expression				{ $$ = new COpNode(opGT, $1, $3); }
 	| expression GE expression				{ $$ = new COpNode(opGE, $1, $3); }
 	| expression NE expression				{ $$ = new COpNode(opNE, $1, $3); }
+	;
+
+logic_expression:
+	expression AND expression				{ $$ = new COpNode(opAnd, $1, $3); }
+	| expression OR expression				{ $$ = new COpNode(opOr, $1, $3); }
 	;
 
 %%

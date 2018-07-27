@@ -1,10 +1,10 @@
-//tron;
+
 
 mainWindow = 0;
 invWindow = 1;
-tron;
-directions = [northTo,neTo,eastTo,seTo,southTo,swTo,westTo,nwTo,upTo,downTo,inTo,outTo]; 
-troff;
+
+directionIds = [&northTo,&neTo,&eastTo,&seTo,&southTo,&swTo,&westTo,&nwTo,&upTo,&downTo,&inTo,&outTo]; 
+
 directionNames = ["north","northeast","east","southeast","south","southwest","west","northwest","up","down","in","out"]; 
 
 
@@ -23,7 +23,7 @@ drop {
 	updateInventory();
 }, examine {
 	return style("popHeader") + cap(name) + style("popBody") + "\n" + description();
-};
+}, array = [1,2,3];
 
 updateInventory() {
 	setWindow(invWindow);
@@ -53,29 +53,84 @@ listChildren(parentObj) {
 
 
 
+
+
 CGameObj CRoom has 
 registerHotText {
-	x = 0;
-	for each dir in directions {
+	x = 0; //local 0
+	for each dir in directionIds { //dir local 1
 		if (*dir) 
 			hot directionNames[x], dir, self;
 		x = x +1;
 	}
-	troff;
-	
+
 	//register hot text for any scenery
-	for each item of self {
+	for each item of self {  //item local 2
 		if (item inherits CScenery) {
 			hot item.name , click, item;
 		}
 	}
+
+},
+listUndescribedExits() {
+	directionNum = 0;
+	
+	for each id in directionIds {
+		destination = *id;
+		if (destination != nothing &&  !hot directionNames[directionNum] used) {
+			
+			print "\n" + directionNames[directionNum] + "ly not used!";
+			
+			if (destination inherits CCorridor)
+				corridorList[] = directionNum;
+			else 
+				exitList[] = directionNum;
+				
+		}
+		
+		directionNum += 1;
+	}
+	
+
+	//print "!!!!!!!" + exitList;
+
+	if (corridorList == 1) {
+		"A corridor led " + directionNames[corridorList[0]];
+	
+	}
+	else if (corridorList > 1) {
+	
+		"Corridors led... "; count = 0;
+	
+		for each corridorDir in corridorList {
+			print "got here";
+			print directionNames[corridorDir];
+			count += 1;
+			if (count < corridorList -2)
+				", ";
+			if (count == corridorList -1)
+				" and ";
+			
+		}
+
+	}
+	
+	//exits
+	//if one, 
+		//if = back direction "the way back led...", 
+		//else "a doorway opened to the..."
+	//else "doorways opened to the..."
+			
+		
+		
+	
 },
 look {
 	registerHotText();
 	print description(); //TO DO: should really be called describe.
 	
-	//list other exits
-	//'if (!hot dir written)' ...
+	listUndescribedExits();
+
 	
 	hot clear;
 },northTo,neTo,eastTo,seTo,southTo,swTo,westTo,nwTo,upTo,downTo,inTo,outTo;
@@ -105,7 +160,8 @@ staticClassId = CStaticObj;
 supporterClassId = CSupporter;
 sceneryClassId = CScenery;
 
-CGameObj player has onObject;
+CGameObj player has onObject, prevLocation
+;
 
 
 
@@ -156,7 +212,7 @@ had come to the south.",
 shortName "broad corridor",
 northTo = octHall, southTo = foyer;
 
-startRoom = foyer;
+startRoom = octHall;
 currentRoom = startRoom;
 playerObj = player;
 

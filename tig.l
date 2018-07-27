@@ -53,7 +53,7 @@ IDENT    {LETTER}({LETTER}|{DIGIT})*
 							return INTEGER;
 						}
 						
-[-()<>=+*/%;{}.,\[\]!] 		return *yytext;    // Match any one of these nonalphanumeric characters amd returns the Ascii code.
+[-()<>=+*/%;{}.,\[\]!&#] 		return *yytext;    // Match any one of these nonalphanumeric characters amd returns the Ascii code.
 	
 ">="					return GE;    /* Matches the literal string inside " " */
 "<="					return LE;
@@ -78,6 +78,7 @@ IDENT    {LETTER}({LETTER}|{DIGIT})*
 "hot"					return HOT;
 "purge"					return PURGE;
 "clear"					return CLEAR;
+"used"					return USED;
 "->"					return ARROW;
 "return"				return RETURN;
 "if"					return IF;
@@ -100,6 +101,7 @@ IDENT    {LETTER}({LETTER}|{DIGIT})*
 "cap"					return CAP;
 "inherits"				return INHERITS;
 "::"					return SUPERCLASS;
+"[]"					return ARRAY;
 {IDENT}					{	identBufs[currentIdentBuf].clear(); 
 							identBufs[currentIdentBuf].assign(yytext,yyleng);
 							yylval.str = &identBufs[currentIdentBuf];
