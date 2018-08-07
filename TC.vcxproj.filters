@@ -50,5 +50,8 @@
     <ClInclude Include="..\VMtest\src\var.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\nodeLib.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

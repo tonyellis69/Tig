@@ -14,6 +14,16 @@
 #include "sharedTypes.h"
 #include "..\..\VMtest\src\var.h"
 
+#include "nodeLib.h"
+
+class CSyntaxNode;
+
+
+
+
+
+
+
 extern int lineNo;
 
 const int variableExpression = 2001;
@@ -29,6 +39,8 @@ struct TMemberCheck {
 	int lineNum;
 	int memberId;
 };
+
+
 
 class CObject {
 public:
@@ -46,12 +58,19 @@ struct TGlobalFn {
 
 enum TCodeDest {funcDest, globalDest, destNone};
 
+//namespace syn {
+	extern std::vector<CSyntaxNode*> nodeList2;
+
+//}
+
+
 /** Basic syntax node. */
 class COptionNode;
 class CMemberDeclNode;
 class CSyntaxNode {
 public:
 	CSyntaxNode();
+	virtual ~CSyntaxNode();
 	virtual int getStrIndex() {  return NULL; } ;
 	virtual void encode() {};
 	virtual int getId() { return NULL; }
@@ -100,6 +119,8 @@ public:
 	//static std::map<std::string, int> globalVarIds;
 //	static int nextGlobalVarId;
 	static std::vector<std::string> localVarIds; ///<Local variable names.
+	static std::map<std::string,int> localVarIdsPermanent; ///<Local variable names, permanent list.
+
 	static std::map<std::string, int> memberIds; ///<Object member names and their ids.
 	static int nextMemberId;
 	static std::map<std::string, CObject> objects; ///<Objects names and their details.
@@ -210,6 +231,7 @@ public:
 class CVarAssigneeNode : public CSyntaxNode {
 public:
 	CVarAssigneeNode(std::string* parsedString);
+	~CVarAssigneeNode();
 	void encode();
 
 	int varId;
@@ -418,13 +440,22 @@ public:
 	void encode();
 };
 
+
 class CMemberCallNode : public CSyntaxNode{
 public:
 	CMemberCallNode(CSyntaxNode* object, CSyntaxNode* funcName, CSyntaxNode* params);
 	void encode();
 
 	int memberId;
-	bool isFnCall;
+	//bool isFnCall;
+};
+
+class CMemberCallDerefNode : public CSyntaxNode {
+public:
+	CMemberCallDerefNode(CSyntaxNode* object, CSyntaxNode* ref, CSyntaxNode* params);
+	void encode();
+
+	
 };
 
 class CForEachNode : public CSyntaxNode {
@@ -478,7 +509,7 @@ public:
 	CParamExprNode(CSyntaxNode* param);
 	void encode();
 };
-
+/*
 class CGlobalFnIdentNode : public CSyntaxNode {
 public:
 	CGlobalFnIdentNode(std::string* ident);
@@ -487,11 +518,13 @@ public:
 	std::string name;
 	int id;
 };
+*/
 
 class CFuncIdentNode : public CSyntaxNode {
 public:
-	CFuncIdentNode(std::string* ident);
+	CFuncIdentNode(std::string* ident, CSyntaxNode* deref);
 	std::string& getText();
+	void encode();
 
 	std::string name;
 	int id;
@@ -552,5 +585,11 @@ public:
 class CArrayDynInitElem : public CSyntaxNode {
 public:
 	CArrayDynInitElem(CSyntaxNode* element);
+	void encode();
+};
+
+class CMsgNode : public CSyntaxNode {
+public:
+	CMsgNode(CSyntaxNode* params);
 	void encode();
 };

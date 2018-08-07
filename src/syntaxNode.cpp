@@ -40,12 +40,23 @@ TCodeDest CSyntaxNode::codeDestination;
 bool CSyntaxNode::tron;
 set<int> CSyntaxNode::globalVarIds;
 std::vector<int> CSyntaxNode::arrayInitCount;
+std::map<std::string, int> CSyntaxNode::localVarIdsPermanent;
 
 extern int lineNo;
 
+//namespace syn {
+	std::vector<CSyntaxNode*> nodeList2;
+
+//}
+
 CSyntaxNode::CSyntaxNode() {
-	nodeList.push_back(this);
+	//nodeList.push_back(this);
+	nodeList2.push_back(this);
 	sourceLine = lineNo;
+}
+
+CSyntaxNode::~CSyntaxNode() {
+
 }
 
 /** Set the file the syntax tree writes to. */
@@ -291,6 +302,7 @@ int CSyntaxNode::getVarId(std::string & identifier) {
 
 	//Check if it's an existing local variable
 	//if not, make it one
+	localVarIdsPermanent[identifier] = sourceLine;
 	auto it = std::find_if(localVarIds.begin(), localVarIds.end(),
 		[&](auto& varName) { return varName == identifier; });
 	if (it == localVarIds.end()) {
@@ -508,6 +520,10 @@ CVarAssigneeNode::CVarAssigneeNode(std::string * parsedString) {
 	name = *parsedString;
 }
 
+CVarAssigneeNode::~CVarAssigneeNode() {
+	
+}
+
 /** Tell the VM to push this variable's identifier on to the stack. */
 void CVarAssigneeNode::encode() {
 	writeOp(opPushInt); //TO DO make pushObj where necessary
@@ -524,26 +540,24 @@ void CVarAssigneeNode::encode() {
 			return;
 		}
 
-		//still here? Then we're declaring a variable.
-		//could be global, could be local
-
-		//if we're in global mode it must still be a global variable
-		//if we're not in global mode assume it's local
-	///	auto gIt = globalVarIds.find(name);
-	//if (gIt != globalVarIds.end()) {
-	//		varId = gIt->second;
-	//	}
-	//	else 
+		
 		if (global) {
+			//have we previously used this as a local variable?
+			auto it = localVarIdsPermanent.find(name);
+			if (it != localVarIdsPermanent.end()) {
+				cerr << "\nError: local variable " << name << " declared at line " << it->second 
+					<< " is also declared as a global variable at line " << sourceLine;
+				exit(1);
+			}
 			writeWord(zeroObject);
 			writeOp(opPushInt);
-			varId = getMemberId(name);// getGlobalVarId(name);
+			varId = getMemberId(name);
 			globalVarIds.insert( varId );
 		}
 		else
 			varId = getVarId(name); //local
-	//}
-	writeWord(varId); //globl
+	
+	writeWord(varId); 
 }
 
 
@@ -788,8 +802,6 @@ CMemberExprNode::CMemberExprNode(CSyntaxNode * parent, std::string * parsedStrin
 	//identify member
 	auto iter = memberIds.find(*parsedString);
 	if (iter == memberIds.end()) {
-		//std::cout << "\nError, line " << line << "! No member named " << *parsedString << " exists.";
-		//exit(1);
 		memberId = getMemberId(*parsedString);
 		logGlobalMemberCheck(sourceLine, memberId);
 		return;
@@ -807,32 +819,8 @@ void CMemberExprNode::encode() {
 
 /** Create a node identifying the named variable/object. */
 CVarExprNode::CVarExprNode(std::string * parsedString) {
-
 	id = variableExpression;
-	name = *parsedString;
-	//TO DO: check if this is a local variable
-
-
-
-	//TO DO: can I scrap the below because it all happens at encoding time now?
-
-	//is this a global variable?
-//	auto iter = globalVarIds.find(*parsedString);
-//	if (iter != globalVarIds.end()) {
-//		varId = iter->second;
-//		identType = globalVar;
-//		return;
-//	}
-	
-	//is this a previously declared object?
-	auto iter2 = objects.find(*parsedString);
-	if (iter2 != objects.end()) {
-		varId = iter2->second.objectId;
-		identType = object;
-		return;
-	}
-
-	
+	name = *parsedString;	
 }
 
 /** Tell VM to push this variable's value onto the stack. */
@@ -842,7 +830,7 @@ void CVarExprNode::encode() {
 		[&](auto& varName) { return varName == name; });
 	if (it != localVarIds.end()) {
 		varId = it - localVarIds.begin();
-		writeOp(opPushVar); //TO DO: may need sepatate op for global/local
+		writeOp(opPushVar); //TO DO: convert to opCall, 0 params
 		writeWord(varId);
 		return;
 	}
@@ -868,48 +856,11 @@ void CVarExprNode::encode() {
 	}
 	writeOp(opPushInt);
 	writeWord(zeroObject);
-	writeOp(opPushVar);
+	writeOp(opPushVar); //TO DO: and here
 	writeWord(memberId);
 	return;
 
 
-	//is it global?
-//	auto iter = globalVarIds.find(name);
-//	if (iter != globalVarIds.end()) {
-//		varId = iter->second;
-//		writeOp(opPushVar); //TO DO: may need sepatate op for global/local
-//		writeWord(varId);
-//		return;
-//	}
-
-
-
-	//are we in an object definition?
-//	if (currentObj != 0) {
-		//assume it must be a member of the current object
-		//get member id for it
-	//	int memberId = getMemberId(name);
-		//treat it as a member expression
-
-		//does the current object actually have this member?
-	//	logLocalMemberCheck(currentObj, memberId);
-
-	//	writeOp(opPushInt);
-	//	writeWord(selfObjId);
-	//	writeOp(opPushVar);
-	//	writeWord(memberId);
-	//	return;
-	//}
-
-
-	//std::cerr << "\nError! Identifier \"" << name << "\" not recognised on line " << sourceLine << ". ";
-//	exit(1);
-	//if (identType == globalVar)
-//		writeOp(opPushVar);
-//	else
-//		writeOp(opPushObj);
-	//TO DO: may be able to do this entirely with pushVar, if object ids start at 1000.
-//	writeWord(varId);
 }
 
 int CVarExprNode::getId() {
@@ -1227,10 +1178,12 @@ void CIfNode::encode() {
 
 CMemberCallNode::CMemberCallNode(CSyntaxNode * object, CSyntaxNode * funcName, CSyntaxNode * params) {
 	operands.push_back(object);
-	memberId = getMemberId(funcName->getText());
-	//this may still be a call to a global function as yet undefined
-	logGlobalMemberCheck(sourceLine, memberId); //makes a note to check if this function was ever found
-
+	memberId = 0;
+	if (funcName->getText().size() > 0) {
+		memberId = getMemberId(funcName->getText());
+		logGlobalMemberCheck(sourceLine, memberId); //makes a note to check if this function was ever found
+	}
+	operands.push_back(funcName);
 	operands.push_back(params);
 }
 
@@ -1238,19 +1191,60 @@ CMemberCallNode::CMemberCallNode(CSyntaxNode * object, CSyntaxNode * funcName, C
 void CMemberCallNode::encode() {
 	//write code to leave parameter values on stack
 	paramCount.push_back(0);
-	if (operands[1]) {
-		operands[1]->encode();
+	if (operands[2]) {
+		operands[2]->encode();
 	}
 
 	if (operands[0] == NULL) { //object, if any
-		writeOp(opPushInt); //TO DO pushObj , surely
-		writeWord(zeroObject);
+		writeOp(opPushObj); 
+		writeWord(zeroObject); //local or global method
 	}
 	else
-		operands[0]->encode();
-	writeOp(opCall);
+		operands[0]->encode(); //the object we're messaging
 
-	writeWord(memberId);
+	if (memberId) {
+		writeOp(opCall);
+		writeWord(memberId);
+	}
+	else {
+		operands[1]->encode(); //get the resolved reference on the stack
+		writeOp(opCallDeref);
+	}
+
+	writeByte(paramCount.back());
+	paramCount.pop_back();
+}
+
+
+CMemberCallDerefNode::CMemberCallDerefNode(CSyntaxNode * object, CSyntaxNode * ref, CSyntaxNode * params) {
+	operands.push_back(object);
+	//memberId = getMemberId(funcName->getText());
+	//this may still be a call to a global function as yet undefined
+	//logGlobalMemberCheck(sourceLine, memberId); //makes a note to check if this function was ever found
+
+	operands.push_back(ref);
+
+	operands.push_back(params);
+}
+
+void CMemberCallDerefNode::encode() {
+	//write code to leave parameter values on stack
+	paramCount.push_back(0);
+	if (operands[2]) {
+		operands[2]->encode();
+	}
+
+	if (operands[0] == NULL) { //object, if any
+		writeOp(opPushObj);
+		writeWord(zeroObject); //local or global method
+	}
+	else
+		operands[0]->encode(); //the object we're messaging
+	
+	//leave value on stack to deref
+	operands[1]->encode();
+	writeOp(opCallDeref);
+
 	writeByte(paramCount.back());
 	paramCount.pop_back();
 }
@@ -1430,14 +1424,7 @@ void CGlobalFuncDeclNode::encode() {
 	setCodeDestination(globalDest);
 }
 
-CGlobalFnIdentNode::CGlobalFnIdentNode(std::string* ident) {
-	name = *ident;
-	//id = getGlobalFuncId(*ident);
-}
 
-std::string & CGlobalFnIdentNode::getText() {
-	return name;
-}
 
 /** Ensures declared parameters become part of this function's local variables. */
 CParamDeclNode::CParamDeclNode(std::string* ident) {
@@ -1469,12 +1456,18 @@ void CParamExprNode::encode() {
 	paramCount.back()++;
 }
 
-CFuncIdentNode::CFuncIdentNode(std::string * ident) {
-	name = *ident;
+CFuncIdentNode::CFuncIdentNode(std::string * ident, CSyntaxNode* deref) {
+	if (ident)
+		name = *ident;
+	operands.push_back(deref);
 }
 
 std::string & CFuncIdentNode::getText() {
 	return name;
+}
+
+void CFuncIdentNode::encode() {
+	operands[0]->encode();
 }
 
 /** Tell the VM to put the zero object on the stack. */
@@ -1531,9 +1524,9 @@ CDerefVarNode::CDerefVarNode(CSyntaxNode * var) {
 }
 
 void CDerefVarNode::encode() {
-	writeOp(opPushSelf);
+	//writeOp(opPushSelf);////////////////////////////////////////shouldn't need
 	operands[0]->encode(); //should leave the memberId in var on the stack.
-	writeOp(opGetVar); //leave value in local member on stack
+//	writeOp(opGetVar); //leave value in local member on stack
 }
 
 CVarIdNode::CVarIdNode(std::string * ident) {
@@ -1553,4 +1546,19 @@ CArrayDynInitElem::CArrayDynInitElem(CSyntaxNode * element) {
 void CArrayDynInitElem::encode() {
 	arrayInitCount.back()++;
 	operands[0]->encode();
+}
+
+CMsgNode::CMsgNode(CSyntaxNode * params) {
+	operands.push_back(params);
+}
+
+void CMsgNode::encode() {
+	paramCount.push_back(0);
+	if (operands[0]) {
+		operands[0]->encode();
+	}
+
+	writeOp(opMsg);
+	writeByte(paramCount.back());
+	paramCount.pop_back();
 }

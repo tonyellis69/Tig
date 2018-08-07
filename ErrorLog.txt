@@ -1,0 +1,2 @@
+
+Error: local variable currentRoom declared at line 183 is also declared as a global variable at line 247

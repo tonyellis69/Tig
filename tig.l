@@ -77,6 +77,7 @@ IDENT    {LETTER}({LETTER}|{DIGIT})*
 "has"					return HAS;
 "hot"					return HOT;
 "purge"					return PURGE;
+"all"					return ALL;
 "clear"					return CLEAR;
 "used"					return USED;
 "->"					return ARROW;
@@ -95,6 +96,7 @@ IDENT    {LETTER}({LETTER}|{DIGIT})*
 "nothing"				return NOTHING;
 "move"					return MOVE;
 "to"					return TO;
+"openWindow"			return OPEN_WINDOW;
 "setWindow"				return SET_WINDOW;
 "clearWindow"			return CLEAR_WINDOW;
 "style"					return STYLE;
@@ -102,6 +104,7 @@ IDENT    {LETTER}({LETTER}|{DIGIT})*
 "inherits"				return INHERITS;
 "::"					return SUPERCLASS;
 "[]"					return ARRAY;
+"message"				return MESSAGE;
 {IDENT}					{	identBufs[currentIdentBuf].clear(); 
 							identBufs[currentIdentBuf].assign(yytext,yyleng);
 							yylval.str = &identBufs[currentIdentBuf];

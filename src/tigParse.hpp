@@ -1,8 +1,8 @@
-/* A Bison parser, made by GNU Bison 3.0.  */
+/* A Bison parser, made by GNU Bison 3.0.4.  */
 
-/* Bison interface for Yacc-like parsers in C
+/* Skeleton interface for Bison GLR parsers in C
 
-   Copyright (C) 1984, 1989-1990, 2000-2013 Free Software Foundation, Inc.
+   Copyright (C) 2002-2013 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -48,54 +48,57 @@ extern int yydebug;
     PRINT = 258,
     SET_WINDOW = 259,
     CLEAR_WINDOW = 260,
-    END = 261,
-    RETURN = 262,
-    EVENT = 263,
-    OPTION = 264,
-    OBJECT = 265,
-    HAS = 266,
-    ARROW = 267,
-    INHERITS = 268,
-    SUPERCLASS = 269,
-    GETSTRING = 270,
-    HOT = 271,
-    MAKE_HOT = 272,
-    PURGE = 273,
-    CLEAR = 274,
-    USED = 275,
-    STYLE = 276,
-    CAP = 277,
-    ARRAY = 278,
-    START_TIMER = 279,
-    START_EVENT = 280,
-    AT = 281,
-    INTEGER = 282,
-    IDENTIFIER = 283,
-    STRING = 284,
-    ENDL = 285,
-    IF = 286,
-    FOR = 287,
-    EACH = 288,
-    IN = 289,
-    OF = 290,
-    SELF = 291,
-    CHILDREN = 292,
-    ADD_ASSIGN = 293,
-    BREAK = 294,
-    TRON = 295,
-    TROFF = 296,
-    NOTHING = 297,
-    MOVE = 298,
-    TO = 299,
-    EQ = 300,
-    NE = 301,
-    GE = 302,
-    LE = 303,
-    OR = 304,
-    AND = 305,
-    UMINUS = 306,
-    IFX = 307,
-    ELSE = 308
+    OPEN_WINDOW = 261,
+    END = 262,
+    RETURN = 263,
+    EVENT = 264,
+    OPTION = 265,
+    OBJECT = 266,
+    HAS = 267,
+    ARROW = 268,
+    INHERITS = 269,
+    SUPERCLASS = 270,
+    GETSTRING = 271,
+    HOT = 272,
+    MAKE_HOT = 273,
+    PURGE = 274,
+    ALL = 275,
+    CLEAR = 276,
+    USED = 277,
+    STYLE = 278,
+    CAP = 279,
+    ARRAY = 280,
+    MESSAGE = 281,
+    START_TIMER = 282,
+    START_EVENT = 283,
+    AT = 284,
+    INTEGER = 285,
+    IDENTIFIER = 286,
+    STRING = 287,
+    ENDL = 288,
+    IF = 289,
+    FOR = 290,
+    EACH = 291,
+    IN = 292,
+    OF = 293,
+    SELF = 294,
+    CHILDREN = 295,
+    ADD_ASSIGN = 296,
+    BREAK = 297,
+    TRON = 298,
+    TROFF = 299,
+    NOTHING = 300,
+    MOVE = 301,
+    TO = 302,
+    EQ = 303,
+    NE = 304,
+    GE = 305,
+    LE = 306,
+    OR = 307,
+    AND = 308,
+    UMINUS = 309,
+    IFX = 310,
+    ELSE = 311
   };
 #endif
 
@@ -104,14 +107,14 @@ extern int yydebug;
 typedef union YYSTYPE YYSTYPE;
 union YYSTYPE
 {
-#line 26 "tig.y" /* yacc.c:1909  */
+#line 26 "tig.y" /* glr.c:2553  */
 				 						
     int iValue;                 // integer value - for numeric constants etc 
 	float fValue;				//float value - for floating-point constants
     CSyntaxNode *nPtr;          // node pointer - enables symbols to point to syntax nodes
 	 std::string* str;
 
-#line 115 "tigParse.hpp" /* yacc.c:1909  */
+#line 118 "tigParse.hpp" /* glr.c:2553  */
 };
 # define YYSTYPE_IS_TRIVIAL 1
 # define YYSTYPE_IS_DECLARED 1

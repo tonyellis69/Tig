@@ -29,6 +29,7 @@
   <ItemGroup>
     <ClInclude Include="..\VMtest\src\var.h" />
     <ClInclude Include="src\compiler.h" />
+    <ClInclude Include="src\nodeLib.h" />
     <ClInclude Include="src\sharedTypes.h" />
     <ClInclude Include="src\syntaxNode.h" />
     <ClInclude Include="src\tigParse.hpp" />

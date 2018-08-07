@@ -42,7 +42,7 @@
 %type <nPtr> array_init_expr constant_seq array_init_const array_element_expr array_index_expr array_init_list expr_seq array_dyn_init_elem
 %type <nPtr> comparison_expr logic_expression
 %type <nPtr> global_func_decl   param_list  func_call func_ident
-%type <nPtr> memberId
+%type <nPtr> memberId l_obj_expr
 
 %token PRINT SET_WINDOW CLEAR_WINDOW OPEN_WINDOW END RETURN
 %token EVENT OPTION
@@ -65,6 +65,7 @@
 %left EQ NE GE '>' LE '<'  OR AND     // '%left' makes these tokens left associative
 %left '+' '-'							 // this ensures that long complex sums are never ambiguous. 
 %left '*' '/' '%' 
+//%left ','
 %right '!' 
 %nonassoc UMINUS 
 %nonassoc IFX 
@@ -146,12 +147,17 @@ variable_assignee:
 		;
 
 obj_member_assignee:
-		obj_expr '.' IDENTIFIER							{ $$ = new CObjMemberAssigneeNode($1,$3); }
+		l_obj_expr IDENTIFIER							{ $$ = new CObjMemberAssigneeNode($1,$2); }
 		;
 
 obj_expr:												
 		variable_expr										{ $$ = $1; }
 		| SELF											{ $$ = new COpNode(opPushSelf); }
+		;
+
+l_obj_expr:
+		obj_expr '.'									{ $$ = $1; }
+		| l_obj_expr l_obj_expr							{ $$ = new CJointNode($1,$2); }
 		;
 
 element_assignee:
@@ -268,8 +274,6 @@ expression:
 	  | GETSTRING						{ $$ = new COpNode(opGetString); }
 	  | expression '+' expression		{ $$ = new COpNode(opAdd, $1, $3); }
 	  | expression '-' expression		{ $$ = new COpNode(opSub, $1, $3); }
-	  | expression '%' expression		{ $$ = new COpNode(opMod, $1, $3); }
-	  | '-' expression %prec UMINUS		{ $$ = new COpNode(opMinus, $2); }
 	  | constant_expr					{ $$ = $1; }
 	  | array_init_expr					{ $$ = $1; }
 	  | comparison_expr					{ $$ = $1; }
@@ -300,7 +304,7 @@ deref_variable_expr:
 
 
 member_call:
-	 obj_expr '.' func_ident optional_param_list				{ $$ = new CMemberCallNode($1, $3, $4); }
+	 l_obj_expr func_ident optional_param_list				{ $$ = new CMemberCallNode($1, $2, $3); }
 	| obj_identifier SUPERCLASS func_ident optional_param_list	{ $$ = new CSuperCallNode($1, $3, $4); }
 	//| obj_expr '#' variable_expr optional_param_list				{ $$ = new CMemberCallNode($1, $3, $4); }
 	;

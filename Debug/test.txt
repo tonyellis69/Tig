@@ -3,6 +3,9 @@
 mainWindow = 0;
 invWindow = 1;
 
+//Constants for messaging the user
+msgRoomChange = 5000;
+
 directionIds = [&northTo,&neTo,&eastTo,&seTo,&southTo,&swTo,&westTo,&nwTo,&upTo,&downTo,&inTo,&outTo]; 
 
 directionNames = ["north","northeast","east","southeast","south","southwest","west","northwest","up","down","in","out"]; 
@@ -10,11 +13,13 @@ directionNames = ["north","northeast","east","southeast","south","southwest","we
 
 CGameObj has parent = 0, child = 0, sibling = 0, shortName,  initial, moved, click, 
 take {
+	oldParent = self.parent;
 	purge 0, self; 
 	"\n\nI picked up the " + makeHot(name,0,self) + ". ";
 	move self to player;
 	moved = true;
 	updateInventory();
+	oldParent.taken();
 }, 
 drop {
 	purge 0, self;
@@ -22,8 +27,12 @@ drop {
 	move self to player.parent;
 	updateInventory();
 }, examine {
-	return style("popHeader") + cap(name) + style("popBody") + "\n" + description();
-}, array = [1,2,3];
+	openWindow self;
+	setWindow(self);
+	print style("popHeader") + cap(name) + style("popBody") + "\n";
+	description();
+	setWindow(mainWindow);
+};
 
 updateInventory() {
 	setWindow(invWindow);
@@ -33,6 +42,26 @@ updateInventory() {
 		print makeHot("\nA " + item.name,0,item); 
 	}
 	setWindow(mainWindow);
+};
+
+
+calcBackDirection(direction) {
+	index = 0; dirNo = 12;
+	for each dir in directionIds {
+		if (dir == direction)
+			dirNo = index;
+		index += 1;
+	}
+	if (dirNo < 8) {
+		dirNo += 4;
+		dirNo = dirNo % 8;
+		return directionIds[dirNo];
+	} else {
+		if (dirNo == 8) return directionIds[9];
+		if (dirNo == 9) return directionIds[8];
+		if (dirNo == 10) return directionIds[11];
+		if (dirNo == 11) return directionIds[10];
+	}
 };
 
 
@@ -59,8 +88,10 @@ CGameObj CRoom has
 registerHotText {
 	x = 0; //local 0
 	for each dir in directionIds { //dir local 1
-		if (*dir) 
+		if (self.<dir>)  {
 			hot directionNames[x], dir, self;
+			
+		}
 		x = x +1;
 	}
 
@@ -73,62 +104,69 @@ registerHotText {
 
 },
 listUndescribedExits() {
-	directionNum = 0;
-	
-	for each id in directionIds {
-		destination = *id;
+	directionNum = 0; backDirectionUsed = -1;
+	//TO DO: psuedorandomly turn off backDirection, it's too prevalent
+	for each directionId in directionIds {
+		destination = self.<directionId>;
 		if (destination != nothing &&  !hot directionNames[directionNum] used) {
-			
-			print "\n" + directionNames[directionNum] + "ly not used!";
-			
-			if (destination inherits CCorridor)
-				corridorList[] = directionNum;
-			else 
-				exitList[] = directionNum;
-				
-		}
-		
+			if (directionId == player.backDirection) {
+				backDirectionUsed = directionNum;
+			}
+			else {
+				if (destination inherits CCorridor)
+					corridorList[] = directionNum;
+				else 
+					exitList[] = directionNum;	
+			}
+		} 
 		directionNum += 1;
 	}
 	
-
-	//print "!!!!!!!" + exitList;
-
+	//corridors
 	if (corridorList == 1) {
 		"A corridor led " + directionNames[corridorList[0]];
-	
 	}
 	else if (corridorList > 1) {
-	
-		"Corridors led... "; count = 0;
-	
+		"Corridors led "; count = 0;
 		for each corridorDir in corridorList {
-			print "got here";
 			print directionNames[corridorDir];
 			count += 1;
-			if (count < corridorList -2)
+			if (count < corridorList -1)
 				", ";
 			if (count == corridorList -1)
-				" and ";
-			
+				" and ";	
+		}
+		
+	}
+
+	//exits
+	if (exitList == 1) {
+		". A doorway led " + directionNames[exitList[0]];
+	}
+	else if (exitList > 1) {
+		"Doorways led "; count = 0;
+		for each exitDir in exitList {
+			print directionNames[exitDir];
+			count += 1;
+			if (count < exitList -1)
+				", ";
+			if (count == exitList -1)
+				" and ";	
 		}
 
 	}
 	
-	//exits
-	//if one, 
-		//if = back direction "the way back led...", 
-		//else "a doorway opened to the..."
-	//else "doorways opened to the..."
-			
-		
-		
-	
+	if (backDirectionUsed > -1) {
+		if (exitList > 0 || corridorList > 0)
+			", or I could go back "  + directionNames[backDirectionUsed];
+		else
+			"The way back led "  + directionNames[backDirectionUsed];
+	}
+	print ". ";	
 },
 look {
 	registerHotText();
-	print description(); //TO DO: should really be called describe.
-	
+	description(); //TO DO: should really be called describe.
 	listUndescribedExits();
 
 	
@@ -146,12 +184,19 @@ CStaticObj CScenery;
 CSupporter has search {
 	result = listChildren(self);
 	if (result != "") {
-		result = "On it I could see" + result + ".";
+		setWindow(self);
+		"On it I could see" + result + ".";
+		setWindow(mainWindow);
 	}
-	return result;
 },
 examine {
 	return CGameObj::examine() + search();
+},
+taken {
+	setWindow(self);
+	clearWindow;
+	examine();
+	setWindow(mainWindow);
 };
 
 roomClassId = CRoom;
@@ -160,14 +205,30 @@ staticClassId = CStaticObj;
 supporterClassId = CSupporter;
 sceneryClassId = CScenery;
 
-CGameObj player has onObject, prevLocation
-;
+CGameObj player has onObject, backDirection,
+moveTo (direction) {
+	
+	
+	newRoom = parent.<direction>;  
+
+	move self to newRoom;
+	
+	backDirection = calcBackDirection(direction);
+	
+	setWindow(mainWindow);
+	purge all;
+	"\n\n";
+	message msgRoomChange, newRoom;
+	newRoom.look();
+	
+	
+};
 
 
 
 
 CRoom foyer has name "foyer",  description = { 
-return "I was in what had once been a luxurious reception area. Algae encrusted the windows, admitting 
+"I was in what had once been a luxurious reception area. Algae encrusted the windows, admitting 
 only a thin trickle of light. It fell on mouldering couches, plastic tables and an imposing reception
 desk. Swathes of 
 dust-choked cobweb hung from the ceiling like grey,
@@ -190,7 +251,7 @@ if (pushed == 1)
 return text;
 }
 ,  description "An imposing block of moulded plastic, now as 
-dusty as everything else. ", 
+dusty as everything else.", 
 push {  
 	pushed = 1;
 	"\n\nStraining my back, I managed to push the desk a few centimetres.";
@@ -212,9 +273,10 @@ had come to the south.",
 shortName "broad corridor",
 northTo = octHall, southTo = foyer;
 
-startRoom = octHall;
+startRoom = foyer;
 currentRoom = startRoom;
 playerObj = player;
+move player to foyer;
 
 CRoom octHall has description = "I came to a large, octagonal hall, as dead and dusty as
 everywhere else. An imposingly large door blocked the way north.",

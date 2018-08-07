@@ -40,9 +40,9 @@ void CTigCompiler::compile(std::string filename) {
 
 
 /** Create an operator node for the given op code and return a pointer to it. */
-COpNode * CTigCompiler::opNode(TOpCode opCode, CSyntaxNode* operand) {
-	return new COpNode(opCode, operand);
-}
+//COpNode * CTigCompiler::opNode(TOpCode opCode, CSyntaxNode* operand) {
+//	return new COpNode(opCode, operand);
+//}
 
 /** Convert the given syntax tree into bytecode, and write it to a file. */
 void CTigCompiler::encode(CSyntaxNode * node) {
@@ -106,7 +106,11 @@ void CTigCompiler::encode(CSyntaxNode * node) {
 	cout  << "\n" << outputFile << " compiled successfully!";
 
 	tempFile.close();
-	node->killNodes();
+//	node->killNodes();
+
+	for (auto killNode : nodeList2)
+		 delete killNode;
+
 	remove("fnCode.tmp");
 	remove("globalCode.tmp");
 
