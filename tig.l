@@ -88,6 +88,8 @@ IDENT    {LETTER}({LETTER}|{DIGIT})*
 "each"					return EACH;
 "in"					return IN;
 "of"					return OF;
+"is"					return IS;
+"not"					return NOT;
 "self"					return SELF;
 "children"				return CHILDREN;
 "makeHot"				return MAKE_HOT;

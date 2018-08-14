@@ -46,7 +46,7 @@
 
 %token PRINT SET_WINDOW CLEAR_WINDOW OPEN_WINDOW END RETURN
 %token EVENT OPTION
-%token OBJECT HAS ARROW INHERITS SUPERCLASS
+%token OBJECT  ARROW INHERITS SUPERCLASS
 %token GETSTRING
 %token HOT MAKE_HOT PURGE ALL CLEAR USED STYLE CAP
 %token ARRAY MESSAGE
@@ -55,17 +55,20 @@
 %token <str> IDENTIFIER STRING
 %token ENDL
 %token IF
-%token FOR EACH IN OF
+%token FOR EACH IN OF IS NOT
 %token SELF CHILDREN
 //CHILD SIBLING PARENT
 %token ADD_ASSIGN
 %token BREAK TRON TROFF
 %token NOTHING
 %token MOVE TO
+
 %left EQ NE GE '>' LE '<'  OR AND     // '%left' makes these tokens left associative
+%nonassoc HAS
 %left '+' '-'							 // this ensures that long complex sums are never ambiguous. 
 %left '*' '/' '%' 
 %right '!' 
+
 %nonassoc UMINUS 
 %nonassoc IFX 
 %nonassoc ELSE
@@ -99,9 +102,10 @@ statement:
 		| START_EVENT event_identifier AT INTEGER ';'	{ $$ = new CTimedEventNode($2,$4); }
 		| member_call ';'								{ $$ = new CallDiscardNode($1); }
 		| func_call		';'								{ $$ = new CallDiscardNode($1); }
-		| HOT expression ',' expression ';'					{ $$ = new CHotTextNode($2,$4,NULL); }
+		//| HOT expression ',' expression ';'					{ $$ = new CHotTextNode($2,$4,NULL); }
+		| HOT expression ',' deref_variable_expr	',' expression ';'		{ $$ = new CHotTextNode($2,$4,$6); }
 		| HOT expression ',' expression	',' expression ';'		{ $$ = new CHotTextNode($2,$4,$6); }
-		| PURGE expression  ',' expression ';'				{ $$ = new COpNode(opPurge,$2,$4); }
+		| PURGE memberId  ',' expression ';'				{ $$ = new COpNode(opPurge,$2,$4); }
 		| PURGE ALL ';'										{ $$ = new COpNode(opPurge,new CIntNode(0),new CIntNode(0)); }
 		| RETURN return_expr ';'						{ $$ = new CReturnNode($2); }
 		| IF '(' expression ')' statement %prec IFX			{ $$ = new CIfNode($3, $5, NULL); }	//$prec gives this rule the lesser precedence of dummy token IFX
@@ -275,12 +279,17 @@ expression:
 	  | comparison_expr					{ $$ = $1; }
 	  | '(' expression ')'				{ $$ = $2; }
 	  | SELF							{ $$ = new COpNode(opPushSelf); }
+	  | obj_expr IS IN obj_expr			{ $$ = new COpNode(opIn,$1,$4); }
+	  | obj_expr NOT IN obj_expr			{ $$ = new COpNode(opNotIn,$1,$4); }
 	  | CHILDREN '(' obj_expr ')'		{ $$ = new COpNode(opChildren,$3); }
+	 // | MAKE_HOT '(' expression ',' deref_variable_expr ',' expression ')' { $$ = new COpNode(opMakeHot,$3,$5,$7);}
 	  | MAKE_HOT '(' expression ',' expression ',' expression ')' { $$ = new COpNode(opMakeHot,$3,$5,$7);}
 	  | NOTHING							{ $$ = new CNothingNode(); }
 	  | STYLE '(' expression ')'		{ $$ = new COpNode(opStyle,$3); }
 	  | CAP '(' expression ')'			{ $$ = new COpNode(opCap,$3); }
 	  | obj_expr INHERITS obj_expr		{ $$ = new COpNode(opInherits,$1,$3); }
+	//  | obj_expr HAS memberId			{ $$ = new COpNode(opHas,$1,$3); }
+	  | obj_expr HAS expression			{ $$ = new COpNode(opHas,$1,$3); }
 	  | HOT expression USED				{ $$ = new COpNode(opHotCheck,$2); }
 	  | '!' expression					{ $$ = new COpNode(opNot,$2); }
 	  | logic_expression				{ $$ = $1; } 

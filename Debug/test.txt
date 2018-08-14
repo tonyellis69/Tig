@@ -2,28 +2,30 @@
 
 mainWindow = 0;
 invWindow = 1;
+menuWindow = 2;
 
 //Constants for messaging the user
 msgRoomChange = 5000;
 
 directionIds = [&northTo,&neTo,&eastTo,&seTo,&southTo,&swTo,&westTo,&nwTo,&upTo,&downTo,&inTo,&outTo]; 
-
 directionNames = ["north","northeast","east","southeast","south","southwest","west","northwest","up","down","in","out"]; 
 
+actionIds = [&examine,&push];
+actionNames = ["examine","push"];
 
 CGameObj has parent = 0, child = 0, sibling = 0, shortName,  initial, moved, click, 
 take {
 	oldParent = self.parent;
-	purge 0, self; 
-	"\n\nI picked up the " + makeHot(name,0,self) + ". ";
+	purge click, self; 
+	"\n\nI picked up the " + makeHot(name,&click,self) + ". ";
 	move self to player;
 	moved = true;
 	updateInventory();
 	oldParent.taken();
 }, 
 drop {
-	purge 0, self;
-	"\n\nI dropped the " + makeHot(name,0,self) + ". ";
+	purge click, self;
+	"\n\nI dropped the " + makeHot(name,&click,self) + ". ";
 	move self to player.parent;
 	updateInventory();
 }, examine {
@@ -32,14 +34,38 @@ drop {
 	print style("popHeader") + cap(name) + style("popBody") + "\n";
 	description();
 	setWindow(mainWindow);
+},
+click {
+	//tell ui to open a menu window
+	openWindow(menuWindow);
+	setWindow(menuWindow);
+	if (self has &take && self not in player && !self inherits CScenery)
+			print makeHot("Take",&take,self) + "\n";
+	if (self has &drop && self is in player)
+			print makeHot("Drop",&drop,self) + "\n";
+	
+	//iterate through possible actions 
+	count = 0;
+	for each actionId in actionIds {
+		if (self has actionId) {
+			if (count > 0)
+				"\n";
+			print makeHot(cap(actionNames[count]),actionId,self) ;
+
+		}
+		count += 1;
+		
+	}
+	setWindow(mainWindow);
+	
 };
 
 updateInventory() {
 	setWindow(invWindow);
 	clearWindow;
 	"Inventory:";
-	for each item of player {
-		print makeHot("\nA " + item.name,0,item); 
+	for each possession of player {
+		print makeHot("\nA " + possession.name,&click,possession); 
 	}
 	setWindow(mainWindow);
 };
@@ -70,9 +96,9 @@ listChildren(parentObj) {
 	count = 0; result = "";
 	numChildren = children(parentObj); 
 	for each x of parentObj { 
-		result += " a " + makeHot(x.name,0,x); 
+		result += " a " + makeHot(x.name,&click,x); 
 		count += 1;
-		if (count < numChildren -2)
+		if (count < numChildren -2) //probably needs to be -1
 			result = result + ",";
 		if (count == numChildren -1)
 			result = result + " and";
@@ -81,25 +107,41 @@ listChildren(parentObj) {
 };
 
 
+listElements(array) {
+	count = 0; result = "";
+	for each x in array { 
+		result += " a " + makeHot(x.name,&click,x); 
+		count += 1;
+		if (count < array -1)
+			result = result + ",";
+		if (count == array -1)
+			result = result + " and";
+	}
+	return result;
+};
+
+
+/** Initialisation code.*/
+init() {
+	//start player in the right room:
+	move player to foyer;
+};
 
 
 
 CGameObj CRoom has 
 registerHotText {
 	x = 0; //local 0
-	for each dir in directionIds { //dir local 1
-		if (self.<dir>)  {
-			hot directionNames[x], dir, self;
-			
+	for each directionId in directionIds { 
+		if (self.<directionId>)  {
+			hot directionNames[x], directionId, self;
 		}
-		x = x +1;
+		x += 1;
 	}
 
-	//register hot text for any scenery
-	for each item of self {  //item local 2
-		if (item inherits CScenery) {
-			hot item.name , click, item;
-		}
+	//register hot text for any room objects
+	for each item of self {  
+			hot item.name, &click, item;
 	}
 
 },
@@ -164,10 +206,27 @@ listUndescribedExits() {
 	}
 	print ". ";	
 },
+listObjects() {
+	//provide any initial descriptions
+	for each item of self {
+		if (item != player && !item inherits CScenery) {
+			if (!item.moved)
+				"\n\n" + item.initial();
+			else
+				movedItems[] = item;	
+		}		
+	}
+	
+	//describe any other objects
+	if (movedItems > 0)
+		"\n\nI could also see " + listElements(movedItems) + " here. ";
+	
+},
 look {
 	registerHotText();
 	description(); //TO DO: should really be called describe.
 	listUndescribedExits();
+	listObjects();
 
 	
 	hot clear;
@@ -199,17 +258,12 @@ taken {
 	setWindow(mainWindow);
 };
 
-roomClassId = CRoom;
-corridorClassId = CCorridor;
-staticClassId = CStaticObj;
-supporterClassId = CSupporter;
-sceneryClassId = CScenery;
+
 
 CGameObj player has onObject, backDirection,
 moveTo (direction) {
 	
-	
-	newRoom = parent.<direction>;  
+	newRoom = parent.<direction>;
 
 	move self to newRoom;
 	
@@ -273,10 +327,8 @@ had come to the south.",
 shortName "broad corridor",
 northTo = octHall, southTo = foyer;
 
-startRoom = foyer;
-currentRoom = startRoom;
+
 playerObj = player;
-move player to foyer;
 
 CRoom octHall has description = "I came to a large, octagonal hall, as dead and dusty as
 everywhere else. An imposingly large door blocked the way north.",
