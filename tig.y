@@ -1,11 +1,13 @@
 %{
 	#define YYDEBUG 1
     #include <cstdio>
+	#include <iostream>
 	#include <string>
+	#include <vector>
 
 	#include "compiler.h"
 	#include "syntaxNode.h"
-
+	#include "lineRec.h"
 
     void yyerror(const char *);
     int yylex(void);
@@ -14,11 +16,16 @@
 	CTigCompiler* tigC;
 
 	//extern int yylineno;
-	extern int lineNo;
 	extern char* yytext;
 	extern fpos_t lastLinePos;
 	extern fpos_t linePos;
 	extern FILE* yyin;
+
+	extern std::vector<std::string> filenames;
+	extern std::vector<TLineRec> lineRecs;
+
+
+
 %}
 
 	// Definition of YYSTYPE - the type used for symbols, which enables them to hold various values. 
@@ -55,7 +62,7 @@
 %token <str> IDENTIFIER STRING
 %token ENDL
 %token IF
-%token FOR EACH IN OF IS NOT
+%token FOR EACH IN OF CONTINUE IS NOT
 %token SELF CHILDREN
 //CHILD SIBLING PARENT
 %token ADD_ASSIGN
@@ -102,7 +109,6 @@ statement:
 		| START_EVENT event_identifier AT INTEGER ';'	{ $$ = new CTimedEventNode($2,$4); }
 		| member_call ';'								{ $$ = new CallDiscardNode($1); }
 		| func_call		';'								{ $$ = new CallDiscardNode($1); }
-		//| HOT expression ',' expression ';'					{ $$ = new CHotTextNode($2,$4,NULL); }
 		| HOT expression ',' deref_variable_expr	',' expression ';'		{ $$ = new CHotTextNode($2,$4,$6); }
 		| HOT expression ',' expression	',' expression ';'		{ $$ = new CHotTextNode($2,$4,$6); }
 		| PURGE memberId  ',' expression ';'				{ $$ = new COpNode(opPurge,$2,$4); }
@@ -123,6 +129,8 @@ statement:
 		| HOT CLEAR ';'									{ $$ = new COpNode(opHotClr); }
 		| var_or_obj_memb ARRAY '=' expression	';'		{ $$ = new COpNode(opArrayPush,$4,$1); }
 		| MESSAGE param_list ';'						{ $$ = new CMsgNode($2); }
+		| CONTINUE ';'									{ $$ = new CContinueNode(); }
+		| ';'											{ $$ = new COpNode(opNop);  }
         ;
 
 memberId:
@@ -401,10 +409,13 @@ logic_expression:
 %%
 
 void yyerror(const char *s) {
-	fprintf(stdout, "\n%s, unexpected '%s' on line %d:", s, yytext,lineNo);
+	int lineNum = lineRecs.back().currentLineNo;
+	std::cerr << "\n" << s << ", unexpected " << yytext << " in file " << filenames[lineRecs.back().fileNo]
+		<< ", line " << lineNum;
 	rewind(yyin);
 	char buf[500];
-	for (int line=0; line < lineNo;line++)
+	for (int line=0; line < lineNum;line++)
 		fgets(buf,500,yyin);
 	fprintf(stdout, "\n%s", buf);
+	exit(1);
 }

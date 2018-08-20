@@ -21,7 +21,7 @@ int main(int argc, char* argv[]) {
 	//homeDir += "..\\";
 #endif
 
-	tig.compile(homeDir + "test.txt");
+	tig.compile(homeDir + "level.tpp");
 
 	//std::getchar();
 

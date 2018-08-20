@@ -41,18 +41,19 @@ bool CSyntaxNode::tron;
 set<int> CSyntaxNode::globalVarIds;
 std::vector<int> CSyntaxNode::arrayInitCount;
 std::map<std::string, int> CSyntaxNode::localVarIdsPermanent;
+std::vector<int> CSyntaxNode::continueAddr;
 
-extern int lineNo;
+extern std::vector<TLineRec> lineRecs;
 
-//namespace syn {
-	std::vector<CSyntaxNode*> nodeList2;
+extern vector<string> filenames;
 
-//}
+std::vector<CSyntaxNode*> nodeList;
+
 
 CSyntaxNode::CSyntaxNode() {
-	//nodeList.push_back(this);
-	nodeList2.push_back(this);
-	sourceLine = lineNo;
+	nodeList.push_back(this);
+	sourceLine = lineRecs.back().currentLineNo;
+	sourceFile = lineRecs.back().fileNo;
 }
 
 CSyntaxNode::~CSyntaxNode() {
@@ -249,12 +250,12 @@ void CSyntaxNode::logLocalMemberCheck(int objId, int memberId) {
 }
 
 
-void CSyntaxNode::logGlobalMemberCheck(int lineNum, int memberId) {
+void CSyntaxNode::logGlobalMemberCheck(int lineNum, int fileNum, int memberId) {
 	for (auto globalRef : globalMembersToCheck) {
 		if (globalRef.memberId == memberId) //only need one check
 			return;
 	}
-	globalMembersToCheck.push_back({ lineNum, memberId });
+	globalMembersToCheck.push_back({ lineNum,fileNum, memberId });
 }
 
 std::string CSyntaxNode::getMemberName(int memberId) {
@@ -779,7 +780,7 @@ void CObjRefNode::encode() {
 	writeWord(zeroObject);
 	writeOp(opPushVar);
 	writeWord(id);
-	logGlobalMemberCheck(sourceLine, id);
+	logGlobalMemberCheck(sourceLine,sourceFile, id);
 
 	//check for global variable
 //	auto globIt =  std::find_if(globalVarIds.begin(), globalVarIds.end(),
@@ -803,7 +804,7 @@ CMemberExprNode::CMemberExprNode(CSyntaxNode * parent, std::string * parsedStrin
 	auto iter = memberIds.find(*parsedString);
 	if (iter == memberIds.end()) {
 		memberId = getMemberId(*parsedString);
-		logGlobalMemberCheck(sourceLine, memberId);
+		logGlobalMemberCheck(sourceLine,sourceFile, memberId);
 		return;
 	}
 	memberId = iter->second;
@@ -849,7 +850,7 @@ void CVarExprNode::encode() {
 	if (it2 == memberIds.end()) { //it's totally new
 		memberId = getMemberId(name);
 		//log the fact that we couldn't identify it
-		logGlobalMemberCheck(sourceLine, memberId);
+		logGlobalMemberCheck(sourceLine, sourceFile, memberId);
 	}
 	else {
 		memberId = it2->second;
@@ -937,7 +938,7 @@ ClassIdentNode::ClassIdentNode(std::string * parsedString) {
 		classId = iter->second.objectId;
 		return;
 	}
-	std::cout << "\nError, line: " << sourceLine << " No object named \"" << *parsedString << "\" exists.";
+	std::cout << "\nError, file: " << filenames[sourceFile] << ", line: " << sourceLine << ". No object named \"" << *parsedString << "\" exists.";
 	exit(1);
 }
 
@@ -1181,7 +1182,7 @@ CMemberCallNode::CMemberCallNode(CSyntaxNode * object, CSyntaxNode * funcName, C
 	memberId = 0;
 	if (funcName->getText().size() > 0) {
 		memberId = getMemberId(funcName->getText());
-		logGlobalMemberCheck(sourceLine, memberId); //makes a note to check if this function was ever found
+		logGlobalMemberCheck(sourceLine, sourceFile, memberId); //makes a note to check if this function was ever found
 	}
 	operands.push_back(funcName);
 	operands.push_back(params);
@@ -1286,7 +1287,8 @@ void CForEachNode::encode() {
 		writeOp(opAssign);
 	//:start
 	int loopAddr = outputFile->tellp();
-	//is var == NULL
+	continueAddr.push_back(loopAddr);
+
 	operands[0]->encode(); //put variable identifier back on stack
 	writeOp(opGetVar); //leave variable contents on stack
 	//yes? jump to resume
@@ -1313,6 +1315,7 @@ void CForEachNode::encode() {
 		cout << "\npatched " << patchAddr << " to";
 	writeWord(resumeAddr);
 	outputFile->seekp(resumeAddr);
+	continueAddr.pop_back();
 }
 
 CForEachElementNode::CForEachElementNode(CSyntaxNode * variable, CSyntaxNode * containerObj, CSyntaxNode * code) {
@@ -1329,6 +1332,7 @@ void CForEachElementNode::encode() {
 
 	//loop:
 	int loopAddr = outputFile->tellp();
+	continueAddr.push_back(loopAddr);
 	writeOp(opArrayIt);
 	int patchAddr = outputFile->tellp();
 	writeWord(0xFFFFFFFF); //jump to resume if index = array size
@@ -1350,9 +1354,7 @@ void CForEachElementNode::encode() {
 	writeWord(resumeAddr);
 	outputFile->seekp(resumeAddr);
 
-	//resume:
-	//writeOp(opPop); //VM does this internally
-	//writeOp(opPop);
+	continueAddr.pop_back();
 
 }
 
@@ -1480,7 +1482,7 @@ void CNothingNode::encode() {
 CSuperCallNode::CSuperCallNode(CSyntaxNode * super, CSyntaxNode * funcName, CSyntaxNode * params) {
 	operands.push_back(super);
 	memberId = getMemberId(funcName->getText());
-	logGlobalMemberCheck(sourceLine, memberId); //makes a note to check if this function was ever found										//}
+	logGlobalMemberCheck(sourceLine, sourceFile, memberId); //makes a note to check if this function was ever found										//}
 	operands.push_back(params);
 }
 
@@ -1561,4 +1563,16 @@ void CMsgNode::encode() {
 	writeOp(opMsg);
 	writeByte(paramCount.back());
 	paramCount.pop_back();
+}
+
+/** A syntax node for a continue statement in a loop. */
+void CContinueNode::encode() {
+	if (continueAddr.size()) {
+		writeOp(opJump);
+		writeWord(continueAddr.back());
+		return;
+	}
+	cerr << "\nError: file " << filenames[sourceFile] << ", line: " <<
+		sourceLine << ". 'continue' used outside a loop.";
+	exit(1);
 }

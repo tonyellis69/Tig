@@ -1,0 +1,2 @@
+
+Error, include file global.tpp not found.

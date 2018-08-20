@@ -1,5 +1,6 @@
 
 #include "compiler.h"
+#include "lineRec.h"
 
 #include <cstdio>
 #include <fstream>
@@ -13,7 +14,9 @@ extern  int yyparse();
 extern int yydebug ;
 
 extern CTigCompiler* tigC;
+extern vector<string> filenames;
 
+extern std::vector<TLineRec> lineRecs;
 
 CTigCompiler::CTigCompiler() {
 	
@@ -29,10 +32,16 @@ void CTigCompiler::compile(std::string filename) {
 		return;
 	}
 	outputFile = "output.tig";
+	filenames.push_back(filename);
+	TLineRec file1;
+	lineRecs.push_back({ 1,0 }); //so source line tracking starts on line 1, source file 0
 
 	tigC = this;
-	//yydebug = 1;
+
 	yyparse();
+
+	cout << "\n" << outputFile << " compiled successfully!";
+
 	fclose(yyin);
 }
 
@@ -103,12 +112,12 @@ void CTigCompiler::encode(CSyntaxNode * node) {
 	main << tempFile.rdbuf();
 	main.close();
 
-	cout  << "\n" << outputFile << " compiled successfully!";
+
 
 	tempFile.close();
 //	node->killNodes();
 
-	for (auto killNode : nodeList2)
+	for (auto killNode : nodeList)
 		 delete killNode;
 
 	remove("fnCode.tmp");
@@ -139,8 +148,8 @@ bool CTigCompiler::globalMemberChecksResolve(CSyntaxNode * node) {
 		
 		if (!found) {
 			resolve = false;
-			cerr << "\nError!!!! Identifier \"" << node->getMemberName(check.memberId) << "\" used at line "
-				<< check.lineNum << " but never defined.";
+			cerr << "\nError! Identifier \"" << node->getMemberName(check.memberId) << "\" used in file "
+				<< filenames[check.fileNum] <<  " at line " << check.lineNum << " but never defined.";
 		}
 	}
 	return resolve;

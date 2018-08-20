@@ -80,27 +80,28 @@ extern int yydebug;
     EACH = 290,
     IN = 291,
     OF = 292,
-    IS = 293,
-    NOT = 294,
-    SELF = 295,
-    CHILDREN = 296,
-    ADD_ASSIGN = 297,
-    BREAK = 298,
-    TRON = 299,
-    TROFF = 300,
-    NOTHING = 301,
-    MOVE = 302,
-    TO = 303,
-    EQ = 304,
-    NE = 305,
-    GE = 306,
-    LE = 307,
-    OR = 308,
-    AND = 309,
-    HAS = 310,
-    UMINUS = 311,
-    IFX = 312,
-    ELSE = 313
+    CONTINUE = 293,
+    IS = 294,
+    NOT = 295,
+    SELF = 296,
+    CHILDREN = 297,
+    ADD_ASSIGN = 298,
+    BREAK = 299,
+    TRON = 300,
+    TROFF = 301,
+    NOTHING = 302,
+    MOVE = 303,
+    TO = 304,
+    EQ = 305,
+    NE = 306,
+    GE = 307,
+    LE = 308,
+    OR = 309,
+    AND = 310,
+    HAS = 311,
+    UMINUS = 312,
+    IFX = 313,
+    ELSE = 314
   };
 #endif
 
@@ -109,14 +110,14 @@ extern int yydebug;
 typedef union YYSTYPE YYSTYPE;
 union YYSTYPE
 {
-#line 26 "tig.y" /* glr.c:2553  */
+#line 33 "tig.y" /* glr.c:2553  */
 				 						
     int iValue;                 // integer value - for numeric constants etc 
 	float fValue;				//float value - for floating-point constants
     CSyntaxNode *nPtr;          // node pointer - enables symbols to point to syntax nodes
 	 std::string* str;
 
-#line 120 "tigParse.hpp" /* glr.c:2553  */
+#line 121 "tigParse.hpp" /* glr.c:2553  */
 };
 # define YYSTYPE_IS_TRIVIAL 1
 # define YYSTYPE_IS_DECLARED 1

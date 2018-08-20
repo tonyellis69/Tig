@@ -10,7 +10,7 @@
 #include <map>
 #include <set>
 
-
+#include "lineRec.h"
 #include "sharedTypes.h"
 #include "..\..\VMtest\src\var.h"
 
@@ -21,10 +21,7 @@ class CSyntaxNode;
 
 
 
-
-
-
-extern int lineNo;
+extern std::vector<TLineRec> lineRecs;
 
 const int variableExpression = 2001;
 
@@ -37,6 +34,7 @@ struct TMemberRec {
 
 struct TMemberCheck {
 	int lineNum;
+	int fileNum;
 	int memberId;
 };
 
@@ -59,7 +57,7 @@ struct TGlobalFn {
 enum TCodeDest {funcDest, globalDest, destNone};
 
 //namespace syn {
-	extern std::vector<CSyntaxNode*> nodeList2;
+	extern std::vector<CSyntaxNode*> nodeList;
 
 //}
 
@@ -101,14 +99,15 @@ public:
 
 	bool objectHasMember(int objId, int memberId);
 	void logLocalMemberCheck(int objId, int memberId);
-	void logGlobalMemberCheck(int lineNum, int memberId);
+	void logGlobalMemberCheck(int lineNum, int fileNum, int memberId);
 	std::string getMemberName(int memberId);
 
 	void setCodeDestination(TCodeDest dest);
 
 	std::vector<CSyntaxNode*> operands;
 
-	int sourceLine; //source code line from which this node was spawned.
+	int sourceLine; ///<source code line from which this node was spawned.
+	int sourceFile; ///<filename index of source code from which this node was spawned.
 
 	static std::ofstream fnByteCode;
 	static std::ofstream globalByteCode;
@@ -116,8 +115,7 @@ public:
 
 	static std::map<std::string, int> eventIds;
 	static int nextEventId;
-	//static std::map<std::string, int> globalVarIds;
-//	static int nextGlobalVarId;
+
 	static std::vector<std::string> localVarIds; ///<Local variable names.
 	static std::map<std::string,int> localVarIdsPermanent; ///<Local variable names, permanent list.
 
@@ -161,6 +159,8 @@ public:
 	static bool tron;
 
 	static std::set<int> globalVarIds; ///<Set of member ids that reperesent global variables.
+
+	static std::vector<int> continueAddr; ///<Address to use for loop continue statements;
 };
 
 enum TIdentType { local, globalVar, object };
@@ -592,4 +592,11 @@ class CMsgNode : public CSyntaxNode {
 public:
 	CMsgNode(CSyntaxNode* params);
 	void encode();
+};
+
+class CContinueNode :public CSyntaxNode {
+public:
+	//CContinueNode();
+	void encode();
+
 };

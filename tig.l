@@ -5,7 +5,7 @@
 	#include <iostream>
 
 	#include <io.h>       // isatty
-	 #pragma warning (push)
+	#pragma warning (push)
 	#pragma warning (disable : 4005)
 	#include <string>
 	#pragma warning (pop)
@@ -13,14 +13,19 @@
 	
 	#include "tigParse.hpp"
 
+	#include "lineRec.h"
+
     void yyerror(const char *);
 	void trackLine();
 	
-	int lineNo = 1; ///<Keeps track of line numbers for error messages.
 	std::string stringBuf;
 	const int maxIdentBufs = 10;
 	std::string identBufs[maxIdentBufs];
 	int currentIdentBuf = 0;
+
+	std::vector<std::string> filenames; ///<Permanent list of #included files.
+
+	std::vector<TLineRec> lineRecs;
 %}
 
 	/* Substitutions simplify pattern-matching rules, eg, letter [A-Za-z] or digit [0-9] */
@@ -30,7 +35,7 @@ IDENT    {LETTER}({LETTER}|{DIGIT})*
 
 
 	//Excusive states are useful for sequences where the usual rules change.
-%x	COMMENT STR
+%x	COMMENT STR INCL
 
 	//supposedly hits performance: %option yylineno 
  
@@ -48,6 +53,29 @@ IDENT    {LETTER}({LETTER}|{DIGIT})*
 							while ((c = yyinput()) != '\n' && c != 0);
 							trackLine();
 						}
+
+#include				BEGIN(INCL);
+<INCL>[ \t]*			/* eat the whitespace */
+<INCL>[^ \t\n]+			{ /* got the include file name */
+
+							yyin = fopen( yytext, "r" );
+							if ( ! yyin ) {
+								std::cerr << "\nError, include file " << yytext << " not found.";
+								exit(1);
+							}
+							filenames.push_back(yytext);
+							lineRecs.push_back({1,(int)filenames.size()-1}); //start a new line rec
+							yypush_buffer_state(yy_create_buffer( yyin, YY_BUF_SIZE ));
+							BEGIN(INITIAL);
+						}
+<<EOF>>					{
+							yypop_buffer_state();
+							lineRecs.pop_back();
+							if ( !YY_CURRENT_BUFFER ) {
+								yyterminate();
+							 }
+						 }
+
 
 [0-9]+					{	yylval.iValue = atoi(yytext);
 							return INTEGER;
@@ -88,6 +116,7 @@ IDENT    {LETTER}({LETTER}|{DIGIT})*
 "each"					return EACH;
 "in"					return IN;
 "of"					return OF;
+"continue"				return CONTINUE;
 "is"					return IS;
 "not"					return NOT;
 "self"					return SELF;
@@ -142,5 +171,5 @@ int yywrap(void) { //Called when input exhausted. Reset yyin and return 0 to pro
 }
 
 void trackLine() {
-	lineNo++; 
+	lineRecs.back().currentLineNo++;
 }
