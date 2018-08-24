@@ -58,7 +58,7 @@ listChildren(parentObj) {
 		if (count < numChildren -2) //probably needs to be -1
 			result = result + ",";
 		if (count == numChildren -1)
-			result = result + " and";
+			result = result + " and ";
 	}
 	return result;
 };
@@ -72,7 +72,7 @@ listElements(array) {
 		if (count < array -1)
 			result = result + ",";
 		if (count == array -1)
-			result = result + " and";
+			result = result + " and ";
 	}
 	return result;
 };

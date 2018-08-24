@@ -4,7 +4,7 @@ CGameObj has parent = 0, child = 0, sibling = 0, shortName,  initial, moved, cli
 take {
 	oldParent = self.parent;
 	purge click, self; 
-	"\n\nI picked up the " + makeHot(name,&click,self) + ". ";
+	"\n\nYou pick up the " + makeHot(name,&click,self) + ". ";
 	move self to player;
 	moved = true;
 	updateInventory();
@@ -12,7 +12,7 @@ take {
 }, 
 drop {
 	purge click, self;
-	"\n\nI dropped the " + makeHot(name,&click,self) + ". ";
+	"\n\nYou drop the " + makeHot(name,&click,self) + ". ";
 	move self to player.parent;
 	updateInventory();
 }, 
@@ -100,7 +100,7 @@ listUndescribedExits() {
 	doorCount = 0;
 	for each doorDir in doorList {
 		pDoor = self.<directionIds[doorDir]>;
-		"a " + pDoor.name() + " led " + directionNames[doorDir];
+		"a " + pDoor.name() + " leads " + directionNames[doorDir];
 		doorCount += 1;
 		if (doorCount < doorList -1)
 			", ";
@@ -112,10 +112,10 @@ listUndescribedExits() {
 	
 	//corridors
 	if (corridorList == 1) {
-		"A corridor led " + directionNames[corridorList[0]];
+		"A corridor leads " + directionNames[corridorList[0]];
 	}
 	else if (corridorList > 1) {
-		"Corridors led "; count = 0;
+		"Corridors lead "; count = 0;
 		for each directionIndex in corridorList {
 			print directionNames[directionIndex];
 			count += 1;
@@ -129,10 +129,10 @@ listUndescribedExits() {
 
 	//exits
 	if (exitList == 1) {
-		". A doorway led " + directionNames[exitList[0]];
+		". A solitary exit leads " + directionNames[exitList[0]];
 	}
 	else if (exitList > 1) {
-		"Doorways led "; count = 0;
+		"Doorways lead "; count = 0;
 		for each exitDir in exitList {
 			print directionNames[exitDir];
 			count += 1;
@@ -146,9 +146,9 @@ listUndescribedExits() {
 	
 	if (backDirectionUsed > -1) {
 		if (exitList > 0 || corridorList > 0)
-			", or I could go back "  + directionNames[backDirectionUsed];
+			", or you can go back "  + directionNames[backDirectionUsed];
 		else
-			"The way back led "  + directionNames[backDirectionUsed];
+			"The way back leads "  + directionNames[backDirectionUsed];
 	}
 	print ". ";	
 },
@@ -167,10 +167,11 @@ listObjects() {
 	
 	//describe any other objects
 	if (movedItems > 0)
-		"\n\nI could also see " + listElements(movedItems) + " here. ";
+		"\n\nYou can also see " + listElements(movedItems) + " here. ";
 	
 },
 look {
+	print style("mainHeader") + cap(name) + style("mainBody") + "\n";
 	registerHotText();
 	description(); //TO DO: should really be called describe.
 	listUndescribedExits();
@@ -189,7 +190,7 @@ CStatic CScenery;
 CSupporter has search {
 	result = listChildren(self);
 	if (result != "") {
-		"On it I could see " + result + ".";
+		"On it you can see " + result + ".";
 	}
 },
 examine {
