@@ -11,8 +11,8 @@ msgRoomChange = 5000;
 directionIds = [&northTo,&neTo,&eastTo,&seTo,&southTo,&swTo,&westTo,&nwTo,&upTo,&downTo,&inTo,&outTo]; 
 directionNames = ["north","northeast","east","southeast","south","southwest","west","northwest","up","down","in","out"]; 
 
-actionIds = [&examine,&push,&turnSub];
-actionNames = ["examine","push","turn"];
+actionIds = [&examine,&push,&turnSub,&climb];
+actionNames = ["examine","push","turn","climb"];
 
 playerObj = player;
 
@@ -20,11 +20,23 @@ updateInventory() {
 
 	setWindow(invWindow);
 	clearWindow;
-	"Inventory:";
+	print style("smallHeader") + "Inventory:\n" + style("small");
 	for each possession of player {
-		print makeHot("\nA " + possession.name,&click,possession); 
+		print makeHot("A " + possession.name,&click,possession) + "\n"; 
 	}
 	setWindow(mainWindow);
+};
+
+getDirectionName(directionId) {
+	index = 0; 
+	for each dir in directionIds {
+		if (dir == directionId) {
+			//break;
+			return directionNames[index];
+		}
+		index += 1;
+	}
+	//return directionNames[index];
 };
 
 
@@ -80,4 +92,13 @@ listElements(array) {
 clickableName(obj) {
 	purge click, self;
 	return makeHot(obj.name,&click,obj);
+};
+
+teleport(destination) {
+	move player to destination;
+	
+	purge all;
+	"\n";
+	message msgRoomChange, destination;
+	destination.look();
 };

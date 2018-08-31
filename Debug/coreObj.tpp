@@ -19,7 +19,7 @@ drop {
 examine {
 	openWindow self;
 	setWindow(self);
-	print style("popHeader") + cap(name) + style("popBody") + "\n";
+	print style("smallHeader") + cap(name) + style("small") + "\n";
 	description();
 	setWindow(mainWindow);
 },
@@ -126,13 +126,18 @@ listUndescribedExits() {
 		}
 		
 	}
+	print ". ";
 
 	//exits
 	if (exitList == 1) {
-		". A solitary exit leads " + directionNames[exitList[0]];
+		". An exit leads " + directionNames[exitList[0]];
 	}
 	else if (exitList > 1) {
-		"Doorways lead "; count = 0;
+		if (corridorList > 0 || doorList > 0)
+			"Other exits lead ";
+		else
+			"Exits lead "; 
+		count = 0;
 		for each exitDir in exitList {
 			print directionNames[exitDir];
 			count += 1;
@@ -259,12 +264,10 @@ moveTo (direction) {
 	} else
 		backDirection = calcBackDirection(direction);
 
-	move self to destination;
-	
-	purge all;
-	"\n";
-	message msgRoomChange, destination;
-	destination.look();
+
+	"\nYou go " + getDirectionName(direction) + ".\n";
+
+	teleport(destination);
 	
 	
 };

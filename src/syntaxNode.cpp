@@ -42,6 +42,7 @@ set<int> CSyntaxNode::globalVarIds;
 std::vector<int> CSyntaxNode::arrayInitCount;
 std::map<std::string, int> CSyntaxNode::localVarIdsPermanent;
 std::vector<int> CSyntaxNode::continueAddr;
+std::vector<int> CSyntaxNode::breakAddr;
 
 extern std::vector<TLineRec> lineRecs;
 
@@ -1277,7 +1278,7 @@ CForEachNode::CForEachNode(CSyntaxNode* variable, CSyntaxNode * containerObj, CS
 }
 
 void CForEachNode::encode() {
-	//operands[0]->encode(); //write code to put variable identifier on the stack
+	unsigned int numBreaks = breakAddr.size();
 	operands[1]->encode(); //write code to put parent object identifier on the stack
 	//initialise var with first child of container
 		//get child of container object
@@ -1314,6 +1315,15 @@ void CForEachNode::encode() {
 	if (tron)
 		cout << "\npatched " << patchAddr << " to";
 	writeWord(resumeAddr);
+
+	for (unsigned int breaks = numBreaks; breaks < breakAddr.size(); breaks++) {
+		outputFile->seekp(breakAddr[breaks]);
+		if (tron)
+			cout << "\npatched " << breakAddr[breaks] << " to";
+		writeWord(resumeAddr);
+	}
+	breakAddr.erase(breakAddr.begin() + numBreaks, breakAddr.end());
+
 	outputFile->seekp(resumeAddr);
 	continueAddr.pop_back();
 }
@@ -1325,7 +1335,7 @@ CForEachElementNode::CForEachElementNode(CSyntaxNode * variable, CSyntaxNode * c
 }
 
 void CForEachElementNode::encode() {
-	
+	unsigned int numBreaks = breakAddr.size();
 	writeOp(opPushInt); 
 	writeWord(0); //put 0 on the stack as index
 	operands[1]->encode(); //write code to put array on the stack
@@ -1352,6 +1362,15 @@ void CForEachElementNode::encode() {
 	if (tron)
 		cout << "\npatched " << patchAddr << " to";
 	writeWord(resumeAddr);
+
+	for (unsigned int breaks = numBreaks; breaks < breakAddr.size(); breaks++) {
+		outputFile->seekp(breakAddr[breaks]);
+		if (tron)
+			cout << "\npatched " << breakAddr[breaks] << " to";
+		writeWord(resumeAddr);
+	}
+	breakAddr.erase(breakAddr.begin() + numBreaks, breakAddr.end());
+
 	outputFile->seekp(resumeAddr);
 
 	continueAddr.pop_back();
@@ -1575,4 +1594,15 @@ void CContinueNode::encode() {
 	cerr << "\nError: file " << filenames[sourceFile] << ", line: " <<
 		sourceLine << ". 'continue' used outside a loop.";
 	exit(1);
+}
+
+/** A syntax node fore breaking out of a loop. */
+void CLoopBreakNode::encode() {
+	writeOp(opPop);
+	writeOp(opPop);
+	//TO DO!!! make sure this works for child and other loops, or fix!
+
+	writeOp(opJump);
+	breakAddr.push_back(outputFile->tellp());
+	writeWord(0xFFFFFFFF);
 }

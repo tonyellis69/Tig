@@ -161,6 +161,8 @@ public:
 	static std::set<int> globalVarIds; ///<Set of member ids that reperesent global variables.
 
 	static std::vector<int> continueAddr; ///<Address to use for loop continue statements;
+	static std::vector<int> breakAddr; ///<Address to use for loop break statements;
+
 };
 
 enum TIdentType { local, globalVar, object };
@@ -596,7 +598,10 @@ public:
 
 class CContinueNode :public CSyntaxNode {
 public:
-	//CContinueNode();
 	void encode();
+};
 
+class CLoopBreakNode :public CSyntaxNode {
+public:
+	void encode();
 };

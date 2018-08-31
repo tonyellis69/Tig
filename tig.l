@@ -117,6 +117,7 @@ IDENT    {LETTER}({LETTER}|{DIGIT})*
 "in"					return IN;
 "of"					return OF;
 "continue"				return CONTINUE;
+"break"					return LOOP_BREAK;
 "is"					return IS;
 "not"					return NOT;
 "self"					return SELF;

@@ -62,7 +62,7 @@
 %token <str> IDENTIFIER STRING
 %token ENDL
 %token IF
-%token FOR EACH IN OF CONTINUE IS NOT
+%token FOR EACH IN OF CONTINUE IS NOT LOOP_BREAK
 %token SELF CHILDREN
 //CHILD SIBLING PARENT
 %token ADD_ASSIGN
@@ -130,6 +130,7 @@ statement:
 		| var_or_obj_memb ARRAY '=' expression	';'		{ $$ = new COpNode(opArrayPush,$4,$1); }
 		| MESSAGE param_list ';'						{ $$ = new CMsgNode($2); }
 		| CONTINUE ';'									{ $$ = new CContinueNode(); }
+		| LOOP_BREAK ';'								{ $$ = new CLoopBreakNode(); }
 		| ';'											{ $$ = new COpNode(opNop);  }
         ;
 

@@ -7,7 +7,7 @@
 /** Initialisation code.*/
 init() {
 	//start player in the right room:
-	move player to foyer;
+	move player to gallery; //turbineHall;
 };
 
 
@@ -61,23 +61,25 @@ westTo turbineHall, eastTo maintenance, swTo nePassage;
 CRoom turbineHall has name "Turbine hall", description {
 "The bottom of a vertical chamber that must fill most of the remaining space of the building.
 Enormous cyclindrical machines rise into the dark, towering over you and the rusty metal crates 
-lying discarded nearby. Giant pipes snake among the machines, as does a maintenance catwalk just a 
+lying discarded nearby. Giant pipes snake among the machines, as does a maintenance gantry just a 
 few metres overhead.";},
 eastTo junction;
 
 
--> CScenery catwalk has name "maintenance catwalk", description "Slightly too high to reach, it 
+-> CScenery gantry has name "maintenance gantry", description "Slightly too high to reach, it 
 leads off tantalisingly into the dark.",
 climb {
 	if (player.onObject != crate) {
-		"\n\nThe catwalk is too high to reach.";
+		"\n\nThe gantry is too high to reach.";
 	}
 	if (player.onObject == crate) {
 		if (crate.pushed == true) {
 			player.onObject = nothing;
-			"\n\nStanding on the crate, you are able to climb onto the catwalk.";
+			"\n\nStanding on the crate, you are able to climb onto the gantry.\n";
+			teleport(onGantry);
+			
 		} else { 
-			"\n\nAlthough you're higher, the crate is nowhere near the catwalk.";
+			"\n\nAlthough you're higher, the crate is nowhere near the gantry.";
 		}
 	}
 };
@@ -87,16 +89,17 @@ climb {
 	if (pushed == false)
 		result += "You can just about move one or two of them if you put your back into it.";
 	else 
-		result += "You manage to push one under the catwalk.";
+		result += "You've managed to push one under the catwalk.";
 	return result;
 },
 climb {  
+	purge click, self;
 	if (player.onObject == self) {
 		player.onObject = nothing;
-		"\n\nYou climb off the crate.";
+		"\n\nYou climb off the " + clickableName(self);
 	} else {
 		player.onObject = self;
-		"\n\nYou climb onto one of the crates.";
+		"\n\nYou climb onto one of the " + makeHot("crates",&click,self) + ".";
 	}
 },
 push {
@@ -106,9 +109,10 @@ push {
 			return;
 		}
 		pushed = true;
-		"\n\nWith a lot of swearing, you push one of the crates under the catwalk.";
+		purge click, self;
+		"\n\nWith a lot of swearing, you push one of the " + makeHot("crates",&click,self) + " under the catwalk.";
 	} else { 
-		 "\n\nThere is no point pushing the crate any further.";
+		 "\n\nThere is no point pushing the crates any further.";
 	}
 	
 };
@@ -117,7 +121,15 @@ CRoom maintenance has name "Maintenance room", description "Full of old, corrode
 rusty tools.",
 westTo junction;
 
-CRoom gallery has name "Gallery", description "A large and airy, empty space.",
+CRoom onGantry has name "On gantry", description "This metal walkway creaks ominously beneath your feet. 
+To the east, it streches off some distance into the dark, if you're feeling brave.",
+eastTo gantryEnd, downTo turbineHall;
+
+CRoom gantryEnd has name "End of walkway", description "The long walkway from the west ends here. A ladder descends
+to the darkness below.",
+westTo onGantry, downTo gallery;
+
+CRoom gallery has name "Gallery", description "A large and airy, empty space. A ladder leads up into the dark." ,
 southTo rustyDoor;
 
 -> CStatic CContainer panel has name "maintenance panel", open = false,
