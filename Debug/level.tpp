@@ -7,12 +7,12 @@
 /** Initialisation code.*/
 init() {
 	//start player in the right room:
-	move player to gallery; //turbineHall;
+	move player to foyer;
 };
 
 
 CRoom foyer has name "Decayed foyer",  description {
-"It must have looked pretty impressive about a hundred years ago. Now a layer of dust shrouds everything in grey. Beneath it, expensive-looking couches moulder, and stylish chairs and tables age. Only the long, elaborately contoured reception desk still dominates the room."; 
+"This place must have looked pretty impressive about a hundred years ago. Now a layer of dust shrouds everything in grey. Beneath it, expensive-looking couches moulder, and stylish chairs and tables age. Only the long, elaborately contoured reception desk still dominates the room."; 
 }, 	
 northTo = octHall;
 
