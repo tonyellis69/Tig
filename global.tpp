@@ -22,8 +22,6 @@ updateInventory() {
 	clearWindow;
 	print style("smallHeader") + "Inventory:\n" + style("small");
 	for each possession of player {
-		text = possession.name;
-		if (text[0] 
 		print makeHot("A " + possession.name,&click,possession) + "\n"; 
 	}
 	setWindow(mainWindow);

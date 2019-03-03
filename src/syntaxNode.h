@@ -183,6 +183,7 @@ public:
 	COpNode(TOpCode code);
 	COpNode(TOpCode code, CSyntaxNode* operand1, CSyntaxNode* operand2);
 	COpNode(TOpCode code, CSyntaxNode* operand1, CSyntaxNode* operand2, CSyntaxNode* operand3);
+	COpNode(TOpCode code, CSyntaxNode* operand1, CSyntaxNode* operand2, CSyntaxNode* operand3, CSyntaxNode* operand4);
 	void encode();
 
 	TOpCode opCode;
@@ -603,5 +604,13 @@ public:
 
 class CLoopBreakNode :public CSyntaxNode {
 public:
+	void encode();
+};
+
+
+class CMakeHotNode : public CSyntaxNode {
+public:
+	CMakeHotNode(CSyntaxNode* text, CSyntaxNode* fn, CSyntaxNode* obj,
+		CSyntaxNode* params);
 	void encode();
 };

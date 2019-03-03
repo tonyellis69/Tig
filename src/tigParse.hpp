@@ -78,31 +78,32 @@ extern int yydebug;
     IF = 288,
     FOR = 289,
     EACH = 290,
-    IN = 291,
-    OF = 292,
-    CONTINUE = 293,
-    IS = 294,
-    NOT = 295,
-    LOOP_BREAK = 296,
-    SELF = 297,
-    CHILDREN = 298,
-    ADD_ASSIGN = 299,
-    BREAK = 300,
-    TRON = 301,
-    TROFF = 302,
-    NOTHING = 303,
-    MOVE = 304,
-    TO = 305,
-    EQ = 306,
-    NE = 307,
-    GE = 308,
-    LE = 309,
-    OR = 310,
-    AND = 311,
-    HAS = 312,
-    UMINUS = 313,
-    IFX = 314,
-    ELSE = 315
+    OF = 291,
+    CONTINUE = 292,
+    NOT = 293,
+    LOOP_BREAK = 294,
+    SELF = 295,
+    CHILDREN = 296,
+    ADD_ASSIGN = 297,
+    BREAK = 298,
+    TRON = 299,
+    TROFF = 300,
+    NOTHING = 301,
+    MOVE = 302,
+    TO = 303,
+    EQ = 304,
+    NE = 305,
+    GE = 306,
+    LE = 307,
+    OR = 308,
+    AND = 309,
+    HAS = 310,
+    MATCHES = 311,
+    IS = 312,
+    IN = 313,
+    UMINUS = 314,
+    IFX = 315,
+    ELSE = 316
   };
 #endif
 
@@ -118,7 +119,7 @@ union YYSTYPE
     CSyntaxNode *nPtr;          // node pointer - enables symbols to point to syntax nodes
 	 std::string* str;
 
-#line 122 "tigParse.hpp" /* glr.c:2553  */
+#line 123 "tigParse.hpp" /* glr.c:2553  */
 };
 # define YYSTYPE_IS_TRIVIAL 1
 # define YYSTYPE_IS_DECLARED 1

@@ -394,6 +394,15 @@ COpNode::COpNode(TOpCode code, CSyntaxNode * operand1, CSyntaxNode * operand2, C
 	operands.push_back(operand3);
 }
 
+COpNode::COpNode(TOpCode code, CSyntaxNode * operand1, CSyntaxNode * operand2, CSyntaxNode * operand3,
+	CSyntaxNode * operand4) {
+	opCode = code;
+	operands.push_back(operand1);
+	operands.push_back(operand2);
+	operands.push_back(operand3);
+	operands.push_back(operand4);
+}
+
 
 /** Write the bytecode for this operator and its operands. */
 void COpNode::encode() {
@@ -1605,4 +1614,24 @@ void CLoopBreakNode::encode() {
 	writeOp(opJump);
 	breakAddr.push_back(outputFile->tellp());
 	writeWord(0xFFFFFFFF);
+}
+
+
+CMakeHotNode::CMakeHotNode(CSyntaxNode * text, CSyntaxNode * fn, CSyntaxNode * obj, CSyntaxNode * params) {
+	operands.push_back(text);
+	operands.push_back(fn);
+	operands.push_back(obj);
+	if (params)
+		operands.push_back(params);
+}
+
+void CMakeHotNode::encode() {
+	paramCount.push_back(0);
+
+	for (auto operand : operands)
+		operand->encode();
+
+	writeOp(opMakeHot);
+	writeByte(paramCount.back());
+	paramCount.pop_back();
 }

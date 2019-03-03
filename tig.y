@@ -48,7 +48,7 @@
 %type <nPtr> memb_decl_identifier memb_function_def return_expr member_call optional_param_list
 %type <nPtr> array_init_expr constant_seq array_init_const array_element_expr array_index_expr array_init_list expr_seq array_dyn_init_elem
 %type <nPtr> comparison_expr logic_expression
-%type <nPtr> global_func_decl   param_list  func_call func_ident
+%type <nPtr> global_func_decl   param_list  func_call func_ident 
 %type <nPtr> memberId
 
 %token PRINT SET_WINDOW CLEAR_WINDOW OPEN_WINDOW END RETURN
@@ -62,18 +62,19 @@
 %token <str> IDENTIFIER STRING
 %token ENDL
 %token IF
-%token FOR EACH IN OF CONTINUE IS NOT LOOP_BREAK
+%token FOR EACH  OF CONTINUE  NOT LOOP_BREAK
 %token SELF CHILDREN
 //CHILD SIBLING PARENT
 %token ADD_ASSIGN
 %token BREAK TRON TROFF
 %token NOTHING
-%token MOVE TO
+%token MOVE TO 
 
 %left EQ NE GE '>' LE '<'  OR AND     // '%left' makes these tokens left associative
 %nonassoc HAS
 %left '+' '-'							 // this ensures that long complex sums are never ambiguous. 
-%left '*' '/' '%' 
+%left '*' '/' '%' '#'
+%left MATCHES IS IN						//Wow, this solves a LOT of <expr> token <expr> shift/reduce problems
 %right '!' 
 
 %nonassoc UMINUS 
@@ -288,11 +289,13 @@ expression:
 	  | comparison_expr					{ $$ = $1; }
 	  | '(' expression ')'				{ $$ = $2; }
 	  | SELF							{ $$ = new COpNode(opPushSelf); }
-	  | obj_expr IS IN obj_expr			{ $$ = new COpNode(opIn,$1,$4); }
+	  //| obj_expr IS IN obj_expr			{ $$ = new COpNode(opIn,$1,$4); }
+	   | expression IS IN expression			{ $$ = new COpNode(opIn,$1,$4); } //was obj_expr
 	  | obj_expr NOT IN obj_expr			{ $$ = new COpNode(opNotIn,$1,$4); }
 	  | CHILDREN '(' obj_expr ')'		{ $$ = new COpNode(opChildren,$3); }
 	 // | MAKE_HOT '(' expression ',' deref_variable_expr ',' expression ')' { $$ = new COpNode(opMakeHot,$3,$5,$7);}
-	  | MAKE_HOT '(' expression ',' expression ',' expression ')' { $$ = new COpNode(opMakeHot,$3,$5,$7);}
+	  | MAKE_HOT '(' expression ',' expression ',' expression ')' { $$ = new CMakeHotNode($3,$5,$7,NULL);}
+	  | MAKE_HOT '(' expression ',' expression ',' expression ',' param_list ')' { $$ = new CMakeHotNode($3,$5,$7,$9);}
 	  | NOTHING							{ $$ = new CNothingNode(); }
 	  | STYLE '(' expression ')'		{ $$ = new COpNode(opStyle,$3); }
 	  | CAP '(' expression ')'			{ $$ = new COpNode(opCap,$3); }
@@ -302,6 +305,7 @@ expression:
 	  | HOT expression USED				{ $$ = new COpNode(opHotCheck,$2); }
 	  | '!' expression					{ $$ = new COpNode(opNot,$2); }
 	  | logic_expression				{ $$ = $1; } 
+	  | expression MATCHES expression   { $$ = new COpNode(opMatch, $1, $3); }
       ;
 
 variable_expr:
@@ -336,6 +340,7 @@ func_ident:
 optional_param_list:
 	'(' param_list ')'						{ $$ = $2; }
 	|										{ $$ = NULL; }
+
 
 param_list:
 	expression								{ $$ = new CParamExprNode($1); }
