@@ -46,14 +46,15 @@
 %type <nPtr> obj_identifier class_identifier optional_member_list member_decl_list member_decl obj_expr init_expr 
 %type <iValue> level
 %type <nPtr> memb_decl_identifier memb_function_def return_expr member_call optional_param_list
+%type <nPtr> flag_decl flag_decl_list
 %type <nPtr> array_init_expr constant_seq array_init_const array_element_expr array_index_expr array_init_list expr_seq array_dyn_init_elem
 %type <nPtr> comparison_expr logic_expression
 %type <nPtr> global_func_decl   param_list  func_call func_ident 
-%type <nPtr> memberId
+%type <nPtr> memberId flag_expr
 
 %token PRINT SET_WINDOW CLEAR_WINDOW OPEN_WINDOW END RETURN
 %token EVENT OPTION
-%token OBJECT  ARROW INHERITS SUPERCLASS
+%token OBJECT  ARROW INHERITS SUPERCLASS FLAG NEW
 %token GETSTRING
 %token HOT MAKE_HOT PURGE ALL CLEAR USED STYLE CAP
 %token ARRAY MESSAGE
@@ -62,19 +63,20 @@
 %token <str> IDENTIFIER STRING
 %token ENDL
 %token IF
-%token FOR EACH  OF CONTINUE  NOT LOOP_BREAK
+%token FOR EACH  CONTINUE  NOT LOOP_BREAK
 %token SELF CHILDREN
 //CHILD SIBLING PARENT
 %token ADD_ASSIGN
 %token BREAK TRON TROFF
 %token NOTHING
 %token MOVE TO 
+%token SET UNSET
 
 %left EQ NE GE '>' LE '<'  OR AND     // '%left' makes these tokens left associative
 %nonassoc HAS
 %left '+' '-'							 // this ensures that long complex sums are never ambiguous. 
 %left '*' '/' '%' '#'
-%left MATCHES IS IN						//Wow, this solves a LOT of <expr> token <expr> shift/reduce problems
+%left MATCHES IS IN	OF					//Wow, this solves a LOT of <expr> token <expr> shift/reduce problems
 %right '!' 
 
 %nonassoc UMINUS 
@@ -117,8 +119,8 @@ statement:
 		| RETURN return_expr ';'						{ $$ = new CReturnNode($2); }
 		| IF '(' expression ')' statement %prec IFX			{ $$ = new CIfNode($3, $5, NULL); }	//$prec gives this rule the lesser precedence of dummy token IFX
         | IF '(' expression ')' statement ELSE statement	{ $$ = new CIfNode($3, $5, $7); } //thus rule has the greater precedence of ELSE
-		| FOR EACH var_or_obj_memb OF obj_expr statement	{ $$ = new CForEachNode($3, $5, $6); }
-		| FOR EACH var_or_obj_memb IN variable_expr statement	{ $$ = new CForEachElementNode($3, $5, $6); }
+		//| FOR EACH var_or_obj_memb OF obj_expr statement	{ $$ = new CForEachElementNode($3, $5, $6); } //{ $$ = new CForEachNode($3, $5, $6); }
+		| FOR EACH var_or_obj_memb OF obj_expr statement	{ $$ = new CForEachElementNode($3, $5, $6); }
 		| var_or_obj_memb ADD_ASSIGN expression ';'			{ $$ = new COpAssignNode(opAdd,$1,$3); }
 		| BREAK	';'										{ $$ = new COpNode(opBrk); }
 		| MOVE  obj_expr TO obj_expr ';'				{ $$ = new COpNode(opMove,$2,$4); }
@@ -133,6 +135,8 @@ statement:
 		| CONTINUE ';'									{ $$ = new CContinueNode(); }
 		| LOOP_BREAK ';'								{ $$ = new CLoopBreakNode(); }
 		| ';'											{ $$ = new COpNode(opNop);  }
+		| SET obj_expr flag_expr ';'					{ $$ = new COpNode(opSet,$2,$3);  }
+		| UNSET obj_expr flag_expr ';'					{ $$ = new COpNode(opUnset,$2,$3);  }
         ;
 
 memberId:
@@ -219,11 +223,22 @@ member_decl:
 		memb_decl_identifier						{ $$ = new CMemberDeclNode($1,NULL); } 
 		| memb_decl_identifier '=' init_expr		{ $$ = new CMemberDeclNode($1,$3); }
 		| memb_decl_identifier	init_expr			{ $$ = new CMemberDeclNode($1,$2); }
+		| flag_decl									{ $$ = new CFlagDeclNode(); }
 		;
 
 memb_decl_identifier:
 		IDENTIFIER							{ $$ = new CMembDeclIdentNode($1); }
 		;
+
+flag_decl:
+		FLAG flag_decl_list					{ ; }
+		;
+
+flag_decl_list:
+		IDENTIFIER							{ CSyntaxNode::flagNamesTmp.push_back(std::string(*$1)); }
+		| flag_decl_list  IDENTIFIER		{ CSyntaxNode::flagNamesTmp.push_back(std::string(*$2)); }
+		;
+
 
 global_func_decl:
 		func_ident   '(' param_list  ')' code_block		{ $$ = new CGlobalFuncDeclNode($1,$3,$5); }
@@ -290,10 +305,9 @@ expression:
 	  | '(' expression ')'				{ $$ = $2; }
 	  | SELF							{ $$ = new COpNode(opPushSelf); }
 	  //| obj_expr IS IN obj_expr			{ $$ = new COpNode(opIn,$1,$4); }
-	   | expression IS IN expression			{ $$ = new COpNode(opIn,$1,$4); } //was obj_expr
+	   | expression IN expression			{ $$ = new COpNode(opIn,$1,$3); } //was obj_expr
 	  | obj_expr NOT IN obj_expr			{ $$ = new COpNode(opNotIn,$1,$4); }
 	  | CHILDREN '(' obj_expr ')'		{ $$ = new COpNode(opChildren,$3); }
-	 // | MAKE_HOT '(' expression ',' deref_variable_expr ',' expression ')' { $$ = new COpNode(opMakeHot,$3,$5,$7);}
 	  | MAKE_HOT '(' expression ',' expression ',' expression ')' { $$ = new CMakeHotNode($3,$5,$7,NULL);}
 	  | MAKE_HOT '(' expression ',' expression ',' expression ',' param_list ')' { $$ = new CMakeHotNode($3,$5,$7,$9);}
 	  | NOTHING							{ $$ = new CNothingNode(); }
@@ -306,6 +320,9 @@ expression:
 	  | '!' expression					{ $$ = new COpNode(opNot,$2); }
 	  | logic_expression				{ $$ = $1; } 
 	  | expression MATCHES expression   { $$ = new COpNode(opMatch, $1, $3); }
+	  | obj_expr IS flag_expr			{ $$ = new COpNode(opIs, $1, $3); }
+	  | obj_expr IS NOT flag_expr		{ $$ = new COpNode(opIsNot, $1, $4); }
+	  | NEW obj_identifier				{ $$ = new CNewNode($2,NULL); }
       ;
 
 variable_expr:
@@ -320,6 +337,9 @@ deref_variable_expr:
 	'<' variable_expr '>'			{ $$ = new CDerefVarNode($2); }
 	;
 
+flag_expr:
+	IDENTIFIER						{ $$ = new CFlagExprNode($1); }
+	;
 
 member_call:
 	 obj_expr '.' func_ident optional_param_list				{ $$ = new CMemberCallNode($1, $3, $4); }

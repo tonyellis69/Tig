@@ -9,6 +9,7 @@
 #include <fstream>
 #include <map>
 #include <set>
+#include <unordered_set>
 
 #include "lineRec.h"
 #include "sharedTypes.h"
@@ -38,15 +39,23 @@ struct TMemberCheck {
 	int memberId;
 };
 
+struct TNameCheck {
+	int lineNum;
+	int fileNum;
+	std::string name;
+
+};
+
 
 
 class CObject {
 public:
-	CObject() : objectId(0) {};
+	CObject() : objectId(0), flags(0) {};
 	int objectId;
 	std::vector<int> classIds;
 	std::vector<TMemberRec> members;
 	std::vector<TMemberCheck> localMembersToCheck;
+	int flags; //storing to help with inheritence
 };
 
 struct TGlobalFn {
@@ -100,9 +109,13 @@ public:
 	bool objectHasMember(int objId, int memberId);
 	void logLocalMemberCheck(int objId, int memberId);
 	void logGlobalMemberCheck(int lineNum, int fileNum, int memberId);
+	void logFlagNameCheck(int lineNum, int fileNum, std::string flagName);
+	void logObjDeclarationCheck(int lineNum, int fileNum, std::string objName);
 	std::string getMemberName(int memberId);
 
 	void setCodeDestination(TCodeDest dest);
+
+	void mergeInheritedFlags();
 
 	std::vector<CSyntaxNode*> operands;
 
@@ -162,6 +175,11 @@ public:
 
 	static std::vector<int> continueAddr; ///<Address to use for loop continue statements;
 	static std::vector<int> breakAddr; ///<Address to use for loop break statements;
+	 
+	static std::vector<std::string> flagNamesTmp; ///<Stores flag names as we meet them
+	static std::vector<std::string> flagStack; ///<Permanent list of all flag names.
+	static std::vector<TNameCheck> flagNamesToCheck; ///<Flag name expressions encountered with no current declaration.
+	static std::vector<TNameCheck> objNamesToCheck; ///<object names encountered with no current declaration.
 
 };
 
@@ -613,4 +631,30 @@ public:
 	CMakeHotNode(CSyntaxNode* text, CSyntaxNode* fn, CSyntaxNode* obj,
 		CSyntaxNode* params);
 	void encode();
+};
+
+
+class CFlagDeclNode : public CSyntaxNode {
+public:
+	CFlagDeclNode();
+	void encode();
+
+	std::vector<std::string> flagNames;
+};
+
+class CFlagExprNode : public CSyntaxNode {
+public:
+	CFlagExprNode(std::string* flagName);
+	void encode();
+
+	std::string flagName;
+};
+
+class CNewNode : public CSyntaxNode {
+public:
+	CNewNode(CSyntaxNode* className, CSyntaxNode* initialisation);
+
+	void encode();
+
+	int classId;
 };

@@ -9,7 +9,8 @@ enum TOpCode {
 	opPushElem, opAssignElem, opPop, opEq, opNE, opLT, opLE, opGT, opGE,
 	opJumpFalse, opJump, opChild, opSibling, opIn, opNotIn, opGetVar, opChildren, opMakeHot, opBrk,
 	opMove, opOpenWin, opWin, opClr, opStyle, opCap, opInherits, opHotClr, opArrayIt,
-	opHotCheck, opNot, opAnd, opOr, opArrayPush, opMsg, opHas, opMatch
+	opHotCheck, opNot, opAnd, opOr, opArrayPush, opMsg, opHas, opMatch, opIs,
+	opIsNot, opSet, opUnset, opNew
 };
 
 static char* opCode[] = { "opNop\0",
@@ -75,7 +76,12 @@ static char* opCode[] = { "opNop\0",
 	"opArrayPush\0",
 	"opMsg\0",
 	"opHas\0",
-	"opMatch\0"
+	"opMatch\0",
+	"opIs\0",
+	"opIsNot\0",
+	"opSet\0",
+	"opUnset\0",
+	"opNew\0"
 
 };
 

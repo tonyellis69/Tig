@@ -18,6 +18,8 @@ public:
 	//COpNode* opNode(TOpCode opCode, CSyntaxNode* operand);
 	void encode(CSyntaxNode* node);
 	bool globalMemberChecksResolve(CSyntaxNode* node);
+	bool flagNameChecksResolve(CSyntaxNode * node);
+	bool objNameChecksResolve(CSyntaxNode * node);
 
 	std::string outputFile;
 };

@@ -26,6 +26,8 @@
 	std::vector<std::string> filenames; ///<Permanent list of #included files.
 
 	std::vector<TLineRec> lineRecs;
+
+	std::string homeDir;
 %}
 
 	/* Substitutions simplify pattern-matching rules, eg, letter [A-Za-z] or digit [0-9] */
@@ -57,8 +59,8 @@ IDENT    {LETTER}({LETTER}|{DIGIT})*
 #include				BEGIN(INCL);
 <INCL>[ \t]*			/* eat the whitespace */
 <INCL>[^ \t\n]+			{ /* got the include file name */
-
-							yyin = fopen( yytext, "r" );
+							std::string path = homeDir + yytext;
+							yyin = fopen( path.c_str(), "r" );
 							if ( ! yyin ) {
 								std::cerr << "\nError, include file " << yytext << " not found.";
 								exit(1);
@@ -138,6 +140,10 @@ IDENT    {LETTER}({LETTER}|{DIGIT})*
 "[]"					return ARRAY;
 "message"				return MESSAGE;
 "matches"				return MATCHES;
+"flag"					return FLAG;
+"set"					return SET;
+"unset"					return UNSET;
+"new"					return NEW;
 {IDENT}					{	identBufs[currentIdentBuf].clear(); 
 							identBufs[currentIdentBuf].assign(yytext,yyleng);
 							yylval.str = &identBufs[currentIdentBuf];

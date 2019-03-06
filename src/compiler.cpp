@@ -16,6 +16,8 @@ extern int yydebug ;
 extern CTigCompiler* tigC;
 extern vector<string> filenames;
 
+extern string homeDir;
+
 extern std::vector<TLineRec> lineRecs;
 
 CTigCompiler::CTigCompiler() {
@@ -35,6 +37,8 @@ void CTigCompiler::compile(std::string filename) {
 	filenames.push_back(filename);
 	TLineRec file1;
 	lineRecs.push_back({ 1,0 }); //so source line tracking starts on line 1, source file 0
+	homeDir = filename.substr(0, filename.find_last_of('\\') + 1);
+
 
 	tigC = this;
 
@@ -43,6 +47,9 @@ void CTigCompiler::compile(std::string filename) {
 	cout << "\n" << outputFile << " compiled successfully!";
 
 	fclose(yyin);
+
+	if (homeDir.size() > 0)
+		std::getchar();
 }
 
 
@@ -66,6 +73,12 @@ void CTigCompiler::encode(CSyntaxNode * node) {
 	node->encode();
 
 	if (!globalMemberChecksResolve(node))
+		exit(1);
+
+	if (!flagNameChecksResolve(node))
+		exit(1);
+
+	if (!objNameChecksResolve(node))
 		exit(1);
 
 	node->fnByteCode.close();
@@ -93,7 +106,9 @@ void CTigCompiler::encode(CSyntaxNode * node) {
 	//add events table
 	node->setOutputFile(fullCode); if (node->tron) cout << "\n\n[Tables]\n";
 	node->writeEventTable();
-	//node->writeGlobalVarTable();
+	
+	node->mergeInheritedFlags();
+
 	node->writeObjectDefTable();
 	node->writeMemberNameTable();
 	//node->writeGlobalFuncTable();
@@ -153,6 +168,30 @@ bool CTigCompiler::globalMemberChecksResolve(CSyntaxNode * node) {
 		}
 	}
 	return resolve;
+}
+
+/** Return false if there are still flag names that were used but never declared. */
+bool CTigCompiler::flagNameChecksResolve(CSyntaxNode * node) {
+	if (node->flagNamesToCheck.size() == 0)
+		return true;
+	for (auto failName : node->flagNamesToCheck) {
+		cerr << "\nError! Flag \"" << failName.name << "\"  used in file " <<
+			filenames[failName.fileNum] << " at line " << failName.lineNum <<
+			" but never declared.";
+	}
+	return false;
+}
+
+/** Return false if there are still object names that were used but never declared. */
+bool CTigCompiler::objNameChecksResolve(CSyntaxNode * node) {
+	if (node->objNamesToCheck.size() == 0)
+		return true;
+	for (auto failName : node->objNamesToCheck) {
+		cerr << "\nError! Object \"" << failName.name << "\"  used in file " <<
+			filenames[failName.fileNum] << " at line " << failName.lineNum <<
+			" but never declared.";
+	}
+	return false;
 }
 
 

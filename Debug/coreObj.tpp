@@ -29,7 +29,7 @@ click {
 	setWindow(menuWindow);
 	if (self not in player && !self inherits CStatic)
 			print makeHot("Take",&take,self) + "\n";
-	if (self is in player)
+	if (self in player)
 			print makeHot("Drop",&drop,self) + "\n";
 	if (self inherits CContainer) 
 		if (self.open)
@@ -38,7 +38,7 @@ click {
 			print makeHot("Open",&openSub,self) + "\n";
 	//iterate through possible actions 
 	count = 0;
-	for each actionId in actionIds {
+	for each actionId of actionIds {
 		if (self has actionId) {
 			if (count > 0)
 				"\n";
@@ -56,7 +56,7 @@ click {
 CGameObj CRoom has 
 registerHotText {
 	x = 0; //local 0
-	for each directionId in directionIds { 
+	for each directionId of directionIds { 
 		if (self.<directionId>)  {
 			hot directionNames[x], directionId, self;
 		}
@@ -72,7 +72,7 @@ registerHotText {
 listUndescribedExits() {
 	directionNum = 0; backDirectionUsed = -1;
 	//TO DO: psuedorandomly turn off backDirection, it's too prevalent
-	for each directionId in directionIds {
+	for each directionId of directionIds {
 		destination = self.<directionId>;
 		if (destination == nothing ||  hot directionNames[directionNum] used) {
 			directionNum += 1;
@@ -98,7 +98,7 @@ listUndescribedExits() {
 	
 	//doors	
 	doorCount = 0;
-	for each doorDir in doorList {
+	for each doorDir of doorList {
 		pDoor = self.<directionIds[doorDir]>;
 		"a " + pDoor.name() + " leads " + directionNames[doorDir];
 		doorCount += 1;
@@ -116,7 +116,7 @@ listUndescribedExits() {
 	}
 	else if (corridorList > 1) {
 		"Corridors lead "; count = 0;
-		for each directionIndex in corridorList {
+		for each directionIndex of corridorList {
 			print directionNames[directionIndex];
 			count += 1;
 			if (count < corridorList -1)
@@ -138,7 +138,7 @@ listUndescribedExits() {
 		else
 			"Exits lead "; 
 		count = 0;
-		for each exitDir in exitList {
+		for each exitDir of exitList {
 			print directionNames[exitDir];
 			count += 1;
 			if (count < exitList -1)
@@ -247,7 +247,7 @@ closeSub() {
 
 
 
-CGameObj player has onObject, backDirection,
+CGameObj player has onObject, backDirection, 
 moveTo (direction) {
 	setWindow(mainWindow);
 	"\n";

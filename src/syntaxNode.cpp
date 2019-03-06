@@ -43,6 +43,10 @@ std::vector<int> CSyntaxNode::arrayInitCount;
 std::map<std::string, int> CSyntaxNode::localVarIdsPermanent;
 std::vector<int> CSyntaxNode::continueAddr;
 std::vector<int> CSyntaxNode::breakAddr;
+std::vector<std::string> CSyntaxNode::flagNamesTmp; 
+std::vector<std::string> CSyntaxNode::flagStack;
+std::vector<TNameCheck> CSyntaxNode::flagNamesToCheck;
+std::vector<TNameCheck> CSyntaxNode::objNamesToCheck;
 
 extern std::vector<TLineRec> lineRecs;
 
@@ -259,6 +263,26 @@ void CSyntaxNode::logGlobalMemberCheck(int lineNum, int fileNum, int memberId) {
 	globalMembersToCheck.push_back({ lineNum,fileNum, memberId });
 }
 
+/** Register the given flag name as one that has been encountered without yet being
+	declared, to be checked later. */
+void CSyntaxNode::logFlagNameCheck(int lineNum, int fileNum, std::string flagName) {
+	for (auto flag : flagNamesToCheck) {
+		if (flag.name == flagName) 
+			return;
+	}
+	flagNamesToCheck.push_back({ lineNum,fileNum, flagName });
+}
+
+/** Register the given object name as one that has been encountered without yet being
+	declared, to be checked later. */
+void CSyntaxNode::logObjDeclarationCheck(int lineNum, int fileNum, std::string objName) {
+	for (auto obj : objNamesToCheck) {
+		if (obj.name == objName)
+			return;
+	}
+	objNamesToCheck.push_back({ lineNum,fileNum, objName });
+}
+
 std::string CSyntaxNode::getMemberName(int memberId) {
 	auto it = std::find_if(memberIds.begin(), memberIds.end(),
 		[&](const std::pair<std::string, int>& member) {return member.second == memberId; });	
@@ -276,6 +300,35 @@ void CSyntaxNode::setCodeDestination(TCodeDest dest) {
 		else {
 			setOutputFile(globalByteCode);
 		}
+	}
+}
+
+/** If an object inherits flags, merge them together in its #flag member to ensure it inherits them. */
+void CSyntaxNode::mergeInheritedFlags() {
+	int flagsId = getMemberId(string("#flags"));
+	int cumulativeFlags;
+
+	for (auto &object : objects) {
+		cumulativeFlags = 0;
+		for (auto parentId : object.second.classIds) { //for each parent
+			cumulativeFlags |= getObject(parentId)->flags; //merge flags
+		}
+		if (!cumulativeFlags)
+			continue;
+
+		if (object.second.flags) { //if the object already has a flag member
+			cumulativeFlags |= object.second.flags;
+			for (auto &member : object.second.members) {
+				if (member.memberId == flagsId) {
+					member.value = cumulativeFlags; //update it
+					break;
+				}
+			}
+		}
+		else { //otherwise give it one now
+			object.second.members.push_back({ flagsId,cumulativeFlags });
+		}
+	
 	}
 }
 
@@ -332,6 +385,9 @@ int CSyntaxNode::getObjectId(std::string & identifier) {
 		CObject newObject;
 		newObject.objectId = nextObjectId++;
 		objects[identifier] = newObject;
+
+		logObjDeclarationCheck(sourceLine, sourceFile, identifier); //in case this object is never declared
+
 		return newObject.objectId;
 	}
 	return iter->second.objectId;
@@ -611,7 +667,6 @@ void CTimedEventNode::encode() {
 /** Create a node representing the declaration of the named object member. */
 CMemberDeclNode::CMemberDeclNode(CSyntaxNode* identifier, CSyntaxNode* initialiser) {
 	memberId = getMemberId(identifier->getText());
-	//memberId = identNode->getId();
 	if (initialiser)
 		operands.push_back(initialiser);
 }
@@ -676,14 +731,22 @@ void CObjDeclNode::encode() {
 	parentClassList = &thisObj->classIds;
 	if (classObj)
 		classObj->encode();  //collect all the parent class ids, if any
-	//if (classObj)
-	//	thisObj->classId = classObj->getId();
+
+	//if this object name is on the to-be-checked list, we can now remove it
+	for (int x = 0; x < objNamesToCheck.size(); x++) {
+		if (name == objNamesToCheck[x].name) {
+			objNamesToCheck.erase(objNamesToCheck.begin() + x);
+			break;
+		}
+	}
+
 
 	if (!members)
 		return;
 
 	//run through the member node declarations and add these to the object's definition
 	memberStack2.clear();
+	flagNamesTmp.clear();
 	members->encode();
 
 	for (auto memberRec2 : memberStack2) {
@@ -691,6 +754,30 @@ void CObjDeclNode::encode() {
 	}
 	memberStack2.clear();
 	currentObj = 0;
+
+	//did we pick up any flags while running through the member declarations?
+	int flagValues = 0;
+	for (auto flagName : flagNamesTmp) {
+		//add flag to the list of known flags
+		auto it = find(flagStack.begin(),flagStack.end(),flagName);
+		unsigned int index = distance(flagStack.begin(),it);
+		//accumulate flag values
+		flagValues |= (1 << (index));
+	}
+
+	if (flagValues) {
+		//if object doesn't have the flags member, add it
+		TMemberRec* flagsMember = getObjectMember(*thisObj, "#flags");
+		if (flagsMember == NULL) {
+			thisObj->members.push_back({ memberIds["#flags"], CTigVar(flagValues) });
+		}
+		else {
+			int oldVal = flagsMember->value.getIntValue();
+			flagsMember->value = oldVal |= flagValues;
+		}
+		thisObj->flags = flagValues;
+	}
+	flagNamesTmp.clear();
 
 	if (parentId == 0)
 		return;
@@ -741,7 +828,7 @@ CObjMemberAssigneeNode::CObjMemberAssigneeNode(CSyntaxNode * parent, std::string
 
 /** Tell the VM to push the object id and member id onto the stack. */
 void CObjMemberAssigneeNode::encode() {
-	operands[0]->encode();
+	operands[0]->encode(); 
 	writeOp(opPushInt);
 	writeWord(memberId);
 }
@@ -948,7 +1035,11 @@ ClassIdentNode::ClassIdentNode(std::string * parsedString) {
 		classId = iter->second.objectId;
 		return;
 	}
-	std::cout << "\nError, file: " << filenames[sourceFile] << ", line: " << sourceLine << ". No object named \"" << *parsedString << "\" exists.";
+
+
+
+	std::cout << "\nError, file: " << filenames[sourceFile] << ", line: " << sourceLine << ". No object named \"" << *parsedString << 
+		"\" has so far been declared.";
 	exit(1);
 }
 
@@ -1634,4 +1725,60 @@ void CMakeHotNode::encode() {
 	writeOp(opMakeHot);
 	writeByte(paramCount.back());
 	paramCount.pop_back();
+}
+
+/** Node for the declaration of a flag in an object definition. If the flag doesn't
+	already exist it is added to the permanent list. */
+CFlagDeclNode::CFlagDeclNode() {
+	for (auto flagName : flagNamesTmp)
+		flagNames.push_back(flagName);
+	flagNamesTmp.clear();
+}
+
+void CFlagDeclNode::encode() {
+	for (auto flagName : flagNames) {
+		flagNamesTmp.push_back(flagName);
+		if (find(flagStack.begin(), flagStack.end(), flagName) == flagStack.end()) {
+			flagStack.push_back(flagName);
+
+			//if it's on the naughty list, remove it
+			for (unsigned int x = 0; x < flagNamesToCheck.size(); x++) {
+				if (flagNamesToCheck[x].name == flagName) {
+					flagNamesToCheck.erase(flagNamesToCheck.begin() + x);
+					break;
+				}
+			}
+		}
+	}
+}
+
+
+/** Node for when a flag expression is encountered in code. */
+CFlagExprNode::CFlagExprNode(std::string * flagName) {
+	this->flagName = *flagName;
+}
+
+void CFlagExprNode::encode() {
+
+	auto it = find(flagStack.begin(),flagStack.end(),flagName);
+	if (it == flagStack.end()) {
+		logFlagNameCheck(sourceLine, sourceFile, flagName);
+
+	}
+
+	int bitMask = std::distance(flagStack.begin(), it);
+	bitMask = 1 << bitMask;
+
+	writeOp(opPushInt);
+	writeWord(bitMask);
+}
+
+/**	Node for creating a new object with the 'new' keyword. */
+CNewNode::CNewNode(CSyntaxNode * className, CSyntaxNode * initialisation) {
+	classId = className->getId();
+}
+
+void CNewNode::encode() {
+	writeOp(opNew);
+	writeWord(classId);
 }

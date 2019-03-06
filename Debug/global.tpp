@@ -22,16 +22,14 @@ updateInventory() {
 	clearWindow;
 	print style("smallHeader") + "Inventory:\n" + style("small");
 	for each possession of player {
-		text = possession.name;
-		if (text[0] 
-		print makeHot("A " + possession.name,&click,possession) + "\n"; 
+		print makeHot(cap(aAn(possession)),&click,possession) + "\n"; 
 	}
 	setWindow(mainWindow);
 };
 
 getDirectionName(directionId) {
 	index = 0; 
-	for each dir in directionIds {
+	for each dir of directionIds {
 		if (dir == directionId) {
 			//break;
 			return directionNames[index];
@@ -44,7 +42,7 @@ getDirectionName(directionId) {
 
 calcBackDirection(direction) {
 	index = 0; dirNo = 12;
-	for each dir in directionIds {
+	for each dir of directionIds {
 		if (dir == direction)
 			dirNo = index;
 		index += 1;
@@ -67,7 +65,7 @@ listChildren(parentObj) {
 	count = 0; result = "";
 	numChildren = children(parentObj); 
 	for each x of parentObj { 
-		result += "a " + makeHot(x.name,&click,x); 
+		result += makeHot(aAn(x) ,&click,x); 
 		count += 1;
 		if (count < numChildren -2) //probably needs to be -1
 			result = result + ",";
@@ -80,7 +78,7 @@ listChildren(parentObj) {
 
 listElements(array) {
 	count = 0; result = "";
-	for each x in array { 
+	for each x of array { 
 		result += "a " + makeHot(x.name,&click,x); 
 		count += 1;
 		if (count < array -1)
@@ -103,4 +101,12 @@ teleport(destination) {
 	"\n";
 	message msgRoomChange, destination;
 	destination.look();
+};
+
+/** Return the object name correctly prefixed with 'a' or 'an'.*/
+aAn(obj) {
+	if (obj.name[0] matches "aieouAIEOU" >= 0)
+		return "an " + obj.name;
+	return "a " + obj.name;
+	
 };
