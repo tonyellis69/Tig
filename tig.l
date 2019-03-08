@@ -144,6 +144,7 @@ IDENT    {LETTER}({LETTER}|{DIGIT})*
 "set"					return SET;
 "unset"					return UNSET;
 "new"					return NEW;
+"delete"				return DELETE;
 {IDENT}					{	identBufs[currentIdentBuf].clear(); 
 							identBufs[currentIdentBuf].assign(yytext,yyleng);
 							yylval.str = &identBufs[currentIdentBuf];

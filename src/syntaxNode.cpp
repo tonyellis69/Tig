@@ -47,6 +47,7 @@ std::vector<std::string> CSyntaxNode::flagNamesTmp;
 std::vector<std::string> CSyntaxNode::flagStack;
 std::vector<TNameCheck> CSyntaxNode::flagNamesToCheck;
 std::vector<TNameCheck> CSyntaxNode::objNamesToCheck;
+std::vector<int> CSyntaxNode::newInitialisationMembers;
 
 extern std::vector<TLineRec> lineRecs;
 
@@ -368,8 +369,27 @@ int CSyntaxNode::getVarId(std::string & identifier) {
 	return it - localVarIds.begin();
 }
 
+/** Return the correct member/local variable id number for this identifier, if it can be found. */
+int CSyntaxNode::resolveIdentifier(std::string  identifier) {
+	//is it a local variable
+	auto it = std::find_if(localVarIds.begin(), localVarIds.end(),
+		[&](auto& varName) { return varName == identifier; });
+	if (it != localVarIds.end()) { //great, found it!
+		return distance(localVarIds.begin(), it);
+	}
+
+	//is it a member identifier?
+	auto iter = memberIds.find(identifier);
+	if (iter != memberIds.end()) {
+		return  memberIds[identifier];
+	}
+	return -1;
+}
+
 /** Return the unique id number for this object member identifier. */
 int CSyntaxNode::getMemberId(std::string & identifier) {
+	if (identifier == "localX")
+		int b = 0;
 	auto iter = memberIds.find(identifier);
 	if (iter == memberIds.end()) {
 		memberIds[identifier] = nextMemberId++;
@@ -585,6 +605,8 @@ std::string & CEventIdentNode::getText() {
 /** Create a variable assignment node for the named variable. */
 CVarAssigneeNode::CVarAssigneeNode(std::string * parsedString) {
 	name = *parsedString;
+	if (name == "localX" || name == "possession")
+		int b = 0;
 }
 
 CVarAssigneeNode::~CVarAssigneeNode() {
@@ -593,6 +615,10 @@ CVarAssigneeNode::~CVarAssigneeNode() {
 
 /** Tell the VM to push this variable's identifier on to the stack. */
 void CVarAssigneeNode::encode() {
+	if (name == "localX" || name == "possession")
+		int b = 0; //we don't get to here until *last* because the other stuff happens at construction
+
+
 	writeOp(opPushInt); //TO DO make pushObj where necessary
 		//check if it's an existing data member or global variable.
 		auto iter = memberIds.find(name);
@@ -817,6 +843,7 @@ CObjMemberAssigneeNode::CObjMemberAssigneeNode(CSyntaxNode * parent, std::string
 	//assume that parent will leave an object id on the stack
 	operands.push_back(parent);
 
+	/*
 	//identify member
 	auto iter = memberIds.find(*parsedString);
 	if (iter == memberIds.end()) {
@@ -824,6 +851,8 @@ CObjMemberAssigneeNode::CObjMemberAssigneeNode(CSyntaxNode * parent, std::string
 		exit(1);
 	}
 	memberId = iter->second;
+	*/
+	memberId = getMemberId(*parsedString);
 }
 
 /** Tell the VM to push the object id and member id onto the stack. */
@@ -1280,17 +1309,30 @@ void CIfNode::encode() {
 
 CMemberCallNode::CMemberCallNode(CSyntaxNode * object, CSyntaxNode * funcName, CSyntaxNode * params) {
 	operands.push_back(object);
-	memberId = 0;
-	if (funcName->getText().size() > 0) {
-		memberId = getMemberId(funcName->getText());
-		logGlobalMemberCheck(sourceLine, sourceFile, memberId); //makes a note to check if this function was ever found
-	}
+	//memberId = 0;
 	operands.push_back(funcName);
 	operands.push_back(params);
 }
 
 
 void CMemberCallNode::encode() {
+	if (operands[1]->getText() == "localX")
+		int b = 0;
+
+	string funcName = operands[1]->getText();
+	int nameId = -1;
+
+	if (funcName.size() > 0) {
+		nameId = resolveIdentifier(funcName);
+		//either an id or -1 = not found
+		//if not found, consider it a forward reference to a global func name
+		if (nameId == -1) {
+			nameId = getMemberId(funcName);
+			logGlobalMemberCheck(sourceLine, sourceFile, nameId); //makes a note to check if this function was ever found
+		}
+	}
+
+
 	//write code to leave parameter values on stack
 	paramCount.push_back(0);
 	if (operands[2]) {
@@ -1304,13 +1346,13 @@ void CMemberCallNode::encode() {
 	else
 		operands[0]->encode(); //the object we're messaging
 
-	if (memberId) {
+	if (nameId != -1) {
 		writeOp(opCall);
-		writeWord(memberId);
+		writeWord(nameId);
 	}
 	else {
 		operands[1]->encode(); //get the resolved reference on the stack
-		writeOp(opCallDeref);
+		writeOp(opCallDeref); //TO DO: I don't think we ever got here. Investigate
 	}
 
 	writeByte(paramCount.back());
@@ -1776,9 +1818,46 @@ void CFlagExprNode::encode() {
 /**	Node for creating a new object with the 'new' keyword. */
 CNewNode::CNewNode(CSyntaxNode * className, CSyntaxNode * initialisation) {
 	classId = className->getId();
+	if (initialisation)
+		operands.push_back(initialisation);
 }
 
 void CNewNode::encode() {
+	//handle any initialisation here
+	if (operands.size() > 0) {
+		newInitialisationMembers.clear();
+		operands[0]->encode();
+	}
+
 	writeOp(opNew);
 	writeWord(classId);
+
+	//write length of initialisation list
+	writeByte((char)newInitialisationMembers.size());
+	//write initialisation list
+	reverse(newInitialisationMembers.begin(), newInitialisationMembers.end());
+	for (auto member : newInitialisationMembers)
+		writeWord(member);
+}
+
+/** Node for handling a list of member initialisations for a new object. */
+CNewInitialiserListNode::CNewInitialiserListNode(CSyntaxNode * initList) {
+	operands.push_back(initList);
+}
+
+/** Process the initialisation list items. */
+void CNewInitialiserListNode::encode() {
+	operands[0]->encode();
+}
+
+/** Node for the initialisation of a specific member in a new object initialisation list. */
+CNewInitialiserNode::CNewInitialiserNode(std::string* memberName, CSyntaxNode * initCode) {
+	memberId = getMemberId(*memberName);
+	operands.push_back(initCode);
+}
+
+/** Write the code to put the initialisation value on the stack; record the initialised member. */
+void CNewInitialiserNode::encode() {
+	operands[0]->encode();
+	newInitialisationMembers.push_back(memberId);
 }

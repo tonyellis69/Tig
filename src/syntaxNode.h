@@ -84,6 +84,7 @@ public:
 	virtual std::string& getText() { std::string nul;  return nul; };
 	int getEventId(std::string& identifier); //TO DO still needed?
 	int getVarId(std::string & identifier);
+	int resolveIdentifier(std::string identifier);
 	int getMemberId(std::string & identifier);
 	int getObjectId(std::string & identifier);
 	int getGlobalFuncId(std::string& identifier);
@@ -181,6 +182,7 @@ public:
 	static std::vector<TNameCheck> flagNamesToCheck; ///<Flag name expressions encountered with no current declaration.
 	static std::vector<TNameCheck> objNamesToCheck; ///<object names encountered with no current declaration.
 
+	static std::vector<int> newInitialisationMembers; ///<Temporary list of members in a new object initialisation list.
 };
 
 enum TIdentType { local, globalVar, object };
@@ -657,4 +659,20 @@ public:
 	void encode();
 
 	int classId;
+};
+
+class CNewInitialiserListNode : public CSyntaxNode {
+public:
+	CNewInitialiserListNode(CSyntaxNode* initList);
+
+	void encode();
+};
+
+class CNewInitialiserNode : public CSyntaxNode {
+public:
+	CNewInitialiserNode(std::string* memberName, CSyntaxNode* initCode);
+
+	void encode();
+
+	int memberId;
 };

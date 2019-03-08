@@ -13,9 +13,9 @@ init() {
 	updateInventory();
 	
 	tron;
-	localX = 42;
 	localX = globalFn;
 	localX();
+	//blargle();
 	troff;
 	
 };

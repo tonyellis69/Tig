@@ -51,10 +51,11 @@
 %type <nPtr> comparison_expr logic_expression
 %type <nPtr> global_func_decl   param_list  func_call func_ident 
 %type <nPtr> memberId flag_expr
+%type <nPtr> optional_new_init new_init_list new_init
 
 %token PRINT SET_WINDOW CLEAR_WINDOW OPEN_WINDOW END RETURN
 %token EVENT OPTION
-%token OBJECT  ARROW INHERITS SUPERCLASS FLAG NEW
+%token OBJECT  ARROW INHERITS SUPERCLASS FLAG NEW DELETE
 %token GETSTRING
 %token HOT MAKE_HOT PURGE ALL CLEAR USED STYLE CAP
 %token ARRAY MESSAGE
@@ -76,7 +77,7 @@
 %nonassoc HAS
 %left '+' '-'							 // this ensures that long complex sums are never ambiguous. 
 %left '*' '/' '%' '#'
-%left MATCHES IS IN	OF					//Wow, this solves a LOT of <expr> token <expr> shift/reduce problems
+%left MATCHES IS IN	OF				//Wow, this solves a LOT of <expr> token <expr> shift/reduce problems
 %right '!' 
 
 %nonassoc UMINUS 
@@ -137,6 +138,7 @@ statement:
 		| ';'											{ $$ = new COpNode(opNop);  }
 		| SET obj_expr flag_expr ';'					{ $$ = new COpNode(opSet,$2,$3);  }
 		| UNSET obj_expr flag_expr ';'					{ $$ = new COpNode(opUnset,$2,$3);  }
+		| DELETE obj_expr ';'							{ $$ = new COpNode(opDelete,$2); }
         ;
 
 memberId:
@@ -322,8 +324,23 @@ expression:
 	  | expression MATCHES expression   { $$ = new COpNode(opMatch, $1, $3); }
 	  | obj_expr IS flag_expr			{ $$ = new COpNode(opIs, $1, $3); }
 	  | obj_expr IS NOT flag_expr		{ $$ = new COpNode(opIsNot, $1, $4); }
-	  | NEW obj_identifier				{ $$ = new CNewNode($2,NULL); }
+	  | NEW obj_identifier optional_new_init	{ $$ = new CNewNode($2,$3); }
       ;
+
+optional_new_init:
+	'('  new_init_list	')'				{ $$ = new CNewInitialiserListNode($2); }
+	|									{ $$ = NULL; }
+	;
+
+new_init_list:
+	new_init							{ $$ = $1; }
+	| new_init_list ',' new_init		{ $$ = new CJointNode($1,$3); }
+	;
+
+new_init:
+	IDENTIFIER  expression				{ $$ = new CNewInitialiserNode($1,$2); }
+	;
+	
 
 variable_expr:
 	IDENTIFIER							{ $$ = new CVarExprNode($1); }
@@ -353,7 +370,7 @@ func_call:
 
 func_ident:
 	IDENTIFIER							{ $$ = new CFuncIdentNode($1,NULL); }
-	| deref_variable_expr				{ $$ = new CFuncIdentNode(NULL,$1); }
+	| deref_variable_expr				{ $$ = new CFuncIdentNode(NULL,$1); } //investigate!
 	;
 
  
