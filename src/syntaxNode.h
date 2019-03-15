@@ -118,6 +118,8 @@ public:
 
 	void mergeInheritedFlags();
 
+	int getFlagBitmask(std::string flagName);
+
 	std::vector<CSyntaxNode*> operands;
 
 	int sourceLine; ///<source code line from which this node was spawned.
@@ -393,7 +395,7 @@ public:
 
 class CHotTextNode : public CSyntaxNode {
 public:
-	CHotTextNode(CSyntaxNode* hotText, CSyntaxNode* member, CSyntaxNode* object);
+	CHotTextNode(CSyntaxNode* hotText, CSyntaxNode* object, CSyntaxNode* member, CSyntaxNode* params);
 	void encode();
 
 	std::string text;
@@ -648,8 +650,15 @@ class CFlagExprNode : public CSyntaxNode {
 public:
 	CFlagExprNode(std::string* flagName);
 	void encode();
+	std::string& getText() { return flagName; }
 
 	std::string flagName;
+};
+
+class CSetFlagNode : public CSyntaxNode {
+public:
+	CSetFlagNode(CSyntaxNode* object, CSyntaxNode* flagExpr);
+	void encode();
 };
 
 class CNewNode : public CSyntaxNode {
@@ -675,4 +684,18 @@ public:
 	void encode();
 
 	int memberId;
+};
+
+class CFinalLoopNode : public CSyntaxNode {
+public:
+	void encode();
+
+};
+
+class CRollNode : public CSyntaxNode {
+public:
+	CRollNode(int die);
+	void encode();
+
+	int sides;
 };

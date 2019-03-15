@@ -82,7 +82,10 @@ IDENT    {LETTER}({LETTER}|{DIGIT})*
 [0-9]+					{	yylval.iValue = atoi(yytext);
 							return INTEGER;
 						}
-						
+d[1-9]([0-9])*					{
+							yylval.iValue = atoi(yytext+1);
+							return ROLL;
+						}					
 [#()<>=+*/%;{}.,\[\]!&-] 		return *yytext;    // Match any one of these nonalphanumeric characters amd returns the Ascii code.
 	
 ">="					return GE;    /* Matches the literal string inside " " */
@@ -92,6 +95,7 @@ IDENT    {LETTER}({LETTER}|{DIGIT})*
 "&&"					return AND;
 "||"					return OR;
 "+="					return ADD_ASSIGN;
+"-="					return SUB_ASSIGN;
 "brk"					return BREAK;
 "tron"					return TRON;
 "troff"					return TROFF;
@@ -120,6 +124,7 @@ IDENT    {LETTER}({LETTER}|{DIGIT})*
 "of"					return OF;
 "continue"				return CONTINUE;
 "break"					return LOOP_BREAK;
+"finalLoop"				return FINAL_LOOP;
 "is"					return IS;
 "not"					return NOT;
 "self"					return SELF;
@@ -141,10 +146,12 @@ IDENT    {LETTER}({LETTER}|{DIGIT})*
 "message"				return MESSAGE;
 "matches"				return MATCHES;
 "flag"					return FLAG;
-"set"					return SET;
-"unset"					return UNSET;
+"unflag"				return UNFLAG;
 "new"					return NEW;
 "delete"				return DELETE;
+"sort>"					return SORT_DESC;
+"by"					return BY;
+"log"					return LOG;
 {IDENT}					{	identBufs[currentIdentBuf].clear(); 
 							identBufs[currentIdentBuf].assign(yytext,yyleng);
 							yylval.str = &identBufs[currentIdentBuf];

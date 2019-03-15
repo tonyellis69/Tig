@@ -74,7 +74,7 @@ void CSyntaxNode::setOutputFile(std::ofstream& file) {
 void CSyntaxNode::writeOp(char byte) {
 	if (tron) {
 		int addr = outputFile->tellp();
-		cout << "\n" << (codeDestination == funcDest ? "F " : "G ") << " " << addr << " " << opCode[byte];
+		cout << "\n" << (codeDestination == funcDest ? "F " : "G ") << " "  << addr << " " << opCode[byte];
 	}
 	outputFile->write(&byte, 1);
 	lastOp = byte;
@@ -331,6 +331,31 @@ void CSyntaxNode::mergeInheritedFlags() {
 		}
 	
 	}
+}
+
+/** Return the bitmask value of this flag, creating it if necessary. */
+int CSyntaxNode::getFlagBitmask(std::string flagName) {
+	auto it = find(flagStack.begin(), flagStack.end(), flagName);
+	if (it == flagStack.end()) {
+		flagStack.push_back(flagName);
+		if (flagStack.size() > 32) {
+			cerr << "\nError! Max number of flags (32) exceeded in file: "
+				<< filenames[sourceFile] << ", line: " << sourceLine << ".";
+			exit(1);
+		}
+		it = flagStack.end();
+
+		//if it's on the naughty list, remove it
+		for (unsigned int x = 0; x < flagNamesToCheck.size(); x++) {
+			if (flagNamesToCheck[x].name == flagName) {
+				flagNamesToCheck.erase(flagNamesToCheck.begin() + x);
+				break;
+			}
+		}
+	}
+
+	
+	return std::distance(flagStack.begin(), it);
 }
 
 
@@ -605,8 +630,6 @@ std::string & CEventIdentNode::getText() {
 /** Create a variable assignment node for the named variable. */
 CVarAssigneeNode::CVarAssigneeNode(std::string * parsedString) {
 	name = *parsedString;
-	if (name == "localX" || name == "possession")
-		int b = 0;
 }
 
 CVarAssigneeNode::~CVarAssigneeNode() {
@@ -615,10 +638,6 @@ CVarAssigneeNode::~CVarAssigneeNode() {
 
 /** Tell the VM to push this variable's identifier on to the stack. */
 void CVarAssigneeNode::encode() {
-	if (name == "localX" || name == "possession")
-		int b = 0; //we don't get to here until *last* because the other stuff happens at construction
-
-
 	writeOp(opPushInt); //TO DO make pushObj where necessary
 		//check if it's an existing data member or global variable.
 		auto iter = memberIds.find(name);
@@ -1093,27 +1112,34 @@ void CodeBlockNode::encode() {
 }
 
 
-CHotTextNode::CHotTextNode(CSyntaxNode* hotText, CSyntaxNode* member, CSyntaxNode* object) {
+CHotTextNode::CHotTextNode(CSyntaxNode* hotText, CSyntaxNode* object, CSyntaxNode* member,   CSyntaxNode* params) {
 	operands.push_back(hotText);
-	//text = *hotText;
-	//memberId = getMemberId(*member);
 	operands.push_back(member);
-	if (object)
+	//if (object)
 		operands.push_back(object);
+	if (params)
+		operands.push_back(params);
 }
 
 void CHotTextNode::encode() {
+	paramCount.push_back(0);
+
 	operands[0]->encode(); //get hot text string
 	operands[1]->encode(); //get memberId
-	if (operands.size() > 2 )
+	//if (operands.size() > 2 )
 		operands[2]->encode(); //get object
-	else {
-		writeOp(opPushSelf);
+	//else {
+	///	writeOp(opPushSelf);
 		//writeWord(selfObjId);
-	}
+	//}
+	if (operands.size()>3)
+		operands[3]->encode(); //get params on stack
+	//TO DO: can surely replace with one loop through operands
 	writeOp(opHot);
-	//writeString(text);
-	//writeWord(memberId);
+	
+	writeByte(paramCount.back());
+	paramCount.pop_back();
+
 }
 
 void CArrayInitConstNode::encode() {
@@ -1750,7 +1776,7 @@ void CLoopBreakNode::encode() {
 }
 
 
-CMakeHotNode::CMakeHotNode(CSyntaxNode * text, CSyntaxNode * fn, CSyntaxNode * obj, CSyntaxNode * params) {
+CMakeHotNode::CMakeHotNode(CSyntaxNode * text, CSyntaxNode * obj, CSyntaxNode * fn,  CSyntaxNode * params) {
 	operands.push_back(text);
 	operands.push_back(fn);
 	operands.push_back(obj);
@@ -1780,17 +1806,8 @@ CFlagDeclNode::CFlagDeclNode() {
 void CFlagDeclNode::encode() {
 	for (auto flagName : flagNames) {
 		flagNamesTmp.push_back(flagName);
-		if (find(flagStack.begin(), flagStack.end(), flagName) == flagStack.end()) {
-			flagStack.push_back(flagName);
-
-			//if it's on the naughty list, remove it
-			for (unsigned int x = 0; x < flagNamesToCheck.size(); x++) {
-				if (flagNamesToCheck[x].name == flagName) {
-					flagNamesToCheck.erase(flagNamesToCheck.begin() + x);
-					break;
-				}
-			}
-		}
+		getFlagBitmask(flagName);
+		//adds name to list, no need to record bitmask here
 	}
 }
 
@@ -1860,4 +1877,43 @@ CNewInitialiserNode::CNewInitialiserNode(std::string* memberName, CSyntaxNode * 
 void CNewInitialiserNode::encode() {
 	operands[0]->encode();
 	newInitialisationMembers.push_back(memberId);
+}
+
+/** A syntax node for a finalLoop expression in a loop. */
+void CFinalLoopNode::encode() {
+
+	if (continueAddr.size()) {
+		writeOp(opFinalLoop);
+		return;
+	}
+	cerr << "\nError: file " << filenames[sourceFile] << ", line: " <<
+		sourceLine << ". 'finalLoop' used outside a loop.";
+	exit(1);
+
+}
+
+/**	A node for setting a flag on an object. If the flag is unrecognised, it is created.*/
+CSetFlagNode::CSetFlagNode(CSyntaxNode * object, CSyntaxNode * flagExpr) {
+	operands.push_back(object);
+	operands.push_back(flagExpr);
+}
+
+void CSetFlagNode::encode() {
+	std::string flagName = operands[1]->getText();
+	int bitmask = getFlagBitmask(flagName);
+
+	operands[0]->encode();
+	writeOp(opPushInt);
+	writeWord(bitmask);
+	writeOp(opSet);
+}
+
+/** Node for a dice roll expression, eg 'd20'. */
+CRollNode::CRollNode(int die) {
+	sides = die;
+}
+
+void CRollNode::encode() {
+	writeOp(opRoll);
+	writeWord(sides);
 }

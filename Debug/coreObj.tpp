@@ -1,10 +1,10 @@
 /* Core game objects. */
 
-CGameObj has parent = 0, child = 0, sibling = 0, shortName,  initial, moved, click, 
+CGameObj has parent = 0, child = 0, sibling = 0, shortName,  initial, moved, click, turn,
 take {
 	oldParent = self.parent;
 	purge click, self; 
-	"\n\nYou pick up the " + makeHot(name,&click,self) + ". ";
+	"\n\nYou pick up the " + makeHot(name,self,&click) + ". ";
 	move self to player;
 	moved = true;
 	updateInventory();
@@ -12,7 +12,7 @@ take {
 }, 
 drop {
 	purge click, self;
-	"\n\nYou drop the " + makeHot(name,&click,self) + ". ";
+	"\n\nYou drop the " + makeHot(name,self,&click) + ". ";
 	move self to player.parent;
 	updateInventory();
 }, 
@@ -28,21 +28,21 @@ click {
 	openWindow(menuWindow);
 	setWindow(menuWindow);
 	if (self not in player && !self inherits CStatic)
-			print makeHot("Take",&take,self) + "\n";
+			print makeHot("Take",self,&take) + "\n";
 	if (self in player)
-			print makeHot("Drop",&drop,self) + "\n";
+			print makeHot("Drop",self,&drop) + "\n";
 	if (self inherits CContainer) 
 		if (self.open)
-			print makeHot("Close",&closeSub,self) + "\n";
+			print makeHot("Close",self,&closeSub) + "\n";
 		else
-			print makeHot("Open",&openSub,self) + "\n";
+			print makeHot("Open",self,&openSub) + "\n";
 	//iterate through possible actions 
 	count = 0;
 	for each actionId of actionIds {
 		if (self has actionId) {
 			if (count > 0)
 				"\n";
-			print makeHot(cap(actionNames[count]),actionId,self) ;
+			print makeHot(cap(actionNames[count]),self,actionId) ;
 
 		}
 		count += 1;
@@ -50,25 +50,35 @@ click {
 	}
 	setWindow(mainWindow);
 	
-};
+},
+
+/** An empty default method to prevent tiresome warnings in room descriptions.*/
+search() {}
+
+;
 
 
+/**	The basic room template. */
 CGameObj CRoom has 
+
+/** Register each exit and every object as something to hot text. */
 registerHotText {
 	x = 0; //local 0
 	for each directionId of directionIds { 
 		if (self.<directionId>)  {
-			hot directionNames[x], directionId, self;
+			hot directionNames[x], player, &moveTo, directionId;
 		}
 		x += 1;
 	}
 
 	//register hot text for any room objects
 	for each item of self {  
-			hot item.name, &click, item;
+			hot item.name, item, &click;
 	}
 
 },
+
+
 listUndescribedExits() {
 	directionNum = 0; backDirectionUsed = -1;
 	//TO DO: psuedorandomly turn off backDirection, it's too prevalent
@@ -86,11 +96,11 @@ listUndescribedExits() {
 		}
 			
 		if (destination inherits CDoor) 
-			doorList[] = directionNum;
+			doorList[] += directionNum;
 		else if (destination inherits CCorridor)
-			corridorList[] = directionNum;
+			corridorList[] += directionNum;
 		else 
-			exitList[] = directionNum;	
+			exitList[] += directionNum;	
 
 		 
 		directionNum += 1;
@@ -166,7 +176,7 @@ listObjects() {
 				item.search();
 			}
 			else
-				movedItems[] = item;	
+				movedItems[] += item;	
 		}		
 	}
 	
@@ -247,7 +257,8 @@ closeSub() {
 
 
 
-CGameObj player has onObject, backDirection, 
+CGameObj player has onObject, backDirection, name "player", hitPoints 15, opponent, initiative,
+combatActionFn,
 moveTo (direction) {
 	setWindow(mainWindow);
 	"\n";
@@ -270,7 +281,70 @@ moveTo (direction) {
 	teleport(destination);
 	
 	
-};
+},
+
+/** Queue an attack on the given opponent. */
+queueHit(target) {
+	//"\n\nYou aim a blow at the " + target.name + "...";
+	opponent = target;
+	tron;
+	combatActionFn = bash;
+	troff;
+},
+
+
+/** Queue an attempted block on the given opponent's attack. */
+queueBlock(target) {
+	opponent = target;
+	combatActionFn = block;
+},
+
+/** Carry out whatever combat move the player has lined up.*/
+combatAction() {
+	log "\n[" + self.name + " acts on " + opponent.name + "]";
+	combatActionFn(opponent);
+},
+
+/** Roll for initiative! This value will help the combatAssistant determine battle order.*/
+rollInitiative() {
+	initiative = d10;
+	//TO DO: modify with dexterity, etc
+},
+
+/** Use the player's basic physical attack on the given target. */
+bash(target) {
+	target.receiveBash(self,d10);
+		
+},
+
+
+block(target) {
+	log "\n[Silent block action.]";
+},
+
+/** Handle a bash attack. */
+receiveBash(attacker,damage) {
+	"\nThe " + attacker.name + " swings at you, ";
+	if (combatActionFn == block) {
+		"but you block its attack.";
+		return;
+	}
+	
+	"doing " + damage + " damage.";
+	
+	hitPoints -= damage;
+	log "\nplayer hitpoints " + hitPoints;
+	
+	if (hitPoints <= 0) {
+			"\n\nThe " + attacker.name + " kills you!";
+	}
+}
+
+;
+
+
+
+
 
 CGameObj CDoor has open, name "door", passThrough,
 blockedMsg() {

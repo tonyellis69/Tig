@@ -50,8 +50,8 @@
 %type <nPtr> array_init_expr constant_seq array_init_const array_element_expr array_index_expr array_init_list expr_seq array_dyn_init_elem
 %type <nPtr> comparison_expr logic_expression
 %type <nPtr> global_func_decl   param_list  func_call func_ident 
-%type <nPtr> memberId flag_expr
-%type <nPtr> optional_new_init new_init_list new_init
+%type <nPtr> memberId flag_expr member_id_expr
+%type <nPtr> optional_new_init new_init_list new_init optional_hot_param_list
 
 %token PRINT SET_WINDOW CLEAR_WINDOW OPEN_WINDOW END RETURN
 %token EVENT OPTION
@@ -64,14 +64,17 @@
 %token <str> IDENTIFIER STRING
 %token ENDL
 %token IF
-%token FOR EACH  CONTINUE  NOT LOOP_BREAK
+%token FOR EACH  CONTINUE  NOT LOOP_BREAK FINAL_LOOP
 %token SELF CHILDREN
 //CHILD SIBLING PARENT
-%token ADD_ASSIGN
+%token ADD_ASSIGN SUB_ASSIGN 
 %token BREAK TRON TROFF
 %token NOTHING
 %token MOVE TO 
-%token SET UNSET
+%token UNFLAG
+%token <iValue> ROLL
+%token SORT_DESC BY
+%token LOG
 
 %left EQ NE GE '>' LE '<'  OR AND     // '%left' makes these tokens left associative
 %nonassoc HAS
@@ -113,8 +116,8 @@ statement:
 		| START_EVENT event_identifier AT INTEGER ';'	{ $$ = new CTimedEventNode($2,$4); }
 		| member_call ';'								{ $$ = new CallDiscardNode($1); }
 		| func_call		';'								{ $$ = new CallDiscardNode($1); }
-		| HOT expression ',' deref_variable_expr	',' expression ';'		{ $$ = new CHotTextNode($2,$4,$6); }
-		| HOT expression ',' expression	',' expression ';'		{ $$ = new CHotTextNode($2,$4,$6); }
+		| HOT expression ',' expression	',' deref_variable_expr optional_hot_param_list';'		{ $$ = new CHotTextNode($2,$4,$6, $7); }
+		| HOT expression ',' expression	',' expression optional_hot_param_list ';'		{ $$ = new CHotTextNode($2,$4,$6,$7); }
 		| PURGE memberId  ',' expression ';'				{ $$ = new COpNode(opPurge,$2,$4); }
 		| PURGE ALL ';'										{ $$ = new COpNode(opPurge,new CIntNode(0),new CIntNode(0)); }
 		| RETURN return_expr ';'						{ $$ = new CReturnNode($2); }
@@ -123,6 +126,7 @@ statement:
 		//| FOR EACH var_or_obj_memb OF obj_expr statement	{ $$ = new CForEachElementNode($3, $5, $6); } //{ $$ = new CForEachNode($3, $5, $6); }
 		| FOR EACH var_or_obj_memb OF obj_expr statement	{ $$ = new CForEachElementNode($3, $5, $6); }
 		| var_or_obj_memb ADD_ASSIGN expression ';'			{ $$ = new COpAssignNode(opAdd,$1,$3); }
+		| var_or_obj_memb SUB_ASSIGN expression ';'			{ $$ = new COpAssignNode(opSub,$1,$3); }
 		| BREAK	';'										{ $$ = new COpNode(opBrk); }
 		| MOVE  obj_expr TO obj_expr ';'				{ $$ = new COpNode(opMove,$2,$4); }
 		| TRON	';'										{ $$ = new CTronNode(true); }
@@ -131,16 +135,21 @@ statement:
 		| SET_WINDOW '(' expression ')' ';'				{ $$ = new COpNode(opWin,$3); }
 		| CLEAR_WINDOW ';'								{ $$ = new COpNode(opClr); }
 		| HOT CLEAR ';'									{ $$ = new COpNode(opHotClr); }
-		| var_or_obj_memb ARRAY '=' expression	';'		{ $$ = new COpNode(opArrayPush,$4,$1); }
+		| var_or_obj_memb ARRAY ADD_ASSIGN expression	';'		{ $$ = new COpNode(opArrayPush,$4,$1); }
 		| MESSAGE param_list ';'						{ $$ = new CMsgNode($2); }
 		| CONTINUE ';'									{ $$ = new CContinueNode(); }
 		| LOOP_BREAK ';'								{ $$ = new CLoopBreakNode(); }
 		| ';'											{ $$ = new COpNode(opNop);  }
-		| SET obj_expr flag_expr ';'					{ $$ = new COpNode(opSet,$2,$3);  }
-		| UNSET obj_expr flag_expr ';'					{ $$ = new COpNode(opUnset,$2,$3);  }
+		| FLAG obj_expr flag_expr ';'					{ $$ = new CSetFlagNode($2,$3);  }
+		| UNFLAG obj_expr flag_expr ';'					{ $$ = new COpNode(opUnset,$2,$3);  }
 		| DELETE obj_expr ';'							{ $$ = new COpNode(opDelete,$2); }
+		| '{' '}'										{ $$ = new COpNode(opNop); }
+		| SORT_DESC var_or_obj_memb BY member_id_expr ';' { $$ = new COpNode(opSortDesc,$2,$4); }
+		| LOG expression ';'							{ $$ = new COpNode(opLog,$2); }
         ;
 
+			//TO DO: this repeats the function of '&memberName' (member_id_expr), without the
+			//clarifying '&'. Choose one consistent way to do this.
 memberId:
 		IDENTIFIER										{ $$ = new CMemberIdNode($1); }
 		;
@@ -152,7 +161,7 @@ return_expr:
 
 assignment:
 		var_or_obj_memb '=' expression					{ $$ = new COpNode(opAssign,$3,$1); }
-		| element_assignee '=' expression				{ $$ = new COpNode(opAssign,$3,$1); } //was opAssignElem
+		| element_assignee '=' expression				{ $$ = new COpNode(opAssignElem,$3,$1); } //was opAssignElem
 		;
 
 var_or_obj_memb:
@@ -291,11 +300,13 @@ event_identifier:
 
 code_block:
 		'{' statement_list	'}'			{ $$ = new CodeBlockNode($2); }
+		| '{' '}'							{ $$ = new COpNode(opNop); }
 		;
 
 expression:
       variable_expr						{ $$ = $1; }
-	  | '&' IDENTIFIER					{ $$ = new CVarIdNode($2); }
+	 // | '&' IDENTIFIER					{ $$ = new CVarIdNode($2); }
+	  | member_id_expr					{ $$ = $1; }
 	  | GETSTRING						{ $$ = new COpNode(opGetString); }
 	  | expression '+' expression		{ $$ = new COpNode(opAdd, $1, $3); }
 	  | expression '-' expression		{ $$ = new COpNode(opSub, $1, $3); }
@@ -310,8 +321,7 @@ expression:
 	   | expression IN expression			{ $$ = new COpNode(opIn,$1,$3); } //was obj_expr
 	  | obj_expr NOT IN obj_expr			{ $$ = new COpNode(opNotIn,$1,$4); }
 	  | CHILDREN '(' obj_expr ')'		{ $$ = new COpNode(opChildren,$3); }
-	  | MAKE_HOT '(' expression ',' expression ',' expression ')' { $$ = new CMakeHotNode($3,$5,$7,NULL);}
-	  | MAKE_HOT '(' expression ',' expression ',' expression ',' param_list ')' { $$ = new CMakeHotNode($3,$5,$7,$9);}
+	  | MAKE_HOT '(' expression ',' expression ',' expression optional_hot_param_list ')' { $$ = new CMakeHotNode($3,$5,$7,$8);}
 	  | NOTHING							{ $$ = new CNothingNode(); }
 	  | STYLE '(' expression ')'		{ $$ = new COpNode(opStyle,$3); }
 	  | CAP '(' expression ')'			{ $$ = new COpNode(opCap,$3); }
@@ -325,7 +335,20 @@ expression:
 	  | obj_expr IS flag_expr			{ $$ = new COpNode(opIs, $1, $3); }
 	  | obj_expr IS NOT flag_expr		{ $$ = new COpNode(opIsNot, $1, $4); }
 	  | NEW obj_identifier optional_new_init	{ $$ = new CNewNode($2,$3); }
+	  | FINAL_LOOP						{ $$ = new CFinalLoopNode(); }
+	  | ROLL							{ $$ = new CRollNode($1); }
       ;
+
+member_id_expr:
+		'&' IDENTIFIER					{ $$ = new CVarIdNode($2); }
+		;
+
+
+optional_hot_param_list:
+	 ',' param_list					{ $$ = $2; }
+	 |								{ $$ = NULL; }
+	 ;
+	
 
 optional_new_init:
 	'('  new_init_list	')'				{ $$ = new CNewInitialiserListNode($2); }

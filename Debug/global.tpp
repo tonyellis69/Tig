@@ -22,7 +22,7 @@ updateInventory() {
 	clearWindow;
 	print style("smallHeader") + "Inventory:\n" + style("small");
 	for each possession of player {
-		print makeHot(cap(aAn(possession)),&click,possession) + "\n"; 
+		print makeHot(cap(aAn(possession)),possession,&click) + "\n"; 
 	}
 	setWindow(mainWindow);
 };
@@ -64,8 +64,8 @@ calcBackDirection(direction) {
 listChildren(parentObj) {
 	count = 0; result = "";
 	numChildren = children(parentObj); 
-	for each x of parentObj { 
-		result += makeHot(aAn(x) ,&click,x); 
+	for each childObj of parentObj { 
+		result += makeHot(aAn(childObj),childObj,&click); 
 		count += 1;
 		if (count < numChildren -2) //probably needs to be -1
 			result = result + ",";
@@ -78,8 +78,8 @@ listChildren(parentObj) {
 
 listElements(array) {
 	count = 0; result = "";
-	for each x of array { 
-		result += "a " + makeHot(x.name,&click,x); 
+	for each element of array { 
+		result += "a " + makeHot(element.name,element,&click); 
 		count += 1;
 		if (count < array -1)
 			result = result + ",";
@@ -91,7 +91,7 @@ listElements(array) {
 
 clickableName(obj) {
 	purge click, self; //remove any existing hot text for this name.
-	return makeHot(obj.name,&click,obj);
+	return makeHot(obj.name,obj,&click);
 };
 
 teleport(destination) {
@@ -108,5 +108,22 @@ aAn(obj) {
 	if (obj.name[0] matches "aieouAIEOU" >= 0)
 		return "an " + obj.name;
 	return "a " + obj.name;
+	
+};
+
+
+/** Execute the actions of any active game objects. */
+gameTurn() {
+	if (player is inCombat) { //trap control if we're in combat
+		combatAssistant.resolve();
+		
+	}
+
+	
+	//Execute the actions of any local objects.
+	for each localObject of player.parent {
+		localObject.turn();	
+	}
+	combatAssistant.turn();
 	
 };

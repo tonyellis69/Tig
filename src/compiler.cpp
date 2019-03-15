@@ -53,13 +53,6 @@ void CTigCompiler::compile(std::string filename) {
 }
 
 
-
-
-/** Create an operator node for the given op code and return a pointer to it. */
-//COpNode * CTigCompiler::opNode(TOpCode opCode, CSyntaxNode* operand) {
-//	return new COpNode(opCode, operand);
-//}
-
 /** Convert the given syntax tree into bytecode, and write it to a file. */
 void CTigCompiler::encode(CSyntaxNode * node) {
 	node->objects[""] = CObject();
@@ -197,6 +190,7 @@ bool CTigCompiler::objNameChecksResolve(CSyntaxNode * node) {
 
 
 CTigCompiler::~CTigCompiler() {
-	
+	remove("fnCode.tmp");
+	remove("globalCode.tmp");
 
 }
