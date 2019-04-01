@@ -48,6 +48,8 @@ std::vector<std::string> CSyntaxNode::flagStack;
 std::vector<TNameCheck> CSyntaxNode::flagNamesToCheck;
 std::vector<TNameCheck> CSyntaxNode::objNamesToCheck;
 std::vector<int> CSyntaxNode::newInitialisationMembers;
+std::vector<std::string> CSyntaxNode::unconfirmedLocalVarNames;
+std::string CSyntaxNode::latestNewLocalVarName; 
 
 extern std::vector<TLineRec> lineRecs;
 
@@ -343,19 +345,13 @@ int CSyntaxNode::getFlagBitmask(std::string flagName) {
 				<< filenames[sourceFile] << ", line: " << sourceLine << ".";
 			exit(1);
 		}
-		it = flagStack.end();
-
-		//if it's on the naughty list, remove it
-		for (unsigned int x = 0; x < flagNamesToCheck.size(); x++) {
-			if (flagNamesToCheck[x].name == flagName) {
-				flagNamesToCheck.erase(flagNamesToCheck.begin() + x);
-				break;
-			}
-		}
+		it = flagStack.end()-1;
+		logFlagNameCheck(sourceLine, sourceFile, flagName);//we had to create it, so it's untrustworthy
+		
 	}
 
-	
-	return std::distance(flagStack.begin(), it);
+	int bitMask = std::distance(flagStack.begin(), it);
+	return  1 << bitMask;
 }
 
 
@@ -388,6 +384,8 @@ int CSyntaxNode::getVarId(std::string & identifier) {
 		[&](auto& varName) { return varName == identifier; });
 	if (it == localVarIds.end()) {
 		localVarIds.push_back(identifier);
+		unconfirmedLocalVarNames.push_back(identifier);
+		latestNewLocalVarName = identifier;
 		return localVarIds.size()-1;
 	}
 
@@ -413,11 +411,13 @@ int CSyntaxNode::resolveIdentifier(std::string  identifier) {
 
 /** Return the unique id number for this object member identifier. */
 int CSyntaxNode::getMemberId(std::string & identifier) {
-	if (identifier == "localX")
-		int b = 0;
 	auto iter = memberIds.find(identifier);
 	if (iter == memberIds.end()) {
 		memberIds[identifier] = nextMemberId++;
+
+		logGlobalMemberCheck(sourceLine, sourceFile, nextMemberId-1);
+		//TO DO: experimental! See how this works
+
 		return memberIds[identifier];
 	}
 	return iter->second;
@@ -976,7 +976,7 @@ void CVarExprNode::encode() {
 		[&](auto& varName) { return varName == name; });
 	if (it != localVarIds.end()) {
 		varId = it - localVarIds.begin();
-		writeOp(opPushVar); //TO DO: convert to opCall, 0 params
+		writeOp(opPushVar); //TO DO: convert to opCall, zero params, as below
 		writeWord(varId);
 		return;
 	}
@@ -1002,8 +1002,11 @@ void CVarExprNode::encode() {
 	}
 	writeOp(opPushInt);
 	writeWord(zeroObject);
-	writeOp(opPushVar); //TO DO: and here
+	//writeOp(opPushVar); 
+	//writeWord(memberId);
+	writeOp(opCall);
 	writeWord(memberId);
+	writeByte(0); //zero params
 	return;
 
 
@@ -1233,6 +1236,7 @@ CFunctionDefNode::CFunctionDefNode(CSyntaxNode* params, CSyntaxNode * codeBlock)
 /** Write the function code, prefacing it with the number of local variables required. */
 void CFunctionDefNode::encode() {
 	localVarIds.clear();
+	unconfirmedLocalVarNames.clear();
 	paramDeclarationMode = true;
 	if (operands[0])
 		operands[0]->encode();
@@ -1244,6 +1248,14 @@ void CFunctionDefNode::encode() {
 	int varCountAddr = outputFile->tellp();
 	writeByte(0);
 	operands[1]->encode();
+
+	for (auto varName : unconfirmedLocalVarNames) {
+		cerr << "\nError! Unrecognised identifier \"" << varName << "\" in file " <<
+			filenames[sourceFile] << ", line " << localVarIdsPermanent[varName] << ".";
+
+		exit(1);
+	}
+
 	char varCount = (char)localVarIds.size();
 	if (varCount > 0) {
 		int resume = outputFile->tellp();
@@ -1518,6 +1530,13 @@ void CForEachElementNode::encode() {
 	operands[0]->encode(); //write code to put variable identifier on the stack					   
 	writeOp(opAssign); //assign value on stack to the variable
 
+	auto it = find(unconfirmedLocalVarNames.begin(),
+		unconfirmedLocalVarNames.end(), latestNewLocalVarName);
+	if (it != unconfirmedLocalVarNames.end())
+		unconfirmedLocalVarNames.erase(it);
+
+
+
 	//do code code
 	operands[2]->encode();
 	
@@ -1543,6 +1562,8 @@ void CForEachElementNode::encode() {
 
 	continueAddr.pop_back();
 
+
+
 }
 
 
@@ -1562,6 +1583,9 @@ void COpAssignNode::encode() {
 	//operands[0]->encode();
 	operands[0]->encode();
 	writeOp(opGetVar);
+
+
+
 	operands[1]->encode();
 	writeOp(opCode); //sum values on stack
 	operands[0]->encode();
@@ -1808,6 +1832,14 @@ void CFlagDeclNode::encode() {
 		flagNamesTmp.push_back(flagName);
 		getFlagBitmask(flagName);
 		//adds name to list, no need to record bitmask here
+	
+		//if it's on the naughty list, we can now remove it as it has been set therefore definitely exists
+		for (unsigned int x = 0; x < flagNamesToCheck.size(); x++) {
+			if (flagNamesToCheck[x].name == flagName) {
+				flagNamesToCheck.erase(flagNamesToCheck.begin() + x);
+				break;
+			}
+		}
 	}
 }
 
@@ -1819,14 +1851,16 @@ CFlagExprNode::CFlagExprNode(std::string * flagName) {
 
 void CFlagExprNode::encode() {
 
-	auto it = find(flagStack.begin(),flagStack.end(),flagName);
-	if (it == flagStack.end()) {
-		logFlagNameCheck(sourceLine, sourceFile, flagName);
+	int bitMask = getFlagBitmask(flagName);
 
-	}
+	//auto it = find(flagStack.begin(),flagStack.end(),flagName);
+	//if (it == flagStack.end()) {
+	//	logFlagNameCheck(sourceLine, sourceFile, flagName);
 
-	int bitMask = std::distance(flagStack.begin(), it);
-	bitMask = 1 << bitMask;
+	//}
+
+	//int bitMask = std::distance(flagStack.begin(), it) + 1;
+	//bitMask = 1 << bitMask;
 
 	writeOp(opPushInt);
 	writeWord(bitMask);
@@ -1902,6 +1936,15 @@ void CSetFlagNode::encode() {
 	std::string flagName = operands[1]->getText();
 	int bitmask = getFlagBitmask(flagName);
 
+	//if it's on the naughty list, we can now remove it as it has been set therefore definitely exists
+	for (unsigned int x = 0; x < flagNamesToCheck.size(); x++) {
+		if (flagNamesToCheck[x].name == flagName) {
+			flagNamesToCheck.erase(flagNamesToCheck.begin() + x);
+			break;
+		}
+	}
+
+
 	operands[0]->encode();
 	writeOp(opPushInt);
 	writeWord(bitmask);
@@ -1916,4 +1959,53 @@ CRollNode::CRollNode(int die) {
 void CRollNode::encode() {
 	writeOp(opRoll);
 	writeWord(sides);
+}
+
+
+/** A syntax node for a 'first loop' expression in a loop. */
+void CFirstLoopNode::encode() {
+	if (continueAddr.size()) {
+		writeOp(opFirstLoop);
+		return;
+	}
+	cerr << "\nError: file " << filenames[sourceFile] << ", line: " <<
+		sourceLine << ". 'firstLoop' used outside a loop.";
+	exit(1);
+
+}
+
+/** A syntax node for trapping assignment, to ensure all local variables
+	have been properly created through assignment. */
+CVarAssignNode::CVarAssignNode(CSyntaxNode * assignee, CSyntaxNode * value) {
+	operands.push_back(assignee);
+	operands.push_back(value);
+}
+
+void CVarAssignNode::encode() {
+	operands[0]->encode();
+	operands[1]->encode();
+
+	auto it = find(unconfirmedLocalVarNames.begin(),
+		unconfirmedLocalVarNames.end(), latestNewLocalVarName);
+	if (it != unconfirmedLocalVarNames.end())
+		unconfirmedLocalVarNames.erase(it);
+
+	writeOp(opAssign);
+}
+
+CArrayPushNode::CArrayPushNode(CSyntaxNode * assignee, CSyntaxNode * value) {
+	operands.push_back(assignee);
+	operands.push_back(value);
+}
+
+void CArrayPushNode::encode() {
+	operands[0]->encode();
+	operands[1]->encode();
+
+	auto it = find(unconfirmedLocalVarNames.begin(),
+		unconfirmedLocalVarNames.end(), latestNewLocalVarName);
+	if (it != unconfirmedLocalVarNames.end())
+		unconfirmedLocalVarNames.erase(it);
+
+	writeOp(opArrayPush);
 }

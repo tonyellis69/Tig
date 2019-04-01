@@ -4,15 +4,18 @@
 mainWindow = 0;
 invWindow = 1;
 menuWindow = 2;
+combatWindow = 3;
 
 //Constants for messaging the user
 msgRoomChange = 5000;
 
+//max distance constants, in metres
+meleeDistance = 4;
+mediumDistance = 10;
+
 directionIds = [&northTo,&neTo,&eastTo,&seTo,&southTo,&swTo,&westTo,&nwTo,&upTo,&downTo,&inTo,&outTo]; 
 directionNames = ["north","northeast","east","southeast","south","southwest","west","northwest","up","down","in","out"]; 
 
-actionIds = [&examine,&push,&turnSub,&climb];
-actionNames = ["examine","push","turn","climb"];
 
 playerObj = player;
 
@@ -105,6 +108,8 @@ teleport(destination) {
 
 /** Return the object name correctly prefixed with 'a' or 'an'.*/
 aAn(obj) {
+	if (obj is nonCount)
+		return obj.name;
 	if (obj.name[0] matches "aieouAIEOU" >= 0)
 		return "an " + obj.name;
 	return "a " + obj.name;
@@ -115,11 +120,16 @@ aAn(obj) {
 /** Execute the actions of any active game objects. */
 gameTurn() {
 	if (player is inCombat) { //trap control if we're in combat
-		combatAssistant.resolve();
-		
-	}
-
+		if (player.combatActionFn == 0) //player hasn't chosen an option yet
+			return;
 	
+		combatAssistant.resolve();
+		return;
+	}
+	
+	
+	
+
 	//Execute the actions of any local objects.
 	for each localObject of player.parent {
 		localObject.turn();	

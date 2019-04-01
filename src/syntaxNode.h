@@ -185,6 +185,9 @@ public:
 	static std::vector<TNameCheck> objNamesToCheck; ///<object names encountered with no current declaration.
 
 	static std::vector<int> newInitialisationMembers; ///<Temporary list of members in a new object initialisation list.
+
+	static std::vector<std::string> unconfirmedLocalVarNames; ///<Local var names not yet used as assignees.
+	static std::string latestNewLocalVarName; ///<Temp store for local var name most recently created.
 };
 
 enum TIdentType { local, globalVar, object };
@@ -698,4 +701,24 @@ public:
 	void encode();
 
 	int sides;
+};
+
+
+class CFirstLoopNode : public CSyntaxNode {
+public:
+	void encode();
+};
+
+class CVarAssignNode : public CSyntaxNode {
+public:
+	CVarAssignNode(CSyntaxNode* assignee, CSyntaxNode* value);
+
+	void encode();
+};
+
+class CArrayPushNode : public CSyntaxNode {
+public:
+	CArrayPushNode(CSyntaxNode* assignee, CSyntaxNode* value);
+
+	void encode();
 };

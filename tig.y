@@ -52,19 +52,20 @@
 %type <nPtr> global_func_decl   param_list  func_call func_ident 
 %type <nPtr> memberId flag_expr member_id_expr
 %type <nPtr> optional_new_init new_init_list new_init optional_hot_param_list
+%type <nPtr> make_hot style cap
 
 %token PRINT SET_WINDOW CLEAR_WINDOW OPEN_WINDOW END RETURN
 %token EVENT OPTION
 %token OBJECT  ARROW INHERITS SUPERCLASS FLAG NEW DELETE
 %token GETSTRING
-%token HOT MAKE_HOT PURGE ALL CLEAR USED STYLE CAP
-%token ARRAY MESSAGE
+%token HOT MAKE_HOT PURGE ALL CLEAR USED STYLE CAP NEXT
+%token ARRAY MESSAGE PAUSE UNPAUSE
 %token START_TIMER START_EVENT AT
 %token <iValue> INTEGER
 %token <str> IDENTIFIER STRING
 %token ENDL
 %token IF
-%token FOR EACH  CONTINUE  NOT LOOP_BREAK FINAL_LOOP
+%token FOR EACH  CONTINUE  NOT LOOP_BREAK FINAL_LOOP FIRST_LOOP
 %token SELF CHILDREN
 //CHILD SIBLING PARENT
 %token ADD_ASSIGN SUB_ASSIGN 
@@ -76,12 +77,16 @@
 %token SORT_DESC BY
 %token LOG
 
-%left EQ NE GE '>' LE '<'  OR AND     // '%left' makes these tokens left associative
+%left OR AND 
+%left NE GE '>' LE '<'     // '%left' makes these tokens left associative
+
+%left EQ
 %nonassoc HAS
 %left '+' '-'							 // this ensures that long complex sums are never ambiguous. 
 %left '*' '/' '%' '#'
 %left MATCHES IS IN	OF				//Wow, this solves a LOT of <expr> token <expr> shift/reduce problems
 %right '!' 
+
 
 %nonassoc UMINUS 
 %nonassoc IFX 
@@ -135,7 +140,7 @@ statement:
 		| SET_WINDOW '(' expression ')' ';'				{ $$ = new COpNode(opWin,$3); }
 		| CLEAR_WINDOW ';'								{ $$ = new COpNode(opClr); }
 		| HOT CLEAR ';'									{ $$ = new COpNode(opHotClr); }
-		| var_or_obj_memb ARRAY ADD_ASSIGN expression	';'		{ $$ = new COpNode(opArrayPush,$4,$1); }
+		| var_or_obj_memb ARRAY ADD_ASSIGN expression	';'		{ $$ = new CArrayPushNode($4,$1); }
 		| MESSAGE param_list ';'						{ $$ = new CMsgNode($2); }
 		| CONTINUE ';'									{ $$ = new CContinueNode(); }
 		| LOOP_BREAK ';'								{ $$ = new CLoopBreakNode(); }
@@ -146,6 +151,9 @@ statement:
 		| '{' '}'										{ $$ = new COpNode(opNop); }
 		| SORT_DESC var_or_obj_memb BY member_id_expr ';' { $$ = new COpNode(opSortDesc,$2,$4); }
 		| LOG expression ';'							{ $$ = new COpNode(opLog,$2); }
+		| PAUSE ';'										{ $$ = new COpNode(opPause); }
+		| UNPAUSE ';'									{ $$ = new COpNode(opPause); }
+		| CAP NEXT ';'									{ $$ = new COpNode(opCapNext); }
         ;
 
 			//TO DO: this repeats the function of '&memberName' (member_id_expr), without the
@@ -160,7 +168,7 @@ return_expr:
 		;
 
 assignment:
-		var_or_obj_memb '=' expression					{ $$ = new COpNode(opAssign,$3,$1); }
+		var_or_obj_memb '=' expression					{ $$ = new CVarAssignNode($3,$1); } //was  $$ = new COpNode(opAssign,$3,$1); } 
 		| element_assignee '=' expression				{ $$ = new COpNode(opAssignElem,$3,$1); } //was opAssignElem
 		;
 
@@ -189,8 +197,10 @@ element_assignee:
 
 string_statement:
 		string_literal							{ $$ = $1; }
-		| string_literal '+' expression			{ $$ = new COpNode(opAdd, $1, $3); }
-		//| '(' expression ')' string_literal		{ $$ = $4; }
+		| string_statement '+' expression		{ $$ = new COpNode(opAdd, $1, $3); }
+		| make_hot								{ $$ = $1; }
+		| style									{ $$ = $1; }
+		| cap									{ $$ = $1; }
 		;
 
 dec_statement:
@@ -321,10 +331,11 @@ expression:
 	   | expression IN expression			{ $$ = new COpNode(opIn,$1,$3); } //was obj_expr
 	  | obj_expr NOT IN obj_expr			{ $$ = new COpNode(opNotIn,$1,$4); }
 	  | CHILDREN '(' obj_expr ')'		{ $$ = new COpNode(opChildren,$3); }
-	  | MAKE_HOT '(' expression ',' expression ',' expression optional_hot_param_list ')' { $$ = new CMakeHotNode($3,$5,$7,$8);}
+	  | make_hot						{ $$ = $1; }
 	  | NOTHING							{ $$ = new CNothingNode(); }
-	  | STYLE '(' expression ')'		{ $$ = new COpNode(opStyle,$3); }
-	  | CAP '(' expression ')'			{ $$ = new COpNode(opCap,$3); }
+	 // | STYLE '(' expression ')'		{ $$ = new COpNode(opStyle,$3); }
+	  | style							{ $$ = $1; }
+	  | cap								{ $$ = $1; }
 	  | obj_expr INHERITS obj_expr		{ $$ = new COpNode(opInherits,$1,$3); }
 	//  | obj_expr HAS memberId			{ $$ = new COpNode(opHas,$1,$3); }
 	  | obj_expr HAS expression			{ $$ = new COpNode(opHas,$1,$3); }
@@ -336,8 +347,21 @@ expression:
 	  | obj_expr IS NOT flag_expr		{ $$ = new COpNode(opIsNot, $1, $4); }
 	  | NEW obj_identifier optional_new_init	{ $$ = new CNewNode($2,$3); }
 	  | FINAL_LOOP						{ $$ = new CFinalLoopNode(); }
+	  | FIRST_LOOP						{ $$ = new CFirstLoopNode(); }
 	  | ROLL							{ $$ = new CRollNode($1); }
       ;
+
+make_hot:
+	 MAKE_HOT '(' expression ',' expression ',' expression optional_hot_param_list ')' { $$ = new CMakeHotNode($3,$5,$7,$8);}
+	;
+
+cap:
+	 CAP '(' expression ')'			{ $$ = new COpNode(opCap,$3); }
+	;
+
+style:
+	STYLE '(' expression ')'		{ $$ = new COpNode(opStyle,$3); }
+	;
 
 member_id_expr:
 		'&' IDENTIFIER					{ $$ = new CVarIdNode($2); }
@@ -446,11 +470,13 @@ array_init_const:
 	//| memb_function_def			{ $$ = new CArrayInitConstNode($1); } //arrays of functions not implemented
 	| memberId					{ $$ = new CArrayInitConstNode((CMemberIdNode*)$1); }
 	;
-
+	//TO DO: can remove memberId  and use member_id_expr - the '&' might aid clarity
 	
 array_element_expr:
 	var_or_obj_memb '[' array_index_expr ']'		{ $$ = new CArrayElementExprNode($1,$3); }
 	;
+	//fail! var_or_obj_memb is an assignee expression, creating the variable if needed
+	//but we don't want to pass an unrecognised array name
 
 array_index_expr:
 	variable_expr				{ $$ = $1; }

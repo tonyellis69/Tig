@@ -90,10 +90,10 @@ d[1-9]([0-9])*					{
 	
 ">="					return GE;    /* Matches the literal string inside " " */
 "<="					return LE;
-"=="					return EQ;
 "!="					return NE;
 "&&"					return AND;
 "||"					return OR;
+"=="					return EQ;
 "+="					return ADD_ASSIGN;
 "-="					return SUB_ASSIGN;
 "brk"					return BREAK;
@@ -124,6 +124,7 @@ d[1-9]([0-9])*					{
 "of"					return OF;
 "continue"				return CONTINUE;
 "break"					return LOOP_BREAK;
+"first"					return FIRST_LOOP;
 "finalLoop"				return FINAL_LOOP;
 "is"					return IS;
 "not"					return NOT;
@@ -140,10 +141,14 @@ d[1-9]([0-9])*					{
 "clearWindow"			return CLEAR_WINDOW;
 "style"					return STYLE;
 "cap"					return CAP;
+"capitalise"			return CAP;
+"next"					return NEXT;
 "inherits"				return INHERITS;
 "::"					return SUPERCLASS;
 "[]"					return ARRAY;
 "message"				return MESSAGE;
+"pause"					return PAUSE;
+"unpause"				return UNPAUSE;
 "matches"				return MATCHES;
 "flag"					return FLAG;
 "unflag"				return UNFLAG;
