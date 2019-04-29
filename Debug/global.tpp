@@ -13,7 +13,7 @@ msgRoomChange = 5000;
 meleeDistance = 4;
 mediumDistance = 10;
 
-directionIds = [&northTo,&neTo,&eastTo,&seTo,&southTo,&swTo,&westTo,&nwTo,&upTo,&downTo,&inTo,&outTo]; 
+directionIds = [&northTo,&neTo,&eastTo,&seTo,&southTo,&swTo,&westTo,&nwTo,&upTo,&downTo,&inTo,&outTo];
 directionNames = ["north","northeast","east","southeast","south","southwest","west","northwest","up","down","in","out"]; 
 
 

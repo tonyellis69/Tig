@@ -37,6 +37,7 @@
 	 std::string* str;
 };	
 
+
 %type <nPtr> program tigcode statement expression constant_expr statement_list dec_statement
 %type <nPtr> integer_constant
 %type <nPtr>  string_literal event_identifier 
@@ -50,22 +51,23 @@
 %type <nPtr> array_init_expr constant_seq array_init_const array_element_expr array_index_expr array_init_list expr_seq array_dyn_init_elem
 %type <nPtr> comparison_expr logic_expression
 %type <nPtr> global_func_decl   param_list  func_call func_ident 
-%type <nPtr> memberId flag_expr member_id_expr
+%type <nPtr> memberId flag_expr member_id_expr memb_or_obj_id
 %type <nPtr> optional_new_init new_init_list new_init optional_hot_param_list
-%type <nPtr> make_hot style cap
+%type <nPtr> make_hot style cap 
+//%type <nPtr> range_expr
 
 %token PRINT SET_WINDOW CLEAR_WINDOW OPEN_WINDOW END RETURN
 %token EVENT OPTION
-%token OBJECT  ARROW INHERITS SUPERCLASS FLAG NEW DELETE
+%token OBJECT  ARROW INHERITS SUPERCLASS FLAG DELETE
 %token GETSTRING
 %token HOT MAKE_HOT PURGE ALL CLEAR USED STYLE CAP NEXT
-%token ARRAY MESSAGE PAUSE UNPAUSE
+%token MESSAGE PAUSE UNPAUSE //ARRAY
 %token START_TIMER START_EVENT AT
 %token <iValue> INTEGER
 %token <str> IDENTIFIER STRING
 %token ENDL
 %token IF
-%token FOR EACH  CONTINUE  NOT LOOP_BREAK FINAL_LOOP FIRST_LOOP
+%token WHILE FOR EACH  CONTINUE  NOT LOOP_BREAK FINAL_LOOP FIRST_LOOP FROM
 %token SELF CHILDREN
 //CHILD SIBLING PARENT
 %token ADD_ASSIGN SUB_ASSIGN 
@@ -74,17 +76,20 @@
 %token MOVE TO 
 %token UNFLAG
 %token <iValue> ROLL
+%token RANDOM
 %token SORT_DESC BY
-%token LOG
+%token LOG 
+%token NEW  ARRAY WITH
 
 %left OR AND 
 %left NE GE '>' LE '<'     // '%left' makes these tokens left associative
+
 
 %left EQ
 %nonassoc HAS
 %left '+' '-'							 // this ensures that long complex sums are never ambiguous. 
 %left '*' '/' '%' '#'
-%left MATCHES IS IN	OF				//Wow, this solves a LOT of <expr> token <expr> shift/reduce problems
+%left MATCHES IS IN	OF 	//Wow, this solves a LOT of <expr> token <expr> shift/reduce problems
 %right '!' 
 
 
@@ -128,8 +133,8 @@ statement:
 		| RETURN return_expr ';'						{ $$ = new CReturnNode($2); }
 		| IF '(' expression ')' statement %prec IFX			{ $$ = new CIfNode($3, $5, NULL); }	//$prec gives this rule the lesser precedence of dummy token IFX
         | IF '(' expression ')' statement ELSE statement	{ $$ = new CIfNode($3, $5, $7); } //thus rule has the greater precedence of ELSE
-		//| FOR EACH var_or_obj_memb OF obj_expr statement	{ $$ = new CForEachElementNode($3, $5, $6); } //{ $$ = new CForEachNode($3, $5, $6); }
-		| FOR EACH var_or_obj_memb OF obj_expr statement	{ $$ = new CForEachElementNode($3, $5, $6); }
+		| FOR EACH var_or_obj_memb OF obj_expr statement	{ $$ = new CForEachElementNode($3, $5, $6, NULL); }
+		| FOR EACH var_or_obj_memb OF '(' expression TO expression ')' statement	{ $$ = new CForEachElementNode($3, $8, $10, $6); }
 		| var_or_obj_memb ADD_ASSIGN expression ';'			{ $$ = new COpAssignNode(opAdd,$1,$3); }
 		| var_or_obj_memb SUB_ASSIGN expression ';'			{ $$ = new COpAssignNode(opSub,$1,$3); }
 		| BREAK	';'										{ $$ = new COpNode(opBrk); }
@@ -154,6 +159,7 @@ statement:
 		| PAUSE ';'										{ $$ = new COpNode(opPause); }
 		| UNPAUSE ';'									{ $$ = new COpNode(opPause); }
 		| CAP NEXT ';'									{ $$ = new COpNode(opCapNext); }
+		| WHILE '(' expression ')' statement			{ $$ = new CWhileNode($3,$5); }
         ;
 
 			//TO DO: this repeats the function of '&memberName' (member_id_expr), without the
@@ -184,7 +190,11 @@ variable_assignee:
 
 obj_member_assignee:
 		obj_expr '.' IDENTIFIER							{ $$ = new CObjMemberAssigneeNode($1,$3); }
+		| obj_expr '.' deref_variable_expr				{ $$ = new CObjMemberAssigneeNode($1,$3); }
 		;
+
+
+
 
 obj_expr:												
 		variable_expr										{ $$ = $1; }
@@ -345,11 +355,16 @@ expression:
 	  | expression MATCHES expression   { $$ = new COpNode(opMatch, $1, $3); }
 	  | obj_expr IS flag_expr			{ $$ = new COpNode(opIs, $1, $3); }
 	  | obj_expr IS NOT flag_expr		{ $$ = new COpNode(opIsNot, $1, $4); }
-	  | NEW obj_identifier optional_new_init	{ $$ = new CNewNode($2,$3); }
+	  //| NEW obj_identifier optional_new_init	{ $$ = new CNewNode($2,$3); }
+	  | NEW  variable_expr   optional_new_init	{ $$ = new CNewNode($2,$3); }
 	  | FINAL_LOOP						{ $$ = new CFinalLoopNode(); }
 	  | FIRST_LOOP						{ $$ = new CFirstLoopNode(); }
 	  | ROLL							{ $$ = new CRollNode($1); }
+	  | RANDOM var_or_obj_memb ARRAY	{ $$ = new COpNode(opRand,$2); }
       ;
+
+
+
 
 make_hot:
 	 MAKE_HOT '(' expression ',' expression ',' expression optional_hot_param_list ')' { $$ = new CMakeHotNode($3,$5,$7,$8);}
@@ -375,13 +390,13 @@ optional_hot_param_list:
 	
 
 optional_new_init:
-	'('  new_init_list	')'				{ $$ = new CNewInitialiserListNode($2); }
+	WITH '(' new_init_list	')'			 { $$ = new CNewInitialiserListNode($3); }
 	|									{ $$ = NULL; }
 	;
 
 new_init_list:
 	new_init							{ $$ = $1; }
-	| new_init_list ',' new_init		{ $$ = new CJointNode($1,$3); }
+	| new_init_list ',' new_init 		{ $$ = new CJointNode($1,$3); }
 	;
 
 new_init:
@@ -443,6 +458,7 @@ integer_constant:
 
 array_init_expr:
 	'[' expr_seq ']'				{ $$ = new CArrayDynInitNode($2); }
+	| ARRAY							{ $$ = new CArrayDynInitNode(NULL); }
 	;
 	//TO DO: any reason this has to be constant_seq and not expressions?
 
@@ -457,6 +473,7 @@ array_dyn_init_elem:
 
 array_init_list:
 	'[' constant_seq ']'				{ $$ = new CArrayInitListNode($2); }
+	| ARRAY							{ $$ = new CArrayInitListNode(NULL); }
 	;
 
 constant_seq:
@@ -467,20 +484,29 @@ constant_seq:
 array_init_const:
 	STRING						{ $$ = new CArrayInitConstNode($1); }
 	| INTEGER					{ $$ = new CArrayInitConstNode($1); }
+	//| obj_identifier			{ $$ = new CArrayInitConstNode((CObjIdentNode*)$1); }
 	//| memb_function_def			{ $$ = new CArrayInitConstNode($1); } //arrays of functions not implemented
-	| memberId					{ $$ = new CArrayInitConstNode((CMemberIdNode*)$1); }
+	//| memberId					{ $$ = new CArrayInitConstNode((CMemberIdNode*)$1); }
+	| memb_or_obj_id			{ $$ = new CArrayInitConstNode((CMembOrObjIdNode*)$1); }
 	;
 	//TO DO: can remove memberId  and use member_id_expr - the '&' might aid clarity
-	
+
+	//In an array member initialisation, we may not yet know what this is, so delay deciding for now.
+memb_or_obj_id:
+	IDENTIFIER					{ $$ = new CMembOrObjIdNode($1); }
+	;
+
 array_element_expr:
 	var_or_obj_memb '[' array_index_expr ']'		{ $$ = new CArrayElementExprNode($1,$3); }
+
 	;
 	//fail! var_or_obj_memb is an assignee expression, creating the variable if needed
 	//but we don't want to pass an unrecognised array name
 
 array_index_expr:
-	variable_expr				{ $$ = $1; }
-	| integer_constant			{ $$ = $1; }
+	//variable_expr				{ $$ = $1; }
+	//| integer_constant			{ $$ = $1; }
+	expression					{ $$ = $1; }
 	;
 
 

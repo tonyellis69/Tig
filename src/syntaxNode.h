@@ -26,11 +26,14 @@ extern std::vector<TLineRec> lineRecs;
 
 const int variableExpression = 2001;
 
+enum TLoopTypes { forEachLoop, whileLoop};
+
 class CSyntaxNode;
 struct TMemberRec {
 	int memberId;
 	CTigVar value;
 	std::vector<CTigVar> arrayInitList;
+	std::vector<std::string> unrecogniseArrayInitIds;
 };
 
 struct TMemberCheck {
@@ -148,6 +151,8 @@ public:
 
 	static std::vector<TMemberRec> memberStack2; ///<Temporary tracker of all the members of an object.
 	static std::vector<CTigVar> arrayStack; ///<Temporary tracker of values used to initialise an array.
+	static std::vector<std::string> unrecognisedArrayIniterStack; ///<Temporary tracker of unrecognised identifiers used to initialise an array.
+
 	static std::vector<int> arrayInitCount; 
 
 	static std::vector<CSyntaxNode*> nodeList;
@@ -188,6 +193,7 @@ public:
 
 	static std::vector<std::string> unconfirmedLocalVarNames; ///<Local var names not yet used as assignees.
 	static std::string latestNewLocalVarName; ///<Temp store for local var name most recently created.
+	static std::vector<TLoopTypes> currentLoop; ///<What kind of loop we're currently encoding, if any.
 };
 
 enum TIdentType { local, globalVar, object };
@@ -325,6 +331,7 @@ public:
 class CObjMemberAssigneeNode : public CSyntaxNode {
 public:
 	CObjMemberAssigneeNode(CSyntaxNode* parent, std::string* parsedString);
+	CObjMemberAssigneeNode(CSyntaxNode* parent, CSyntaxNode* reference);
 	void encode();
 
 	int memberId;
@@ -365,6 +372,7 @@ public:
 
 class CArrayInitListNode;
 class CMemberIdNode;
+class CMembOrObjIdNode;
 class CInitNode : public CSyntaxNode {
 public:
 	CInitNode(std::string* parsedString);
@@ -372,11 +380,13 @@ public:
 	CInitNode(CSyntaxNode* codeBlock);
 	CInitNode(CMemberIdNode* membIdent);
 	CInitNode(CObjIdentNode* objIdent);//
+	CInitNode(CMembOrObjIdNode* membOrObjIdent);
 	CInitNode(CArrayInitListNode * arrayInitList);
 	CInitNode();
 	void encode();
 
 	CTigVar value;
+	std::string unrecognisedIdent;
 };
 
 
@@ -495,7 +505,8 @@ public:
 
 class CForEachElementNode : public CSyntaxNode {
 public:
-	CForEachElementNode(CSyntaxNode* variable, CSyntaxNode* containerObj, CSyntaxNode* code);
+	CForEachElementNode(CSyntaxNode* variable, CSyntaxNode* containerObj, CSyntaxNode* code,
+		CSyntaxNode* start);
 	void encode();
 
 };
@@ -712,13 +723,25 @@ public:
 class CVarAssignNode : public CSyntaxNode {
 public:
 	CVarAssignNode(CSyntaxNode* assignee, CSyntaxNode* value);
-
 	void encode();
 };
 
 class CArrayPushNode : public CSyntaxNode {
 public:
 	CArrayPushNode(CSyntaxNode* assignee, CSyntaxNode* value);
-
 	void encode();
+};
+
+class CWhileNode : public CSyntaxNode {
+public: 
+	CWhileNode(CSyntaxNode* condition, CSyntaxNode* code);
+	void encode();
+
+};
+
+class CMembOrObjIdNode : public CSyntaxNode {
+public:
+	CMembOrObjIdNode(std::string* idName);
+	
+	std::string name;
 };

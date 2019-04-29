@@ -118,6 +118,7 @@ d[1-9]([0-9])*					{
 "return"				return RETURN;
 "if"					return IF;
 "else"					return ELSE;
+"while"					return WHILE;
 "for"					return FOR;
 "each"					return EACH;
 "in"					return IN;
@@ -136,6 +137,7 @@ d[1-9]([0-9])*					{
 "nothing"				return NOTHING;
 "move"					return MOVE;
 "to"					return TO;
+"from"					return FROM;
 "openWindow"			return OPEN_WINDOW;
 "setWindow"				return SET_WINDOW;
 "clearWindow"			return CLEAR_WINDOW;
@@ -153,10 +155,12 @@ d[1-9]([0-9])*					{
 "flag"					return FLAG;
 "unflag"				return UNFLAG;
 "new"					return NEW;
+"with"					return WITH;
 "delete"				return DELETE;
 "sort>"					return SORT_DESC;
 "by"					return BY;
 "log"					return LOG;
+"random"				return RANDOM;
 {IDENT}					{	identBufs[currentIdentBuf].clear(); 
 							identBufs[currentIdentBuf].assign(yytext,yyleng);
 							yylval.str = &identBufs[currentIdentBuf];

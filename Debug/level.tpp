@@ -6,13 +6,14 @@
 #include coreObj.tpp
 #include weapons.tpp
 #include robot.tpp
-
+#include powerPlant.tpp
 
 
 /** Initialisation code.*/
 init() {
+
 	//start player in the right room:
-	move player to arena;
+	//move player to arena;
 	move wrench to player;
 	move pipe to player;
 	move ablat to player;
@@ -22,16 +23,20 @@ init() {
 	updateInventory();
 
 
+	entranceHub = powerPlant.createMap();
+
+	move player to entranceHub.hubRoom;
+
 	player.parent.look();
 	gameTurn();
-
 };
 
 
 CRoom arena has name "Bare room",  description {
 "This is a plain, unremarkable room.";
-} ;
+}, southTo testRoomSouth, swTo testRoomSouthWest;
 
+/*
 -> CRobot robot has name "rectangular servobot", shortName "servobot", initial "a rectangular servobot watches you with narrow, electronic eyes",
 description "A collection of hard, metallic edges and surfaces.",
 weapon = metalArm, armour = lightRoboArmour, distance = 5
@@ -41,6 +46,19 @@ weapon = metalArm, armour = lightRoboArmour, distance = 5
 description "A low, four-legged machine with orange brushes for feet.",
 weapon = brushArm, armour = lightRoboArmour, distance = 5
 ;
+*/
+
+
+CRoom testRoomSouth has name "Test room south",  description {
+"This is a test room.";
+},
+northTo arena; 
+
+
+CRoom testRoomSouthWest has name "Test room southwest",  description {
+"This is a test room.";
+},
+neTo arena; 
 
 CWrench wrench;
 CPipe pipe;

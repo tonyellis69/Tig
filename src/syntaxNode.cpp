@@ -24,6 +24,7 @@ std::map<std::string, CObject> CSyntaxNode::objects;
 int CSyntaxNode::nextObjectId = 1; //0 is the default 'object zero'
 std::vector<TMemberRec> CSyntaxNode::memberStack2;
 std::vector<CTigVar> CSyntaxNode::arrayStack;
+std::vector<std::string> CSyntaxNode::unrecognisedArrayIniterStack;
 int CSyntaxNode::childLevel = 0;
 std::map<int,int> CSyntaxNode::parentList;
 bool CSyntaxNode::global = true;
@@ -50,6 +51,7 @@ std::vector<TNameCheck> CSyntaxNode::objNamesToCheck;
 std::vector<int> CSyntaxNode::newInitialisationMembers;
 std::vector<std::string> CSyntaxNode::unconfirmedLocalVarNames;
 std::string CSyntaxNode::latestNewLocalVarName; 
+std::vector<TLoopTypes> CSyntaxNode::currentLoop;
 
 extern std::vector<TLineRec> lineRecs;
 
@@ -156,10 +158,36 @@ void CSyntaxNode::writeObjectDefTable() {
 			if (member.value.type == tigUndefined)
 				writeWord(0);
 			if (member.value.type == tigArray) {
-				writeWord(member.arrayInitList.size());
+				writeWord(member.arrayInitList.size()); int unrecognisedIdx = 0;
 				for (auto element : member.arrayInitList) {
+					if (element.type == tigUndefined) {
+						std:string unrecognisedStr = member.unrecogniseArrayInitIds[unrecognisedIdx++];
+						auto iter = objects.find(unrecognisedStr);
+						if (iter != objects.end()) {
+							writeByte(tigObj);
+							writeWord(iter->second.objectId);
+							continue;
+						}
+						auto iter2 = memberIds.find(unrecognisedStr);
+						if (iter2 != memberIds.end()) {
+							writeByte(tigInt);
+							writeWord(iter2->second);
+							continue;
+						}
+						cerr << "\nError! Identifier " << unrecognisedStr << " used to"
+							<< "initialise object " << object.objectId << " but never defined.";
+						exit(1);
+					}
+
 					writeByte(element.type);
-					writeWord(element.getIntValue());
+					if (element.type == tigInt)
+						writeWord(element.getIntValue());
+					if (element.type == tigObj)
+						writeWord(element.getObjId());
+					if (element.type == tigString)
+						writeString(element.getStringValue());
+					
+					
 					//TO DO: provide for other values
 				}
 			}
@@ -861,24 +889,26 @@ void CObjDeclNode::encode() {
 CObjMemberAssigneeNode::CObjMemberAssigneeNode(CSyntaxNode * parent, std::string* parsedString) {
 	//assume that parent will leave an object id on the stack
 	operands.push_back(parent);
-
-	/*
-	//identify member
-	auto iter = memberIds.find(*parsedString);
-	if (iter == memberIds.end()) {
-		std::cout << "\nError! No member named " << *parsedString << " exists.";
-		exit(1);
-	}
-	memberId = iter->second;
-	*/
 	memberId = getMemberId(*parsedString);
+}
+
+/** Special version for assignment to dereferenced members. */
+CObjMemberAssigneeNode::CObjMemberAssigneeNode(CSyntaxNode* parent, CSyntaxNode* reference) {
+	//assume that parent will leave an object id on the stack
+	operands.push_back(parent);
+	operands.push_back(reference);
 }
 
 /** Tell the VM to push the object id and member id onto the stack. */
 void CObjMemberAssigneeNode::encode() {
 	operands[0]->encode(); 
-	writeOp(opPushInt);
-	writeWord(memberId);
+	if (operands.size() == 1) {
+		writeOp(opPushInt);
+		writeWord(memberId);
+	}
+	else {  //it's a dereferenced member
+		operands[1]->encode(); //hopefully this leaves a memberId on the stack.
+	}
 }
 
 
@@ -1041,7 +1071,27 @@ CInitNode::CInitNode(CMemberIdNode * membIdent) {
 
 CInitNode::CInitNode(CObjIdentNode * objIdent) {//
 	value.setObjId(objIdent->getId());//
-}//
+}
+
+CInitNode::CInitNode(CMembOrObjIdNode* membOrObjIdent) {
+	//let's see if we recognise this identifier
+	auto iter = objects.find(membOrObjIdent->name);
+	if (iter != objects.end()) {
+		value.setObjId(iter->second.objectId);
+		return;
+	}
+	auto iter2 = memberIds.find(membOrObjIdent->name);
+	if (iter2 != memberIds.end()) {
+		value.setIntValue(iter2->second);
+		return;
+	}
+
+	//it hasn't been declared yet, so let's just store the name for now 
+	//and do a last-minute check when compiling
+	unrecognisedIdent = membOrObjIdent->name;
+	value.type = tigUndefined; //kind of a hack to flag this as so far undefined
+}
+
 
 CInitNode::CInitNode(CArrayInitListNode * arrayInitList) {
 	value.type = tigArray;
@@ -1067,8 +1117,11 @@ void CInitNode::encode() {
 	if (value.type == tigArray) {
 		operands[0]->encode(); //encodes arrayInitListNode, values left in arrayStack
 		memberStack2.back().arrayInitList = arrayStack;
+		if (!unrecognisedArrayIniterStack.empty())
+			memberStack2.back().unrecogniseArrayInitIds = unrecognisedArrayIniterStack;
 		memberStack2.back().value.setArray();
 		arrayStack.clear();
+		unrecognisedArrayIniterStack.clear();
 		return;
 	}
 
@@ -1146,8 +1199,13 @@ void CHotTextNode::encode() {
 }
 
 void CArrayInitConstNode::encode() {
-	//arrayStack.back().value = value;
 	arrayStack.push_back(value);
+
+	//unrecognised identifiers go in the string value for later checking,
+	//but because the type is tigUndefined the string has to be copied manually:
+	if (value.type == tigUndefined) {
+		unrecognisedArrayIniterStack.push_back(unrecognisedIdent);
+	}
 }
 
 
@@ -1160,7 +1218,8 @@ void CArrayDynInitNode::encode() {
 
 	//arrayStack.clear();
 	arrayInitCount.push_back(0);
-	operands[0]->encode(); //get all the initialisation values on the //array// stack
+	if (operands[0] != NULL)
+		operands[0]->encode(); //get all the initialisation values on the //array// stack
 	writeOp(opInitArray);
 	writeWord(arrayInitCount.back());
 	arrayInitCount.pop_back();
@@ -1214,7 +1273,9 @@ CArrayInitListNode::CArrayInitListNode(CSyntaxNode * initList) {
 
 void CArrayInitListNode::encode() {
 	arrayStack.clear();
-	operands[0]->encode(); //get all the initialisation values on the array stack
+	unrecognisedArrayIniterStack.clear();
+	if (operands[0] != NULL)
+		operands[0]->encode(); //get all the initialisation values on the array stack
 }
 
 /** Important: this quickly gets the member identifier string stored before an identifier in its initialisation block
@@ -1354,8 +1415,6 @@ CMemberCallNode::CMemberCallNode(CSyntaxNode * object, CSyntaxNode * funcName, C
 
 
 void CMemberCallNode::encode() {
-	if (operands[1]->getText() == "localX")
-		int b = 0;
 
 	string funcName = operands[1]->getText();
 	int nameId = -1;
@@ -1508,16 +1567,22 @@ void CForEachNode::encode() {
 	continueAddr.pop_back();
 }
 
-CForEachElementNode::CForEachElementNode(CSyntaxNode * variable, CSyntaxNode * containerObj, CSyntaxNode * code) {
+CForEachElementNode::CForEachElementNode(CSyntaxNode * variable, CSyntaxNode * containerObj, CSyntaxNode * code,
+	CSyntaxNode* start) {
 	operands.push_back(variable);
 	operands.push_back(containerObj);
 	operands.push_back(code);
+	operands.push_back(start);
 }
 
 void CForEachElementNode::encode() {
 	unsigned int numBreaks = breakAddr.size();
-	writeOp(opPushInt); 
-	writeWord(0); //put 0 on the stack as index
+	if (operands[3] != NULL)
+		operands[3]->encode(); //put start value on stack as index
+	else {
+		writeOp(opPushInt);
+		writeWord(0); //put 0 on the stack as index
+	}
 	operands[1]->encode(); //write code to put array on the stack
 
 	//loop:
@@ -1538,8 +1603,10 @@ void CForEachElementNode::encode() {
 
 
 	//do code code
+	currentLoop.push_back(forEachLoop);
 	operands[2]->encode();
-	
+	currentLoop.pop_back();
+
 	//jump to loop:
 	writeOp(opJump);
 	writeWord(loopAddr);
@@ -1790,9 +1857,16 @@ void CContinueNode::encode() {
 
 /** A syntax node fore breaking out of a loop. */
 void CLoopBreakNode::encode() {
-	writeOp(opPop);
-	writeOp(opPop);
-	//TO DO!!! make sure this works for child and other loops, or fix!
+	if (currentLoop.empty()) {
+		cerr << "\nError: file " << filenames[sourceFile] << ", line: " <<
+			sourceLine << ". 'break' used outside a loop.";
+		exit(1);
+	}
+
+	if (currentLoop.back() == forEachLoop) {
+		writeOp(opPop);
+		writeOp(opPop);
+	}
 
 	writeOp(opJump);
 	breakAddr.push_back(outputFile->tellp());
@@ -1867,21 +1941,25 @@ void CFlagExprNode::encode() {
 }
 
 /**	Node for creating a new object with the 'new' keyword. */
-CNewNode::CNewNode(CSyntaxNode * className, CSyntaxNode * initialisation) {
-	classId = className->getId();
+CNewNode::CNewNode(CSyntaxNode * classType, CSyntaxNode * initialisation) {
+	//classId = classType->getId();
+	//Let's try to make the class a variable
+	operands.push_back(classType);
+
 	if (initialisation)
 		operands.push_back(initialisation);
 }
 
 void CNewNode::encode() {
 	//handle any initialisation here
-	if (operands.size() > 0) {
+	if (operands.size() > 1) {
 		newInitialisationMembers.clear();
-		operands[0]->encode();
+		operands[1]->encode();
 	}
 
+	operands[0]->encode(); //get the classId on the stack
 	writeOp(opNew);
-	writeWord(classId);
+	//writeWord(classId);
 
 	//write length of initialisation list
 	writeByte((char)newInitialisationMembers.size());
@@ -1889,6 +1967,7 @@ void CNewNode::encode() {
 	reverse(newInitialisationMembers.begin(), newInitialisationMembers.end());
 	for (auto member : newInitialisationMembers)
 		writeWord(member);
+	newInitialisationMembers.clear();
 }
 
 /** Node for handling a list of member initialisations for a new object. */
@@ -2008,4 +2087,51 @@ void CArrayPushNode::encode() {
 		unconfirmedLocalVarNames.erase(it);
 
 	writeOp(opArrayPush);
+}
+
+/** A node defining a while loop. */
+CWhileNode::CWhileNode(CSyntaxNode* condition, CSyntaxNode* code) {
+	operands.push_back(condition);
+	operands.push_back(code);
+}
+
+void CWhileNode::encode() {
+	unsigned int numBreaks = breakAddr.size();
+	int loopAddr = outputFile->tellp();
+	continueAddr.push_back(loopAddr);
+	operands[0]->encode(); //condition check
+	writeOp(opJumpFalse);
+	int patchAddr = outputFile->tellp();
+	writeWord(0xFFFFFFFF); //dummy address
+
+	//write the conditional code
+	currentLoop.push_back(whileLoop);
+	operands[1]->encode();
+	currentLoop.pop_back();
+
+	writeOp(opJump);
+	writeWord(loopAddr);
+	int resumeAddr = outputFile->tellp();
+	outputFile->seekp(patchAddr);
+	if (tron)
+		cout << "\npatched " << patchAddr << " to";
+	writeWord(resumeAddr);
+
+	//patch any use of break in this loo[
+	for (unsigned int breaks = numBreaks; breaks < breakAddr.size(); breaks++) {
+		outputFile->seekp(breakAddr[breaks]);
+		if (tron)
+			cout << "\npatched " << breakAddr[breaks] << " to";
+		writeWord(resumeAddr);
+	}
+	breakAddr.erase(breakAddr.begin() + numBreaks, breakAddr.end());
+
+	outputFile->seekp(resumeAddr);
+	continueAddr.pop_back();
+}
+
+/** A node representing an identifier that may be an object name and may be a 
+	member, usually found in a member array initialisation. */
+CMembOrObjIdNode::CMembOrObjIdNode(std::string* idName) {
+	name = *idName; //just preserve the identifier string for now.
 }

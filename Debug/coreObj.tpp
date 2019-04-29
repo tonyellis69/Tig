@@ -75,6 +75,8 @@ registerHotText {
 
 listUndescribedExits() {
 	directionNum = 0; backDirectionUsed = -1;
+	doorList = [];
+	corridorList = [];
 	//TO DO: psuedorandomly turn off backDirection, it's too prevalent
 	for each directionId of directionIds {
 		destination = self.<directionId>;
