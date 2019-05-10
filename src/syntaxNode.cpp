@@ -52,6 +52,9 @@ std::vector<int> CSyntaxNode::newInitialisationMembers;
 std::vector<std::string> CSyntaxNode::unconfirmedLocalVarNames;
 std::string CSyntaxNode::latestNewLocalVarName; 
 std::vector<TLoopTypes> CSyntaxNode::currentLoop;
+std::vector<std::string> CSyntaxNode::declaredMemberNamesTmp;
+std::vector<TMemberCheck> CSyntaxNode::unconfirmedLocalMember;
+std::map<std::string, CTigVar> CSyntaxNode::consts;
 
 extern std::vector<TLineRec> lineRecs;
 
@@ -282,7 +285,7 @@ bool CSyntaxNode::objectHasMember(int objId, int memberId) {
 
 void CSyntaxNode::logLocalMemberCheck(int objId, int memberId) {
 	CObject* obj = getObject(objId);
-	obj->localMembersToCheck.push_back({sourceLine,memberId});
+	obj->localMembersToCheck.push_back({sourceLine,sourceFile, memberId});
 }
 
 
@@ -318,7 +321,7 @@ std::string CSyntaxNode::getMemberName(int memberId) {
 	auto it = std::find_if(memberIds.begin(), memberIds.end(),
 		[&](const std::pair<std::string, int>& member) {return member.second == memberId; });	
 	if (it == memberIds.end())
-		return NULL;
+		return string("");
 	return it->first;
 }
 
@@ -666,18 +669,26 @@ CVarAssigneeNode::~CVarAssigneeNode() {
 
 /** Tell the VM to push this variable's identifier on to the stack. */
 void CVarAssigneeNode::encode() {
+	if (name == "combatActionFn")
+		int b = 0;
 	writeOp(opPushInt); //TO DO make pushObj where necessary
 		//check if it's an existing data member or global variable.
 		auto iter = memberIds.find(name);
-		if (iter != memberIds.end()) {
+		if (iter != memberIds.end()) { //member name exists
 			int memberId = iter->second;
-			writeWord(zeroObject); //tells VM to resolve whether global or local at runtime
-			writeOp(opPushInt);
-			writeWord(memberId);
-			if (global) {
-				globalVarIds.insert(memberId);
+
+			if (globalVarIds.find(memberId) != globalVarIds.end() 
+				|| find(declaredMemberNamesTmp.begin(), declaredMemberNamesTmp.end(),name) != declaredMemberNamesTmp.end()
+				|| objectHasMember(currentObj,memberId) ) {
+
+				writeWord(zeroObject); //tells VM to resolve whether global or local at runtime
+				writeOp(opPushInt);
+				writeWord(memberId);
+				if (global) {
+					globalVarIds.insert(memberId);
+				}
+				return;
 			}
-			return;
 		}
 
 		
@@ -739,6 +750,7 @@ void CTimedEventNode::encode() {
 
 /** Create a node representing the declaration of the named object member. */
 CMemberDeclNode::CMemberDeclNode(CSyntaxNode* identifier, CSyntaxNode* initialiser) {
+	declaredMemberNamesTmp.push_back(identifier->getText());
 	memberId = getMemberId(identifier->getText());
 	if (initialiser)
 		operands.push_back(initialiser);
@@ -780,6 +792,9 @@ CObjDeclNode::CObjDeclNode(CSyntaxNode * identifier, CSyntaxNode * memberList, C
 	parentId = 0;
 	funcMode(false);
 
+	memberNames = declaredMemberNamesTmp;
+	declaredMemberNamesTmp.clear();
+
 	//maintain object tree 
 	parentList[childLevel] = identNode->getId();
 	if (parentList.find(childLevel - 1) != parentList.end()) {
@@ -820,6 +835,8 @@ void CObjDeclNode::encode() {
 	//run through the member node declarations and add these to the object's definition
 	memberStack2.clear();
 	flagNamesTmp.clear();
+	unconfirmedLocalMember.clear();
+	declaredMemberNamesTmp = memberNames;
 	members->encode();
 
 	for (auto memberRec2 : memberStack2) {
@@ -827,6 +844,8 @@ void CObjDeclNode::encode() {
 	}
 	memberStack2.clear();
 	currentObj = 0;
+	memberNames.clear();
+	declaredMemberNamesTmp.clear();
 
 	//did we pick up any flags while running through the member declarations?
 	int flagValues = 0;
@@ -852,6 +871,18 @@ void CObjDeclNode::encode() {
 	}
 	flagNamesTmp.clear();
 
+
+	for (auto check : thisObj->localMembersToCheck) {
+		if (!objectHasMember(thisObj->objectId, check.memberId) 
+			&& globalVarIds.find(check.memberId) == globalVarIds.end()) {
+			std::cerr << "\nError, line " << check.lineNum << ": reference to unrecognised identifier \"" << getMemberName(check.memberId) << "\" in object \"" << name << "\"";
+			exit(1);
+		}
+	}
+	thisObj->localMembersToCheck.clear();
+
+
+
 	if (parentId == 0)
 		return;
 
@@ -876,13 +907,7 @@ void CObjDeclNode::encode() {
 		parentObjChildMemb->value.setObjId(thisObj->objectId);
 	}
 
-	for (auto check : thisObj->localMembersToCheck) {
-		if (!objectHasMember(thisObj->objectId, check.memberId)) {
-			std::cerr << "\nError, line " << check.lineNum << ": reference to unrecognised identifier \"" << getMemberName(check.memberId) << "\" in object \"" << name << "\"";
-			exit(1);
-		}
-	}
-	thisObj->localMembersToCheck.clear();
+
 }
 
 /** Create a node representing an object's member reference. */
@@ -1001,7 +1026,7 @@ CVarExprNode::CVarExprNode(std::string * parsedString) {
 
 /** Tell VM to push this variable's value onto the stack. */
 void CVarExprNode::encode() {
-	//is this a local variable
+	//is this a known local variable
 	auto it = std::find_if(localVarIds.begin(), localVarIds.end(),
 		[&](auto& varName) { return varName == name; });
 	if (it != localVarIds.end()) {
@@ -1020,6 +1045,14 @@ void CVarExprNode::encode() {
 		return;
 	}
 
+	//is it a const?
+	if (consts.find(name) != consts.end()) {
+		writeOp(opPushInt);
+		writeWord(consts[name].getIntValue());
+		return;
+	}
+
+
 	//is this a local member or global variable?
 	auto it2 = memberIds.find(name); int memberId;
 	if (it2 == memberIds.end()) { //it's totally new
@@ -1029,7 +1062,17 @@ void CVarExprNode::encode() {
 	}
 	else {
 		memberId = it2->second;
+		//it's a recognised member name, is it a global var?
+	
+		//does it belong to this object?
+		
+		logLocalMemberCheck(currentObj,memberId );
 	}
+
+
+
+
+
 	writeOp(opPushInt);
 	writeWord(zeroObject);
 	//writeOp(opPushVar); 
@@ -1071,6 +1114,18 @@ CInitNode::CInitNode(CMemberIdNode * membIdent) {
 
 CInitNode::CInitNode(CObjIdentNode * objIdent) {//
 	value.setObjId(objIdent->getId());//
+}
+
+CInitNode::CInitNode(CObjOrConstIdentNode* ident) {
+	//identifier could be an object name or a global variable
+	//search consts list
+	if (consts.find(ident->name) != consts.end()) {
+		value = consts[ident->name];
+		return;
+	}
+
+	value.setObjId(getObjectId(ident->name));
+
 }
 
 CInitNode::CInitNode(CMembOrObjIdNode* membOrObjIdent) {
@@ -1874,7 +1929,8 @@ void CLoopBreakNode::encode() {
 }
 
 
-CMakeHotNode::CMakeHotNode(CSyntaxNode * text, CSyntaxNode * obj, CSyntaxNode * fn,  CSyntaxNode * params) {
+CMakeHotNode::CMakeHotNode(CSyntaxNode * text, CSyntaxNode * obj, CSyntaxNode * fn,  CSyntaxNode * params, bool alt) {
+	this->alt = alt;
 	operands.push_back(text);
 	operands.push_back(fn);
 	operands.push_back(obj);
@@ -1887,8 +1943,10 @@ void CMakeHotNode::encode() {
 
 	for (auto operand : operands)
 		operand->encode();
-
-	writeOp(opMakeHot);
+	if (alt)
+		writeOp(opMakeHotAlt);
+	else
+		writeOp(opMakeHot);
 	writeByte(paramCount.back());
 	paramCount.pop_back();
 }
@@ -2089,6 +2147,24 @@ void CArrayPushNode::encode() {
 	writeOp(opArrayPush);
 }
 
+/** Node for a -= operation on an array. */
+CArrayRemoveNode::CArrayRemoveNode(CSyntaxNode* assignee, CSyntaxNode* value) {
+	operands.push_back(assignee);
+	operands.push_back(value);
+}
+
+void CArrayRemoveNode::encode() {
+	operands[0]->encode();
+	operands[1]->encode();
+
+	auto it = find(unconfirmedLocalVarNames.begin(),
+		unconfirmedLocalVarNames.end(), latestNewLocalVarName);
+	if (it != unconfirmedLocalVarNames.end())
+		unconfirmedLocalVarNames.erase(it);
+
+	writeOp(opArrayRemove);
+}
+
 /** A node defining a while loop. */
 CWhileNode::CWhileNode(CSyntaxNode* condition, CSyntaxNode* code) {
 	operands.push_back(condition);
@@ -2134,4 +2210,15 @@ void CWhileNode::encode() {
 	member, usually found in a member array initialisation. */
 CMembOrObjIdNode::CMembOrObjIdNode(std::string* idName) {
 	name = *idName; //just preserve the identifier string for now.
+}
+
+/** A node representing an identifier that may be an object name and may be a
+	const, usually found in a member  initialisation. */
+CObjOrConstIdentNode::CObjOrConstIdentNode(std::string* idName) {
+	name = *idName; //just preserve the identifier string for now.
+}
+
+/** A node representing a constant declaration. */
+CConstNode::CConstNode(std::string* idName, int value) {
+	consts[*idName] = value;
 }

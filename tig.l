@@ -60,14 +60,16 @@ IDENT    {LETTER}({LETTER}|{DIGIT})*
 <INCL>[ \t]*			/* eat the whitespace */
 <INCL>[^ \t\n]+			{ /* got the include file name */
 							std::string path = homeDir + yytext;
-							yyin = fopen( path.c_str(), "r" );
-							if ( ! yyin ) {
-								std::cerr << "\nError, include file " << yytext << " not found.";
-								exit(1);
+							if (std::find(filenames.begin(),filenames.end(),path) == filenames.end()){
+								yyin = fopen( path.c_str(), "r" );
+								if ( ! yyin ) {
+									std::cerr << "\nError, include file " << yytext << " not found.";
+									exit(1);
+								}
+								filenames.push_back(path);
+								lineRecs.push_back({1,(int)filenames.size()-1}); //start a new line rec
+								yypush_buffer_state(yy_create_buffer( yyin, YY_BUF_SIZE ));
 							}
-							filenames.push_back(yytext);
-							lineRecs.push_back({1,(int)filenames.size()-1}); //start a new line rec
-							yypush_buffer_state(yy_create_buffer( yyin, YY_BUF_SIZE ));
 							BEGIN(INITIAL);
 						}
 <<EOF>>					{
@@ -132,6 +134,7 @@ d[1-9]([0-9])*					{
 "self"					return SELF;
 "children"				return CHILDREN;
 "makeHot"				return MAKE_HOT;
+"makeHotAlt"			return MAKE_HOT_ALT;
 "true"					{	yylval.iValue = 1; return INTEGER; }
 "false"					{	yylval.iValue = 0; return INTEGER; }
 "nothing"				return NOTHING;
@@ -161,6 +164,7 @@ d[1-9]([0-9])*					{
 "by"					return BY;
 "log"					return LOG;
 "random"				return RANDOM;
+"const"					return CONST;
 {IDENT}					{	identBufs[currentIdentBuf].clear(); 
 							identBufs[currentIdentBuf].assign(yytext,yyleng);
 							yylval.str = &identBufs[currentIdentBuf];

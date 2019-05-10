@@ -194,6 +194,9 @@ public:
 	static std::vector<std::string> unconfirmedLocalVarNames; ///<Local var names not yet used as assignees.
 	static std::string latestNewLocalVarName; ///<Temp store for local var name most recently created.
 	static std::vector<TLoopTypes> currentLoop; ///<What kind of loop we're currently encoding, if any.
+	static std::vector<std::string> declaredMemberNamesTmp; ///<Temporary store of each member name encountered building an object definition tree.
+	static std::vector<TMemberCheck> unconfirmedLocalMember;
+	static std::map<std::string, CTigVar> consts;
 };
 
 enum TIdentType { local, globalVar, object };
@@ -326,6 +329,7 @@ public:
 	CSyntaxNode* members;
 	CSyntaxNode* classObj;
 	int parentId;
+	std::vector < std::string> memberNames;
 };
 
 class CObjMemberAssigneeNode : public CSyntaxNode {
@@ -373,13 +377,15 @@ public:
 class CArrayInitListNode;
 class CMemberIdNode;
 class CMembOrObjIdNode;
+class CObjOrConstIdentNode;
 class CInitNode : public CSyntaxNode {
 public:
 	CInitNode(std::string* parsedString);
 	CInitNode(int parsedInt);
 	CInitNode(CSyntaxNode* codeBlock);
 	CInitNode(CMemberIdNode* membIdent);
-	CInitNode(CObjIdentNode* objIdent);//
+	CInitNode(CObjIdentNode* objIdent);
+	CInitNode(CObjOrConstIdentNode* ident);
 	CInitNode(CMembOrObjIdNode* membOrObjIdent);
 	CInitNode(CArrayInitListNode * arrayInitList);
 	CInitNode();
@@ -647,8 +653,9 @@ public:
 class CMakeHotNode : public CSyntaxNode {
 public:
 	CMakeHotNode(CSyntaxNode* text, CSyntaxNode* fn, CSyntaxNode* obj,
-		CSyntaxNode* params);
+		CSyntaxNode* params, bool alt);
 	void encode();
+	bool alt;
 };
 
 
@@ -732,6 +739,13 @@ public:
 	void encode();
 };
 
+
+class CArrayRemoveNode : public CSyntaxNode {
+public:
+	CArrayRemoveNode(CSyntaxNode* assignee, CSyntaxNode* value);
+	void encode();
+};
+
 class CWhileNode : public CSyntaxNode {
 public: 
 	CWhileNode(CSyntaxNode* condition, CSyntaxNode* code);
@@ -744,4 +758,19 @@ public:
 	CMembOrObjIdNode(std::string* idName);
 	
 	std::string name;
+};
+
+class CObjOrConstIdentNode : public CSyntaxNode {
+public:
+	CObjOrConstIdentNode(std::string* idName);
+
+	std::string name;
+};
+
+
+class CConstNode : public CSyntaxNode {
+public:
+	CConstNode(std::string* idName, int value);
+
+
 };

@@ -1,6 +1,67 @@
 /* Core game objects. */
 
 CGameObj has parent = 0, child = 0, sibling = 0,  initial, click, turn, name, description,
+/*
+take {
+	oldParent = self.parent;
+	purge click, self; 
+	"\n\nYou pick up the " + makeHot(name,self,&click) + ". ";
+	move self to player;
+	flag self moved;
+	updateInventory();
+	oldParent.taken();
+}, 
+drop {
+	purge click, self;
+	"\n\nYou drop the " + makeHot(name,self,&click) + ". ";
+	move self to player.parent;
+	updateInventory();
+}, */
+examine {
+	openWindow self;
+	setWindow(self);
+	print style("smallHeader") + cap(name) + style("small") + "\n";
+	description();
+	setWindow(mainWindow);
+},
+click {
+	//tell ui to open a menu window
+	openWindow(menuWindow);
+	setWindow(menuWindow);
+	createMenu();
+	setWindow(mainWindow);
+},
+
+/** Create the options provided by this object in the form of hot text calls. */
+createMenu() {
+	/*if (self not in player && !self inherits CStatic)
+			print makeHot("Take",self,&take) + "\n";
+	if (self in player)
+			print makeHot("Drop",self,&drop) + "\n";*/
+	makeHot("Examine",self,&examine);	
+},
+
+/** An empty default method to prevent tiresome warnings in room descriptions.*/
+search() {},
+
+/** Returns the shorthand version of this thing's name, if any.*/
+shortName() {
+	return name;
+},
+
+/** Called on every object in the room when player enters. */
+onPlayerEntry() {
+},
+
+/** Called on every object in the room when player exits. */
+onPlayerExit() {
+	
+}
+
+;
+
+/** An item is a takeable game object. */
+CGameObj CItem has
 take {
 	oldParent = self.parent;
 	purge click, self; 
@@ -16,21 +77,6 @@ drop {
 	move self to player.parent;
 	updateInventory();
 }, 
-examine {
-	openWindow self;
-	setWindow(self);
-	print style("smallHeader") + cap(name) + style("small") + "\n";
-	description();
-	setWindow(mainWindow);
-},
-click {
-	//tell ui to open a menu window
-	openWindow(menuWindow);
-	setWindow(menuWindow);
-	createMenu();
-	setWindow(mainWindow);
-	
-},
 
 /** Create the options provided by this object in the form of hot text calls. */
 createMenu() {
@@ -39,17 +85,8 @@ createMenu() {
 	if (self in player)
 			print makeHot("Drop",self,&drop) + "\n";
 	makeHot("Examine",self,&examine);	
-},
+};
 
-/** An empty default method to prevent tiresome warnings in room descriptions.*/
-search() {},
-
-/** Returns the shorthand version of this thing's name, if any.*/
-shortName() {
-	return name;
-}
-
-;
 
 
 /**	The basic room template. */
@@ -166,22 +203,26 @@ listUndescribedExits() {
 
 /** List the objects in the room. */
 listRoomContents() {
-	//describe any robots first
+	//describe any live robots first
+
+	robots = [];
 	for each item of self {
-		if (item inherits CRobot && item is not inCombat) {
+		if (item inherits CRobot /*&& item is not inCombat*/) {
 			robots[] += item;	
 		}
 	}
 	
+	
 	if (robots > 0) {
 		"\n\n";
+		
 		
 		//TO DO: lazily assuming if one robot is a short way off they all are!
 		//when I implement long distance, group robots by short and long.
 		if (robots[0].distance > meleeDistance)
 			"A little way off, ";
 		for each robot of robots {
-			robot.initial;
+			robot.initial();
 			if (first && robots > 1)
 				", while ";
 			else
@@ -213,7 +254,7 @@ listRoomContents() {
 	
 },
 look {
-	print style("mainHeader") + cap(name) + style("mainBody") + "\n";
+	print "\n" + style("mainHeader") + cap(name) + style("mainBody") + "\n";
 	registerHotText();
 	description(); //TO DO: should really be called describe.
 	listUndescribedExits();
@@ -253,7 +294,7 @@ taken {
 ;
 
 
-CGameObj CContainer has 
+CGameObj CContainer has open,
 search() {
 	if (open) { //don't tell the player it's openable unless it's examined.
 		"The " + name + " is open";
@@ -296,167 +337,6 @@ createMenu() {
 
 
 
-CGameObj CombatantClass player has onObject, backDirection, name "player", hitPoints 15, armour,
-weapon,
-moveTo (direction) {
-	setWindow(mainWindow);
-	"\n";
-	destination = parent.<direction>;
-	
-	if (destination inherits CDoor) {
-		if (destination.open == false) {
-			destination.blockedMsg();
-			return;
-		}
-		destination.passThrough();
-		destination = destination.<direction>;
-		backDirection = 0;
-	} else
-		backDirection = calcBackDirection(direction);
-
-
-	"\nYou go " + getDirectionName(direction) + ".\n";
-
-	teleport(destination);
-	
-	
-},
-
-/** Do any preparation for round of combat. */
-initialiseCombatRound() {
-	combatActionFn = 0;
-},
-
-/** Queue an attack on the given opponent. */
-queueHit(target) {
-	"\n\nYou choose to attack...\n";
-	opponent = target;
-	combatActionFn = &bash;
-},
-
-/** Queue an attempted block on the given opponent's attack. */
-queueBlock(target) {
-	"\n\nYou choose to block...\n";
-	opponent = target;
-	combatActionFn = &block;
-},
-
-/** Queue an attempt to dodge the given opponent's attack. */
-queueDodge(target) {
-	"\n\nYou choose to dodge...\n";
-	opponent = target;
-	combatActionFn = &dodge;
-},
-
-/** Queue a decision to do nothing this round.*/
-queueNothing(target) {
-	"\n\nYou choose to wait...\n";
-	opponent = target;
-	combatActionFn = &doNothing;
-},
-
-/** Queue an attempt to fire a gun this round.*/
-queueShot(target) {
-	"\n\nYou level your gun for a shot...\n";
-	opponent = target;
-	combatActionFn = &shoot;
-},
-
-/** Carry out whatever combat move the player has lined up.*/
-combatAction() {
-	log "\n[" + self.name + " acts on " + opponent.name + "]";
-	<combatActionFn>(opponent);
-	combatActionFn = 0;
-},
-
-/** Roll for initiative! This value will help the combatAssistant determine battle order.*/
-rollInitiative() {
-	initiative = d10;
-	if (self is stumbling)
-		initiative += 5;
-	//TO DO: modify with dexterity, etc
-},
-
-/** Use the player's basic physical attack on the given target. */
-bash(target) {
-	weapon.bash(target);
-	
-},
-
-
-block(target) {
-	log "\n" + self.name + ": [Silent block action.]";
-	if (target.combatActionFn == &block || target.combatActionFn == &dodge)
-		"You make a defensive move, but so does the " + target.name + ".";
-},
-
-dodge(target) {
-	log "\n" + self.name + ": [Silent dodge action.]";
-	
-	if (target.combatActionFn == &block || target.combatActionFn == &dodge)
-		"You make a defensive move, but so does the " + target.name + ".";
-},
-
-doNothing(target) {
-	"You bide your time";
-	if (target.combatActionFn == &charge)
-		" as the " + target.name + " gets rapidly closer";
-	". ";
-},
-
-shoot(target) {
-	weapon.shoot(target);
-	
-},
-
-/** Handle a bash attack. */
-receiveBash(attacker,damage) {
-	if (combatActionFn == &block && opponent == attacker && self is not stumbling) {
-		if (weapon.doesBlock(damage) == true) {
-			", but you block its attack.";
-			return;
-		} else { 
-			", too fast for you to block";
-		
-		}
-	}
-	
-	if (combatActionFn == &dodge && opponent == attacker && self is not stumbling) {
-		", but you dodge its attack";
-		if (d3 == 1) {
-			", causing it to stumble slightly.";
-			flag attacker stumbling;
-		} 
-		else
-			".";
-		return;
-	}
-	
-	if (self is stumbling) {
-		" as you flounder";
-		damage += 2;
-	}
-	unflag self stumbling;
-	
-	damageAfterArmour = armour.getReduction(damage);
-	
-	", doing " + damageAfterArmour + " damage. ";
-	
-	if (damageAfterArmour < damage) {
-		if (armour is broken)
-			"Your armour is wrecked in the process.";
-		
-	}
-	
-	hitPoints -= damageAfterArmour;
-	log "\nplayer hitpoints " + hitPoints;
-	
-	if (hitPoints <= 0) {
-			"\n\nThe " + attacker.name + " kills you!";
-	}
-}
-
-;
 
 
 

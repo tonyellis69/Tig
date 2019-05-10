@@ -44,7 +44,7 @@
 %type <nPtr> code_block 
 %type <nPtr> variable_expr assignment variable_assignee obj_member_assignee element_assignee var_or_obj_memb deref_variable_expr
 %type <nPtr> string_statement
-%type <nPtr> obj_identifier class_identifier optional_member_list member_decl_list member_decl obj_expr init_expr 
+%type <nPtr> obj_identifier obj_or_const_identifier class_identifier optional_member_list member_decl_list member_decl obj_expr init_expr 
 %type <iValue> level
 %type <nPtr> memb_decl_identifier memb_function_def return_expr member_call optional_param_list
 %type <nPtr> flag_decl flag_decl_list
@@ -60,7 +60,7 @@
 %token EVENT OPTION
 %token OBJECT  ARROW INHERITS SUPERCLASS FLAG DELETE
 %token GETSTRING
-%token HOT MAKE_HOT PURGE ALL CLEAR USED STYLE CAP NEXT
+%token HOT MAKE_HOT MAKE_HOT_ALT PURGE ALL CLEAR USED STYLE CAP NEXT
 %token MESSAGE PAUSE UNPAUSE //ARRAY
 %token START_TIMER START_EVENT AT
 %token <iValue> INTEGER
@@ -79,7 +79,7 @@
 %token RANDOM
 %token SORT_DESC BY
 %token LOG 
-%token NEW  ARRAY WITH
+%token NEW  ARRAY WITH CONST
 
 %left OR AND 
 %left NE GE '>' LE '<'     // '%left' makes these tokens left associative
@@ -146,6 +146,7 @@ statement:
 		| CLEAR_WINDOW ';'								{ $$ = new COpNode(opClr); }
 		| HOT CLEAR ';'									{ $$ = new COpNode(opHotClr); }
 		| var_or_obj_memb ARRAY ADD_ASSIGN expression	';'		{ $$ = new CArrayPushNode($4,$1); }
+		| var_or_obj_memb ARRAY SUB_ASSIGN expression	';'		{ $$ = new CArrayRemoveNode($4,$1); }
 		| MESSAGE param_list ';'						{ $$ = new CMsgNode($2); }
 		| CONTINUE ';'									{ $$ = new CContinueNode(); }
 		| LOOP_BREAK ';'								{ $$ = new CLoopBreakNode(); }
@@ -220,6 +221,7 @@ dec_statement:
 		| level  obj_identifier optional_member_list ';'				{ $$ = new CObjDeclNode($2,$3,NULL); }
 		| level class_identifier obj_identifier optional_member_list ';'	{ $$ = new CObjDeclNode($3,$4,$2); }
 		| global_func_decl ';'												{ $$ = $1; }
+		| CONST IDENTIFIER '=' INTEGER ';'									{ $$ = new CConstNode($2,$4); }
 		;
 
 
@@ -287,8 +289,13 @@ init_expr:
 		STRING						{ $$ = new CInitNode($1); }
 		| INTEGER					{ $$ = new CInitNode($1); }
 		| memb_function_def			{ $$ = new CInitNode($1); }
-		| obj_identifier			{ $$ = new CInitNode((CObjIdentNode*)$1); }
+		//| obj_identifier			{ $$ = new CInitNode((CObjIdentNode*)$1); }
+		| obj_or_const_identifier	{ $$ = new CInitNode((CObjOrConstIdentNode*)$1); }
 		| array_init_list			{ $$ = new CInitNode((CArrayInitListNode*)$1); }
+		;
+
+obj_or_const_identifier:
+		IDENTIFIER					{ $$ = new CObjOrConstIdentNode($1); }
 		;
 
 memb_function_def:
@@ -367,7 +374,8 @@ expression:
 
 
 make_hot:
-	 MAKE_HOT '(' expression ',' expression ',' expression optional_hot_param_list ')' { $$ = new CMakeHotNode($3,$5,$7,$8);}
+	 MAKE_HOT '(' expression ',' expression ',' expression optional_hot_param_list ')' { $$ = new CMakeHotNode($3,$5,$7,$8,false);}
+	| MAKE_HOT_ALT '(' expression ',' expression ',' expression optional_hot_param_list ')' { $$ = new CMakeHotNode($3,$5,$7,$8,true);} 
 	;
 
 cap:

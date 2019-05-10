@@ -19,8 +19,9 @@ directionNames = ["north","northeast","east","southeast","south","southwest","we
 
 playerObj = player;
 
-updateInventory() {
+liveList = []; //Active objects that get their turn() function called every turn.
 
+updateInventory() {
 	setWindow(invWindow);
 	clearWindow;
 	print style("smallHeader") + "Inventory:\n" + style("small");
@@ -98,12 +99,20 @@ clickableName(obj) {
 };
 
 teleport(destination) {
+	for each obj of player.parent 
+		obj.onPlayerExit();
+	
 	move player to destination;
+	
+	unflag combatAssistant active;
 	
 	purge all;
 	"\n";
 	message msgRoomChange, destination;
 	destination.look();
+	
+	for each obj of destination
+		obj.onPlayerEntry();
 };
 
 /** Return the object name correctly prefixed with 'a' or 'an'.*/
@@ -117,23 +126,47 @@ aAn(obj) {
 };
 
 
-/** Execute the actions of any active game objects. */
-gameTurn() {
-	if (player is inCombat) { //trap control if we're in combat
-		if (player.combatActionFn == 0) //player hasn't chosen an option yet
-			return;
+/** After the player has acted, the rest of the game world gets a chance to act. */
+gameTurn() {	
 	
-		combatAssistant.resolve();
-		return;
+	for each liveObject of liveList {
+		liveObject.turn();	
 	}
 	
-	
-	
+	if (combatAssistant is active)
+		combatAssistant.doCombatRound();
+};
 
-	//Execute the actions of any local objects.
-	for each localObject of player.parent {
-		localObject.turn();	
+
+/** Display the shortcut menu for the player. */
+shortcutMenu() {
+	if (player is dead)
+		return;
+	//tell ui to open a menu window
+	openWindow(menuWindow);
+	setWindow(menuWindow);
+	makeHot("Look",player.parent, &look);
+	
+	//loop through exits of player location
+	idx = 0;
+	for each exit of directionIds {
+		if (player.parent.<exit> != 0) {
+			name = directionNames[idx];
+			makeHot(name,player, &moveTo, exit);
+		}
+		idx += 1;
+		
 	}
-	combatAssistant.turn();
+	setWindow(mainWindow);
+};
+
+
+playerPresent() {
+	if (self in player.parent)
+		return true;
+	return false;
 	
 };
+
+
+

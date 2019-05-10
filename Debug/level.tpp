@@ -4,6 +4,7 @@
 #include global.tpp
 #include combatAssistant.tpp
 #include coreObj.tpp
+#include player.tpp
 #include weapons.tpp
 #include robot.tpp
 #include powerPlant.tpp
@@ -13,7 +14,7 @@
 init() {
 
 	//start player in the right room:
-	//move player to arena;
+	move player to arena;
 	move wrench to player;
 	move pipe to player;
 	move ablat to player;
@@ -23,9 +24,9 @@ init() {
 	updateInventory();
 
 
-	entranceHub = powerPlant.createMap();
+	//entranceHub = powerPlant.createMap();
 
-	move player to entranceHub.hubRoom;
+	//move player to entranceHub.hubRoom;
 
 	player.parent.look();
 	gameTurn();
@@ -37,12 +38,9 @@ CRoom arena has name "Bare room",  description {
 }, southTo testRoomSouth, swTo testRoomSouthWest;
 
 /*
--> CRobot robot has name "rectangular servobot", shortName "servobot", initial "a rectangular servobot watches you with narrow, electronic eyes",
-description "A collection of hard, metallic edges and surfaces.",
-weapon = metalArm, armour = lightRoboArmour, distance = 5
-;
 
--> CRobot cleaningBot has name "cleaning bot", initial "a cleaning bot polishes the floor", 
+
+-> CRobot cleaningBot has name "cleaning bot", initialText "a cleaning bot polishes the floor", 
 description "A low, four-legged machine with orange brushes for feet.",
 weapon = brushArm, armour = lightRoboArmour, distance = 5
 ;
@@ -53,6 +51,11 @@ CRoom testRoomSouth has name "Test room south",  description {
 "This is a test room.";
 },
 northTo arena; 
+
+-> CRobot robot has name "rectangular servobot", shortName "servobot", initialText "A rectangular servobot stands here",
+description "A collection of hard, metallic edges and surfaces.",
+weapon = metalArm, armour = lightRoboArmour, distance = 1 //was 5
+;
 
 
 CRoom testRoomSouthWest has name "Test room southwest",  description {
