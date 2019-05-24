@@ -144,6 +144,7 @@ d[1-9]([0-9])*					{
 "openWindow"			return OPEN_WINDOW;
 "setWindow"				return SET_WINDOW;
 "clearWindow"			return CLEAR_WINDOW;
+"clearMarkedText"		return CLEAR_MARKED;
 "style"					return STYLE;
 "cap"					return CAP;
 "capitalise"			return CAP;
@@ -185,7 +186,7 @@ d[1-9]([0-9])*					{
 							return STRING;
 						}
 <STR>\\n				stringBuf.append("\n"); /* user-supplied line break. */ 
-<STR>[ ]*\n[ ]*			stringBuf.append(" "); trackLine(); //An actual line break
+<STR>[ ]*\n[ ]*			stringBuf.append(""); trackLine(); //An actual line break
 <STR>[ \t]+				stringBuf.append(" ");
 <STR>.					stringBuf.append( yytext,yyleng);		
 									

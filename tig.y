@@ -49,14 +49,14 @@
 %type <nPtr> memb_decl_identifier memb_function_def return_expr member_call optional_param_list
 %type <nPtr> flag_decl flag_decl_list
 %type <nPtr> array_init_expr constant_seq array_init_const array_element_expr array_index_expr array_init_list expr_seq array_dyn_init_elem
-%type <nPtr> comparison_expr logic_expression
+%type <nPtr> comparison_expr logic_expression negatable_expression
 %type <nPtr> global_func_decl   param_list  func_call func_ident 
 %type <nPtr> memberId flag_expr member_id_expr memb_or_obj_id
 %type <nPtr> optional_new_init new_init_list new_init optional_hot_param_list
 %type <nPtr> make_hot style cap 
 //%type <nPtr> range_expr
 
-%token PRINT SET_WINDOW CLEAR_WINDOW OPEN_WINDOW END RETURN
+%token PRINT SET_WINDOW CLEAR_WINDOW OPEN_WINDOW CLEAR_MARKED END RETURN
 %token EVENT OPTION
 %token OBJECT  ARROW INHERITS SUPERCLASS FLAG DELETE
 %token GETSTRING
@@ -145,6 +145,7 @@ statement:
 		| SET_WINDOW '(' expression ')' ';'				{ $$ = new COpNode(opWin,$3); }
 		| CLEAR_WINDOW ';'								{ $$ = new COpNode(opClr); }
 		| HOT CLEAR ';'									{ $$ = new COpNode(opHotClr); }
+		| CLEAR_MARKED ';'								{ $$ = new COpNode(opClrMarked); }
 		| var_or_obj_memb ARRAY ADD_ASSIGN expression	';'		{ $$ = new CArrayPushNode($4,$1); }
 		| var_or_obj_memb ARRAY SUB_ASSIGN expression	';'		{ $$ = new CArrayRemoveNode($4,$1); }
 		| MESSAGE param_list ';'						{ $$ = new CMsgNode($2); }
@@ -288,6 +289,7 @@ global_func_decl:
 init_expr:
 		STRING						{ $$ = new CInitNode($1); }
 		| INTEGER					{ $$ = new CInitNode($1); }
+		| '-' INTEGER				{ $$ = new CInitNode(-$2); }
 		| memb_function_def			{ $$ = new CInitNode($1); }
 		//| obj_identifier			{ $$ = new CInitNode((CObjIdentNode*)$1); }
 		| obj_or_const_identifier	{ $$ = new CInitNode((CObjOrConstIdentNode*)$1); }
@@ -338,14 +340,13 @@ expression:
 	  | expression '+' expression		{ $$ = new COpNode(opAdd, $1, $3); }
 	  | expression '-' expression		{ $$ = new COpNode(opSub, $1, $3); }
 	  | expression '%' expression		{ $$ = new COpNode(opMod, $1, $3); }
-	  | '-' expression %prec UMINUS		{ $$ = new COpNode(opMinus, $2); }
+	  | '-' negatable_expression %prec UMINUS		{ $$ = new COpNode(opMinus, $2); } 
 	  | constant_expr					{ $$ = $1; }
 	  | array_init_expr					{ $$ = $1; }
 	  | comparison_expr					{ $$ = $1; }
 	  | '(' expression ')'				{ $$ = $2; }
 	  | SELF							{ $$ = new COpNode(opPushSelf); }
-	  //| obj_expr IS IN obj_expr			{ $$ = new COpNode(opIn,$1,$4); }
-	   | expression IN expression			{ $$ = new COpNode(opIn,$1,$3); } //was obj_expr
+	  | expression IN expression			{ $$ = new COpNode(opIn,$1,$3); } //was obj_expr
 	  | obj_expr NOT IN obj_expr			{ $$ = new COpNode(opNotIn,$1,$4); }
 	  | CHILDREN '(' obj_expr ')'		{ $$ = new COpNode(opChildren,$3); }
 	  | make_hot						{ $$ = $1; }
@@ -354,7 +355,6 @@ expression:
 	  | style							{ $$ = $1; }
 	  | cap								{ $$ = $1; }
 	  | obj_expr INHERITS obj_expr		{ $$ = new COpNode(opInherits,$1,$3); }
-	//  | obj_expr HAS memberId			{ $$ = new COpNode(opHas,$1,$3); }
 	  | obj_expr HAS expression			{ $$ = new COpNode(opHas,$1,$3); }
 	  | HOT expression USED				{ $$ = new COpNode(opHotCheck,$2); }
 	  | '!' expression					{ $$ = new COpNode(opNot,$2); }
@@ -362,7 +362,6 @@ expression:
 	  | expression MATCHES expression   { $$ = new COpNode(opMatch, $1, $3); }
 	  | obj_expr IS flag_expr			{ $$ = new COpNode(opIs, $1, $3); }
 	  | obj_expr IS NOT flag_expr		{ $$ = new COpNode(opIsNot, $1, $4); }
-	  //| NEW obj_identifier optional_new_init	{ $$ = new CNewNode($2,$3); }
 	  | NEW  variable_expr   optional_new_init	{ $$ = new CNewNode($2,$3); }
 	  | FINAL_LOOP						{ $$ = new CFinalLoopNode(); }
 	  | FIRST_LOOP						{ $$ = new CFirstLoopNode(); }
@@ -370,8 +369,10 @@ expression:
 	  | RANDOM var_or_obj_memb ARRAY	{ $$ = new COpNode(opRand,$2); }
       ;
 
-
-
+negatable_expression:
+		variable_expr					{ $$ = $1; }
+	|  '(' expression ')'				{ $$ = $2; }
+	;
 
 make_hot:
 	 MAKE_HOT '(' expression ',' expression ',' expression optional_hot_param_list ')' { $$ = new CMakeHotNode($3,$5,$7,$8,false);}
@@ -462,6 +463,7 @@ constant_expr:							//TO DO: float
 
 integer_constant:
 	INTEGER								{ $$ = new CIntNode($1); }
+	| '-' INTEGER %prec UMINUS			{ $$ = new CIntNode(-$2); }
 	;
 
 array_init_expr:

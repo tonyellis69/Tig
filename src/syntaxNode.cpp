@@ -2222,3 +2222,20 @@ CObjOrConstIdentNode::CObjOrConstIdentNode(std::string* idName) {
 CConstNode::CConstNode(std::string* idName, int value) {
 	consts[*idName] = value;
 }
+
+CNegateNode::CNegateNode(CSyntaxNode* expr) {
+	numericConst = false;
+	operands.push_back(expr);
+}
+
+CNegateNode::CNegateNode(CIntNode* expr) {
+	numericConst = true;
+	expr->integer = -expr->integer;
+	operands.push_back(expr);
+}
+
+void CNegateNode::encode() {
+	operands[0]->encode();
+	if (!numericConst)
+		writeOp(opMinus);
+}

@@ -1,13 +1,13 @@
 
 
 
-CGameObj CombatantClass player has onObject, backDirection, name "player", hitPoints 15, armour,
-weapon,
+CGameObj CombatantClass player has onObject, backDirection, name "player", hitPoints 25, armour,
+weapon, armourClass = 10,
 
 /** An attempt by the player to move in the given direction to a new location.*/
 moveTo (direction) {
 	setWindow(mainWindow);
-	"\n";
+	
 	destination = parent.<direction>;
 	
 	if (destination inherits CDoor) {
@@ -21,27 +21,37 @@ moveTo (direction) {
 	} else
 		backDirection = calcBackDirection(direction);
 
-
-		
-	"\nYou go " + getDirectionName(direction) + ".\n";
-	
 	teleport(destination);
-	
-	
 },
 
-/** Do any preparation for round of combat. */
-initialiseCombatRound() {
-	combatActionFn = 0;
-},
+
 
 /** Queue an attack on the given opponent. */
-queueHit(target) {
-	"\n\nYou choose to attack...\n";
+queueFastHit(target) {
 	opponent = target;
-	combatActionFn = &bash;
+	combatActionFn = &fastHit;
 	combatAssistant.register(self);
 },
+
+queueHeavyHit(target) {
+	opponent = target;
+	combatActionFn = &heavyHit;
+	combatAssistant.register(self);
+},
+
+queueFastShot(target) {
+	opponent = target;
+	combatActionFn = &fastShot;
+	combatAssistant.register(self);
+},
+
+queueCarefulShot(target) {
+	opponent = target;
+	combatActionFn = &carefulShot;
+	combatAssistant.register(self);
+},
+
+
 
 /** Queue an attempted block on the given opponent's attack. */
 queueBlock(target) {
@@ -60,19 +70,11 @@ queueDodge(target) {
 },
 
 /** Queue a decision to do nothing this round.*/
-queueNothing(target) {
-	"\n\nYou choose to wait...\n";
-	opponent = target;
+queueDoNothing() {
 	combatActionFn = &doNothing;
 	combatAssistant.register(self);
 },
 
-/** Queue an attempt to fire a gun this round.*/
-queueShot(target) {
-	opponent = target;
-	combatActionFn = &shoot;
-	combatAssistant.register(self);
-},
 
 /** Carry out whatever combat move the player has lined up.*/
 combatAction() {
@@ -89,11 +91,7 @@ rollInitiative() {
 	//TO DO: modify with dexterity, etc
 },
 
-/** Use the player's basic physical attack on the given target. */
-bash(target) {
-	weapon.bash(target);
-	
-},
+
 
 
 block(target) {
@@ -110,16 +108,127 @@ dodge(target) {
 },
 
 doNothing(target) {
-	"You bide your time";
+	//"You bide your time";
 	if (target.combatActionFn == &charge)
 		" as the " + target.name + " gets rapidly closer";
 	". ";
 },
 
-shoot(target) {
-	weapon.shoot(target);
+
+/** Attempt a fast hit on the target. */
+fastHit(target) {
+	ACmodifier += weapon.getFastACmodifier();
+	hitRoll = rollToHit();
 	
+	hitRoll += weapon.getFastHitModifier(target);
+	targetAC = target.getModifiedAC(weapon);
+	
+	log "\nPlayer ACmodifier: " + ACmodifier + " hit roll + mod: " + hitRoll + 
+	" vs robot AC: " + targetAC;
+		
+	if (hitRoll < targetAC) {
+		", but miss.";
+		return;
+	}
+	
+	damage = weapon.getLightDamage(target);
+	//add any player damage mods
+	target.receiveDamage(weapon,damage);
 },
+
+/** Attempt a heavy hit on the target.*/
+heavyHit(target) {
+	ACmodifier += weapon.getHeavyACmodifier();
+	hitRoll = rollToHit();
+	hitRoll += weapon.getHeavyHitModifier(target);
+	targetAC = target.getModifiedAC(weapon);
+	
+	log "\nPlayer ACmodifier: " + ACmodifier + " hit roll + mod: " + hitRoll + 
+	" vs robot AC: " + targetAC;
+	
+	if (hitRoll < targetAC) {
+		", but miss.";
+		return;
+	}
+	
+	damage = weapon.getHeavyDamage(target);
+	//add any player damage mods
+	target.receiveDamage(weapon,damage);
+},
+
+/** Attempt a fast shot on the target. */
+fastShot(target) {
+	ACmodifier += weapon.getFastACmodifier();
+	hitRoll = rollToHit();
+	
+	hitRoll += weapon.getFastHitModifier(target);
+	targetAC = target.getModifiedAC(weapon);
+		
+	if (hitRoll < targetAC) {
+		", but miss.";
+		return;
+	}
+	
+	damage = weapon.getLightDamage(target);
+	//add any player damage mods
+	target.receiveDamage(weapon,damage);
+},
+
+carefulShot(target) {
+	ACmodifier += weapon.getFastACmodifier();
+	hitRoll = rollToHit();
+	
+	hitRoll += weapon.getFastHitModifier(target);
+	targetAC = target.getModifiedAC(weapon);
+		
+	if (hitRoll < targetAC) {
+		", but miss.";
+		return;
+	}
+	
+	damage = weapon.getLightDamage(target);
+	//add any player damage mods
+	target.receiveDamage(weapon,damage);
+},
+
+/** The player's basic roll to hit. */
+rollToHit() {
+	return d20;
+},
+
+/** Return the player's AC, modified by any personal mods and weaknesses etc to the given weapon. */
+getModifiedAC(weapon) {
+	//add mods here
+	//TO DO: add mod for armour!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+	return armourClass;
+},
+
+/** Handle receiving damage, applying reductions where applicable and deducting what's left from hit points. */
+receiveDamage(weapon,damage) {
+	//reduce damage by any modifiers
+	
+	damage = armour.onHit(damage);
+
+	if (damage < 1)
+		damage = 1;
+	
+	", hitting for " + damage + " damage.";
+	hitPoints -= damage;
+	
+	if (hitPoints <= 0) {
+		"\n\nThe blow kills you!";
+		flag self dead;
+		combatActionFn = 0;
+		purge all;
+		//TO DO: deactivate inventory
+		"\nDo you want to be " + makeHot("resurrected?",self,&resurrect);
+			
+	}
+},
+
+
+
+
 
 /** Handle a bash attack. */
 receiveBash(attacker,damage) {
@@ -155,8 +264,8 @@ receiveBash(attacker,damage) {
 	", doing " + damageAfterArmour + " damage. ";
 	
 	if (damageAfterArmour < damage) {
-		if (armour is broken)
-			"Your armour is wrecked in the process.";
+		//if (armour is broken)
+	//		"Your armour is wrecked in the process.";
 		
 	}
 	

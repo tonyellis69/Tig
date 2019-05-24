@@ -1,2 +1,0 @@
-
-Error, line 263: reference to unrecognised identifier "open" in object "CContainer"

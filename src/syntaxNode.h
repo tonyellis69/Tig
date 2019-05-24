@@ -774,3 +774,12 @@ public:
 
 
 };
+
+class CNegateNode : public CSyntaxNode {
+public:
+	CNegateNode(CSyntaxNode* expr);
+	CNegateNode(CIntNode* expr);
+	void encode();
+
+	bool numericConst;
+};

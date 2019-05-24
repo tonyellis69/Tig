@@ -5,7 +5,18 @@ const initiatingCombat = 10;
 const inCombat = 20;
 const chasingPlayer = 30;
 
-CombatantClass has hitPoints,  opponent, initiative, combatActionFn, initialiseCombatRound, chooseCombatAction, combatState = notInCombat; 
+CombatantClass has hitPoints,  opponent, initiative, combatActionFn, chooseCombatAction, combatState = notInCombat, ACmodifier, armourClass, toHitModifier,
+
+/** Reset stuff for a new round of combat. */
+initialiseCombat() {
+	ACmodifier = 0;
+	toHitModifier = 0;
+},
+
+/** Return this combatant's modified AC, including any weakness/resistance to the given weapon.*/
+getModifiedAC(weapon) {
+	return armourClass + ACmodifier;
+}; 
 
 
 /** An object for keeping track of fights and the combatants involved.*/
@@ -24,6 +35,8 @@ unregister(combatant) {
 
 /** All combatants perform their chosen combat action for this turn in initiative order.*/
 doCombatRound() {
+	player.initialiseCombat();
+	
 	sort> combatants by &initiative;
 	
 	//Do player first, for now...
@@ -43,50 +56,67 @@ doCombatRound() {
 	if (combatants > 0) 
 		warningMsg();
 	
-		
+	robots = combatants;
 	combatants = [];
-
-	
 },
 
 
 /** Make it clear to the player that they're in a fight. */
 warningMsg() {
-	enemyTEMP = combatants[0];
 	//TO DO: this is temp! Fix!
 	
+	purge showPlayerOptions, self;
 	
-	"\n\nYou're being attacked. You should probably " 
-	+ makeHot("do something", combatAssistant,&showPlayerOptions,enemyTEMP) + ". ";
+	print style("markOn") +
+	"\n\n[You're being attacked. You should probably " 
+	+ makeHot("do something", combatAssistant,&showPlayerOptions) + ".]" + style("markOff");
+	//"\n\nYou're being " + makeHot("attacked", combatAssistant,&showPlayerOptions,enemyTEMP) + ".";
 },
 
 
 
 /** Display the player's options for attacking this enemy.*/
-showPlayerOptions(attacker) {
+showPlayerOptions() {
 	//purge showPlayerOptions, self;
+
+
 	openWindow(menuWindow);
 	setWindow(menuWindow);
-	if (attacker.distance > meleeDistance && player.weapon is not ranged) {
-		makeHot("Do nothing",player,&queueNothing,attacker);	
+	if (robots[0].distance > meleeDistance && player.weapon is not ranged) {
+		makeHot("Do nothing",player,&queueDoNothing,"You wait to see what happens");	
 		setWindow(mainWindow);
 		return;
 	}
 	
-	narrative = player.weapon.attackMsg(attacker);
-	if (player.weapon is ranged) {
-		
-		makeHot("Fire " + player.weapon.name,player,&queueShot,attacker,narrative);
-		//makeHotAlt("Test",player,&queueTest,"This is narrative text 1");
-		//makeHotAlt("Test",player,&queueTest,"This is narrative text 2");
-		//makeHotAlt("Test",player,&queueTest,"This is narrative text 3");
-	}
-	else {
-		makeHot("Hit\n",player,&queueHit,attacker,narrative);	
-		makeHot("Block\n",player,&queueBlock,attacker,narrative);
-		makeHot("Dodge",player,&queueDodge,attacker,narrative);
+	for each robot of robots {
+		if (player.weapon is ranged) {
+			if (first) {
+				makeHot("Quick shot",player,&queueFastShot,robot,"You aim a quick shot at the " + robot.name());
+				makeHot("Careful shot",player,&queueCarefulShot,robot,"You aim carefully and fire at the " + robot.name());
+			}
+			else {
+				makeHotAlt("Quick shot",player,&queueFastShot,robot,"You aim a quick shot at the " + robot.name());
+				makeHotAlt("Careful shot",player,&queueCarefulShot,robot,"You aim carefully and fire at the " + robot.name());
+			}
+		}
+		else {
+			
+			//makeHot("Hit\n",player,&queueHit,attacker,narrative);	
+			//makeHot("Block\n",player,&queueBlock,attacker,narrative);
+			//makeHot("Dodge",player,&queueDodge,attacker,narrative);
+			if (first) {
+				makeHot("Fast hit",player,&queueFastHit,robot,"You aim a quick strike at the " + robot.name());
+				makeHot("Heavy hit",player,&queueHeavyHit,robot,"You swing a heavy blow at the " + robot.name());
+			} else { 
+				makeHotAlt("Fast hit",player,&queueFastHit,robot,"You aim a quick strike at the " + robot.name());
+				makeHotAlt("Heavy hit",player,&queueHeavyHit,robot,"You swing a heavy blow at the " + robot.name());
+				
+			}
 
+		}
 	}
+	
+	makeHot("Do nothing",player,&queueDoNothing,"You wait to see what happens");
 	setWindow(mainWindow);
 },
 

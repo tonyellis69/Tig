@@ -1,7 +1,7 @@
 
 
 /** The base robot class. */
-CItem CombatantClass CRobot has opponent, hitPoints 15, initiative, combatActionFn, weapon, armour, initialText,
+CGameObj CombatantClass CRobot has opponent, hitPoints 15, initiative, combatActionFn, weapon, armour, initialText,
 distance = 1,
 
 initial() {
@@ -41,8 +41,6 @@ turn {
 		return;
 	}
 		
-	
-	
 	if (playerPresent())
 		fight(player);
 	else
@@ -59,6 +57,8 @@ followPlayer() {
 
 /** Initiate a round of combat with the target. */
 fight(target) {
+	initialiseCombat();
+	unflag self combatMessaged;
 	opponent = target;
 	rollInitiative();
 	if (combatState ==  notInCombat) {
@@ -71,21 +71,14 @@ fight(target) {
 	combatAssistant.register(self);
 },
 
-/** Describe what the robot is doing, combat-wise. */
-combatMsg() {
-	if (combatState == initiatingCombat) {
-		initiatingCombatMsg();
-		return;
-	}
-	continuingCombatMsg();
-},
+
 
 /** Deliver a one-off message announcing that this robot is starting combat. */
 initiatingCombatMsg() {
 	"Seeing you, the " + shortName + " ";
 	roll = d3;
 	if (roll == 1)
-		msg = "charges, metal arms whirling!";
+		msg = "charges in your direction, metal arms whirling!";
 	if (roll == 2)
 		msg = "speeds toward you, looking hostile!";
 	if (roll == 3)
@@ -95,42 +88,18 @@ initiatingCombatMsg() {
 	combatState = inCombat;
 },
 
-/** Describe what the robot seems to be doing this combat round. Attacking, evading, etc. */
-continuingCombatMsg() {
-	"The " + shortName + " ";
-	/*roll = d3;
-	if (roll == 1)
-		msg = "swipes at you with a metal arm";
-	if (roll == 2)
-		msg = "swings its arm at you like a club";
-	if (roll == 3)
-		msg = "raises a clawed hand to gouge you";	*/
-	
-	"looms menacingly.";
-	return;
-	
-	///////////////////////////////
-	
-	msg = "is poised to strike";
-	
-	makeHot(msg, combatAssistant,&showPlayerOptions,self) + ". ";
-},
-
-
 
 
 /** Robot chooses its action for this round of combat.*/
 chooseCombatAction() {
 	log self.name + " choosing combat action.";
 	
-	
-	
 	if (distance > meleeDistance) {
 		combatActionFn = &charge;
 		return;
 	}
 	
-	choice = d6;
+	/*choice = d6;
 	if (choice == 1) {
 		combatActionFn = &block;
 	} else if (choice == 2) {
@@ -138,14 +107,11 @@ chooseCombatAction() {
 	}
 	else {
 		combatActionFn = &bash;	
-	}
+	}*/
+	
+	combatActionFn = &bash;	
 },
 
-
-/** Do any preparation for round of combat. */
-initialiseCombatRound() {
-	combatActionFn = 0;//?
-},
 
 /** Carry out whatever combat move the robot has previously announced.*/
 combatAction() {
@@ -164,21 +130,38 @@ rollInitiative() {
 
 /** Use the robot's basic physical attack on the given target. */
 bash(target) {
-	damage = weapon.getDamage();
+	ACmodifier += weapon.getFastACmodifier();
+	hitRoll = rollToHit();
+	hitRoll += weapon.getFastHitModifier(target);
+	targetAC = target.getModifiedAC(weapon);
+	
+	log "\nRobot ACmodifier: " + ACmodifier + " hit roll + mod: " + hitRoll + 
+	" vs player AC: " + targetAC;
+	
+	if (hitRoll < targetAC) {
+		"The " + name() + " swipes at you ineffectually.";
+		return;
+	}
+	
+	damage = weapon.getLightDamage(target);
 	
 	qualifier = "The ";
-	if (player.opponent == self)
-		qualifier = "Moving fast, the ";
-	
 	roll = d3;
 	if (roll == 1)
-		print qualifier + self.name + " swings its " + weapon.name + " at you";
+		print qualifier + self.name + " bludgeons you with a " + weapon.name;
 	if (roll == 2)
-		"Whoosh! " + qualifier + self.name + " swipes at you with its " + weapon.name;
+		print qualifier + self.name + " strikes you with a " + weapon.name;
 	if (roll == 3)
-		print qualifier + self.name + " lashes at you with its " + weapon.name;
+		print qualifier + self.name + " lashes at you with a " + weapon.name;
 	
-	target.receiveBash(self,damage);	
+
+	target.receiveDamage(weapon,damage);
+
+},
+
+/** The robot's basic roll to hit. */
+rollToHit() {
+	return d20;
 },
 
 /** Passive block action. Do nothing. */
@@ -191,6 +174,8 @@ block(target) {
 /** Passive dodge action. Do nothing. */
 dodge(target) {
 	//evadingMsg();
+	if (self is not combatMessaged)
+		"The " + self.name + " shifts evasively without striking.";
 	log "\n" + self.name + ": [Silent dodge action.]";
 },
 
@@ -219,49 +204,13 @@ charge() {
 	distance = meleeDistance;
 },
 
-/** Handle a bash attack. */
-receiveBash(attacker,damage) {
-	
-	if (combatActionFn == &block && self is not stumbling) {
-		"but it blocks the attack with a " + weapon.name + ".";
-		return;
-	}
-	
-	if (combatActionFn == &dodge && self is not stumbling) {
-		"but it slips out of the way";
-		if (d3 == 1) {
-			", causing you to stumble slightly.";
-			flag attacker stumbling;
-		}
-		else
-			". ";
-		return;
-	}
-	
-	unflag self stumbling;
-	
-	reducedDamage = armour.getReduction(damage);
-	
-	"for " + reducedDamage + " damage";
-	
-	if (reducedDamage < damage && armour is broken)
-		", wrecking its armour in the process";
-	
-	".";
-	
-	hitPoints -= reducedDamage;
-	log "\nrobot hitpoints " + hitPoints;
-	
-	if (hitPoints <= 0) {
-			"\n\nThe " + self.name + " dies!";
-			flag self dead;
-	}
-},
+
 
 /** Handle being shot. */
 receiveShot(attacker,damage) {
+	flag self combatMessaged;
 	if (combatActionFn == &dodge && self is not stumbling) {
-		", but it slips out of the way. ";
+		", but it dodges out of the way. ";
 		return;
 	}
 	
@@ -270,8 +219,8 @@ receiveShot(attacker,damage) {
 	
 	" for " + reducedDamage + " damage";
 	
-	if (reducedDamage < damage && armour is broken)
-		", wrecking its armour in the process";
+	//if (reducedDamage < damage && armour is broken)
+	//	", wrecking its armour in the process";
 	
 	".";
 	
@@ -279,12 +228,29 @@ receiveShot(attacker,damage) {
 	log "\nrobot hitpoints " + hitPoints;
 	
 	if (hitPoints <= 0) {
-			"\n\nThe " + self.name + " dies!";
-			flag self dead;
-			combatAssistant.unregister(self);
-			liveList[] -= self;
+		death();
 	}
 },
+
+receiveDamage(weapon,damage) {
+	//reduce damage by any modifiers
+
+	damage = armour.onHit(damage);
+
+	if (damage < 1)
+		damage = 1;
+	", hitting it for " + damage + " damage.";
+	hitPoints -= damage;
+},
+
+death() {
+	"\n\nFatally damaged, the " + self.name + " falls lifelessly to the floor.";
+	flag self dead;
+	combatAssistant.unregister(self);
+	liveList[] -= self;
+	
+},
+
 
 /** Respond to the player attempting to leave the room. */
 onPlayerExit() {

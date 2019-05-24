@@ -107,7 +107,7 @@ teleport(destination) {
 	unflag combatAssistant active;
 	
 	purge all;
-	"\n";
+
 	message msgRoomChange, destination;
 	destination.look();
 	
@@ -152,7 +152,7 @@ shortcutMenu() {
 	for each exit of directionIds {
 		if (player.parent.<exit> != 0) {
 			name = directionNames[idx];
-			makeHot(name,player, &moveTo, exit);
+			makeHot("Go " + name,player, &moveTo, exit);
 		}
 		idx += 1;
 		

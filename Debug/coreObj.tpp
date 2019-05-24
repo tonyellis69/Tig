@@ -22,24 +22,38 @@ examine {
 	setWindow(self);
 	print style("smallHeader") + cap(name) + style("small") + "\n";
 	description();
+	listObjectOptions();
 	setWindow(mainWindow);
 },
+
+/** Player has clicked on this object. */
+click() {
+	examine();
+},
+
+/*
 click {
 	//tell ui to open a menu window
 	openWindow(menuWindow);
 	setWindow(menuWindow);
 	createMenu();
 	setWindow(mainWindow);
+},*/
+
+/** Create the options provided by this object in the form of hot text calls. */
+listObjectOptions() {
+	
+	
 },
 
 /** Create the options provided by this object in the form of hot text calls. */
-createMenu() {
+//createMenu() {
 	/*if (self not in player && !self inherits CStatic)
 			print makeHot("Take",self,&take) + "\n";
 	if (self in player)
 			print makeHot("Drop",self,&drop) + "\n";*/
-	makeHot("Examine",self,&examine);	
-},
+//	makeHot("Examine",self,&examine);	
+//},*/
 
 /** An empty default method to prevent tiresome warnings in room descriptions.*/
 search() {},
@@ -64,28 +78,43 @@ onPlayerExit() {
 CGameObj CItem has
 take {
 	oldParent = self.parent;
-	purge click, self; 
-	"\n\nYou pick up the " + makeHot(name,self,&click) + ". ";
+	//purge click, self; 
+	//"\n\nYou pick up the " + makeHot(name,self,&click) + ". ";
 	move self to player;
 	flag self moved;
 	updateInventory();
 	oldParent.taken();
 }, 
 drop {
-	purge click, self;
-	"\n\nYou drop the " + makeHot(name,self,&click) + ". ";
+	//purge click, self;
+	//"\n\nYou drop the " + makeHot(name,self,&click) + ". ";
 	move self to player.parent;
 	updateInventory();
 }, 
 
 /** Create the options provided by this object in the form of hot text calls. */
-createMenu() {
-	if (self not in player && !self inherits CStatic)
-			print makeHot("Take",self,&take) + "\n";
-	if (self in player)
-			print makeHot("Drop",self,&drop) + "\n";
-	makeHot("Examine",self,&examine);	
+listObjectOptions() {
+	"\n";
+	msg = makeHot(name,self,&click);
+	if (self not in player && !self inherits CStatic) 
+		makeHot("Take",self,&take,"You pick up the " + msg + ". ") + " ";
+	if (self in player) {
+		makeHot("Drop",self,&drop,"You drop the " + msg + ". ") + " ";
+	}	
 };
+
+/** Create the options provided by this object in the form of hot text calls. */
+/*
+createMenu() {
+	msg = makeHot(name,self,&click);
+	if (self not in player && !self inherits CStatic) 
+		makeHot("Take",self,&take,"You pick up the " + msg + ". ") + "\n";
+	if (self in player) {
+		makeHot("Drop",self,&drop,"You drop the " + msg + ". ") + "\n";
+	}
+	makeHot("Examine",self,&examine);	
+}*/
+
 
 
 
@@ -97,7 +126,7 @@ registerHotText {
 	x = 0; //local 0
 	for each directionId of directionIds { 
 		if (self.<directionId>)  {
-			hot directionNames[x], player, &moveTo, directionId;
+			hot directionNames[x], player, &moveTo, directionId, "You go " + directionNames[x] ;
 		}
 		x += 1;
 	}
@@ -151,8 +180,7 @@ listUndescribedExits() {
 			" and ";
 	}
 	print ". ";
-	
-	
+
 	//corridors
 	if (corridorList == 1) {
 		"A corridor leads " + directionNames[corridorList[0]];
@@ -199,6 +227,7 @@ listUndescribedExits() {
 			"The way back leads "  + directionNames[backDirectionUsed];
 	}
 	print ". ";	
+	
 },
 
 /** List the objects in the room. */
@@ -219,6 +248,7 @@ listRoomContents() {
 		
 		//TO DO: lazily assuming if one robot is a short way off they all are!
 		//when I implement long distance, group robots by short and long.
+		capitalise next;
 		if (robots[0].distance > meleeDistance)
 			"A little way off, ";
 		for each robot of robots {
@@ -233,28 +263,32 @@ listRoomContents() {
 	}
 	
 	
+
 	
 	//provide initial descriptions for untouched objects
 	for each item of self {
 		if (item != player && !item inherits CScenery && !item inherits CRobot) {
 			if (item is not moved) {
+				/////////////////////////////////
 				"\n\n" + item.initial();
+					
 				item.search();
 			}
 			else
 				movedItems[] += item;	
 		}		
 	}
-	
+
 	//describe any other objects
 	if (movedItems > 0)
 		"\n\nYou can also see " + listElements(movedItems) + " here. ";
 	
-
+	
 	
 },
 look {
-	print "\n" + style("mainHeader") + cap(name) + style("mainBody") + "\n";
+	purge all;
+	print "\n\n" + style("mainHeader") + cap(name) + style("mainBody") + "\n";
 	registerHotText();
 	description(); //TO DO: should really be called describe.
 	listUndescribedExits();
