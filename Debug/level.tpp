@@ -6,6 +6,7 @@
 #include coreObj.tpp
 #include player.tpp
 #include weapons.tpp
+#include items.tpp
 #include robot.tpp
 #include powerPlant.tpp
 
@@ -19,6 +20,8 @@ init() {
 	move pipe to player;
 	move ablat to player;
 	move blaster to player;
+	move medpack to player;
+	//move robot to testRoomSouth;
 	player.weapon = blaster;
 	player.armour = ablat;
 	updateInventory();
@@ -50,17 +53,16 @@ CRoom testRoomSouth has name "Test room south",  description {
 },
 northTo arena; 
 
--> CRobot robot has name "rectangular servobot", shortName "servobot", initialText "a rectangular servobot is stalking about here",
-description "A collection of hard, metallic edges and surfaces.",
-weapon = metalArm, armour = lightRoboArmour, distance = 1, //was 5
-armourClass = 10
-;
+
+-> CServobot robot;
+
 
 -> CRobot cleaningBot has name "cleaning bot", initialText "a cleaning bot polishes the floor", 
 description "A low, four-legged machine with orange brushes for feet.",
 weapon = brushArm, armour = lightRoboArmour, distance = 1, //was 5
 armourClass = 10
 ;
+
 
 
 CRoom testRoomSouthWest has name "Test room southwest",  description {
@@ -72,3 +74,5 @@ CWrench wrench;
 CPipe pipe;
 CAblat ablat;
 CBlaster blaster;
+CMedpack medpack;
+

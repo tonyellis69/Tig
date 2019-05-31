@@ -829,58 +829,56 @@ void CObjDeclNode::encode() {
 	}
 
 
-	if (!members)
-		return;
+	if (members) {
+		//run through the member node declarations and add these to the object's definition
+		memberStack2.clear();
+		flagNamesTmp.clear();
+		unconfirmedLocalMember.clear();
+		declaredMemberNamesTmp = memberNames;
+		members->encode();
 
-	//run through the member node declarations and add these to the object's definition
-	memberStack2.clear();
-	flagNamesTmp.clear();
-	unconfirmedLocalMember.clear();
-	declaredMemberNamesTmp = memberNames;
-	members->encode();
-
-	for (auto memberRec2 : memberStack2) {
-		thisObj->members.push_back(memberRec2);
-	}
-	memberStack2.clear();
-	currentObj = 0;
-	memberNames.clear();
-	declaredMemberNamesTmp.clear();
-
-	//did we pick up any flags while running through the member declarations?
-	int flagValues = 0;
-	for (auto flagName : flagNamesTmp) {
-		//add flag to the list of known flags
-		auto it = find(flagStack.begin(),flagStack.end(),flagName);
-		unsigned int index = distance(flagStack.begin(),it);
-		//accumulate flag values
-		flagValues |= (1 << (index));
-	}
-
-	if (flagValues) {
-		//if object doesn't have the flags member, add it
-		TMemberRec* flagsMember = getObjectMember(*thisObj, "#flags");
-		if (flagsMember == NULL) {
-			thisObj->members.push_back({ memberIds["#flags"], CTigVar(flagValues) });
+		for (auto memberRec2 : memberStack2) {
+			thisObj->members.push_back(memberRec2);
 		}
-		else {
-			int oldVal = flagsMember->value.getIntValue();
-			flagsMember->value = oldVal |= flagValues;
+		memberStack2.clear();
+		currentObj = 0;
+		memberNames.clear();
+		declaredMemberNamesTmp.clear();
+
+		//did we pick up any flags while running through the member declarations?
+		int flagValues = 0;
+		for (auto flagName : flagNamesTmp) {
+			//add flag to the list of known flags
+			auto it = find(flagStack.begin(), flagStack.end(), flagName);
+			unsigned int index = distance(flagStack.begin(), it);
+			//accumulate flag values
+			flagValues |= (1 << (index));
 		}
-		thisObj->flags = flagValues;
-	}
-	flagNamesTmp.clear();
 
-
-	for (auto check : thisObj->localMembersToCheck) {
-		if (!objectHasMember(thisObj->objectId, check.memberId) 
-			&& globalVarIds.find(check.memberId) == globalVarIds.end()) {
-			std::cerr << "\nError, line " << check.lineNum << ": reference to unrecognised identifier \"" << getMemberName(check.memberId) << "\" in object \"" << name << "\"";
-			exit(1);
+		if (flagValues) {
+			//if object doesn't have the flags member, add it
+			TMemberRec* flagsMember = getObjectMember(*thisObj, "#flags");
+			if (flagsMember == NULL) {
+				thisObj->members.push_back({ memberIds["#flags"], CTigVar(flagValues) });
+			}
+			else {
+				int oldVal = flagsMember->value.getIntValue();
+				flagsMember->value = oldVal |= flagValues;
+			}
+			thisObj->flags = flagValues;
 		}
-	}
-	thisObj->localMembersToCheck.clear();
+		flagNamesTmp.clear();
 
+
+		for (auto check : thisObj->localMembersToCheck) {
+			if (!objectHasMember(thisObj->objectId, check.memberId)
+				&& globalVarIds.find(check.memberId) == globalVarIds.end()) {
+				std::cerr << "\nError, line " << check.lineNum << ": reference to unrecognised identifier \"" << getMemberName(check.memberId) << "\" in object \"" << name << "\"";
+				exit(1);
+			}
+		}
+		thisObj->localMembersToCheck.clear();
+	}
 
 
 	if (parentId == 0)

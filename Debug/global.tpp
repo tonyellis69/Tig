@@ -31,6 +31,7 @@ updateInventory() {
 	setWindow(mainWindow);
 };
 
+
 getDirectionName(directionId) {
 	index = 0; 
 	for each dir of directionIds {
@@ -150,9 +151,11 @@ shortcutMenu() {
 	//loop through exits of player location
 	idx = 0;
 	for each exit of directionIds {
+		//if (!first)
+	
 		if (player.parent.<exit> != 0) {
 			name = directionNames[idx];
-			makeHot("Go " + name,player, &moveTo, exit);
+			makeHot("\nGo " + name,player, &moveTo, exit);
 		}
 		idx += 1;
 		

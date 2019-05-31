@@ -1,7 +1,7 @@
 
 
 
-CGameObj CombatantClass player has onObject, backDirection, name "player", hitPoints 25, armour,
+CGameObj CombatantClass player has onObject, backDirection, name "player", hitPoints 25, maxHitPoints 25, armour,
 weapon, armourClass = 10,
 
 /** An attempt by the player to move in the given direction to a new location.*/
@@ -26,55 +26,13 @@ moveTo (direction) {
 
 
 
-/** Queue an attack on the given opponent. */
-queueFastHit(target) {
+
+/** Queue the given action, to be executed later in the combat round. */
+queueCombatAction(action,target) {
+	combatActionFn = action;
 	opponent = target;
-	combatActionFn = &fastHit;
 	combatAssistant.register(self);
 },
-
-queueHeavyHit(target) {
-	opponent = target;
-	combatActionFn = &heavyHit;
-	combatAssistant.register(self);
-},
-
-queueFastShot(target) {
-	opponent = target;
-	combatActionFn = &fastShot;
-	combatAssistant.register(self);
-},
-
-queueCarefulShot(target) {
-	opponent = target;
-	combatActionFn = &carefulShot;
-	combatAssistant.register(self);
-},
-
-
-
-/** Queue an attempted block on the given opponent's attack. */
-queueBlock(target) {
-	"\n\nYou choose to block...\n";
-	opponent = target;
-	combatActionFn = &block;
-	combatAssistant.register(self);
-},
-
-/** Queue an attempt to dodge the given opponent's attack. */
-queueDodge(target) {
-	"\n\nYou choose to dodge...\n";
-	opponent = target;
-	combatActionFn = &dodge;
-	combatAssistant.register(self);
-},
-
-/** Queue a decision to do nothing this round.*/
-queueDoNothing() {
-	combatActionFn = &doNothing;
-	combatAssistant.register(self);
-},
-
 
 /** Carry out whatever combat move the player has lined up.*/
 combatAction() {
@@ -119,15 +77,15 @@ doNothing(target) {
 fastHit(target) {
 	ACmodifier += weapon.getFastACmodifier();
 	hitRoll = rollToHit();
+	log "\nPlayer rolls a " + hitRoll;
 	
 	hitRoll += weapon.getFastHitModifier(target);
+	log "\nplus weapon mod = " + hitRoll;
 	targetAC = target.getModifiedAC(weapon);
-	
-	log "\nPlayer ACmodifier: " + ACmodifier + " hit roll + mod: " + hitRoll + 
-	" vs robot AC: " + targetAC;
+	log "\nTarget AC " + targetAC;
 		
 	if (hitRoll < targetAC) {
-		", but miss.";
+		meleeMissMsg();
 		return;
 	}
 	
@@ -140,14 +98,15 @@ fastHit(target) {
 heavyHit(target) {
 	ACmodifier += weapon.getHeavyACmodifier();
 	hitRoll = rollToHit();
+	log "\nPlayer rolls a " + hitRoll;
 	hitRoll += weapon.getHeavyHitModifier(target);
+	log "\nplus weapon mod = " + hitRoll;
 	targetAC = target.getModifiedAC(weapon);
 	
-	log "\nPlayer ACmodifier: " + ACmodifier + " hit roll + mod: " + hitRoll + 
-	" vs robot AC: " + targetAC;
+	log "\nTarget AC " + targetAC;
 	
 	if (hitRoll < targetAC) {
-		", but miss.";
+		meleeMissMsg();
 		return;
 	}
 	
@@ -156,14 +115,36 @@ heavyHit(target) {
 	target.receiveDamage(weapon,damage);
 },
 
+meleeMissMsg() {
+	roll = d8;
+	if (roll == 1)
+		", but miss.";
+	if (roll == 2)
+		", but your blow goes wide.";
+	if (roll == 3)
+		", but you're a moment too late.";
+	if (roll == 4)
+		" - slicing the space it occupied a moment before.";
+	if (roll == 5)
+		" - but land only a glancing blow.";
+	if (roll == 6)
+		", but your opponent is a half-second ahead of you.";
+	if (roll == 7)
+		", but your opponent eels out of the way.";
+	if (roll == 8)
+		" - just wide of the mark.";
+},
+
 /** Attempt a fast shot on the target. */
 fastShot(target) {
 	ACmodifier += weapon.getFastACmodifier();
 	hitRoll = rollToHit();
-	
+	log "\nPlayer rolls a " + hitRoll;
 	hitRoll += weapon.getFastHitModifier(target);
+	log "\nplus weapon mod = " + hitRoll;
 	targetAC = target.getModifiedAC(weapon);
-		
+	log "\nTarget AC " + targetAC;
+	
 	if (hitRoll < targetAC) {
 		", but miss.";
 		return;
@@ -175,18 +156,20 @@ fastShot(target) {
 },
 
 carefulShot(target) {
-	ACmodifier += weapon.getFastACmodifier();
+	ACmodifier += weapon.getHeavyACmodifier();
 	hitRoll = rollToHit();
-	
-	hitRoll += weapon.getFastHitModifier(target);
+	log "\nPlayer rolls a " + hitRoll;
+	hitRoll += weapon.getHeavyHitModifier(target);
+	log "\nplus weapon mod = " + hitRoll;
 	targetAC = target.getModifiedAC(weapon);
+	log "\nTarget AC " + targetAC;
 		
 	if (hitRoll < targetAC) {
 		", but miss.";
 		return;
 	}
 	
-	damage = weapon.getLightDamage(target);
+	damage = weapon.getHeavyDamage(target);
 	//add any player damage mods
 	target.receiveDamage(weapon,damage);
 },

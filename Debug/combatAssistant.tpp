@@ -5,7 +5,7 @@ const initiatingCombat = 10;
 const inCombat = 20;
 const chasingPlayer = 30;
 
-CombatantClass has hitPoints,  opponent, initiative, combatActionFn, chooseCombatAction, combatState = notInCombat, ACmodifier, armourClass, toHitModifier,
+CombatantClass has hitPoints, maxHitPoints, opponent, initiative, combatActionFn, chooseCombatAction, combatState = notInCombat, ACmodifier, armourClass, toHitModifier,
 
 /** Reset stuff for a new round of combat. */
 initialiseCombat() {
@@ -80,23 +80,25 @@ showPlayerOptions() {
 	//purge showPlayerOptions, self;
 
 
-	openWindow(menuWindow);
+	openWindow menuWindow modal;
 	setWindow(menuWindow);
 	if (robots[0].distance > meleeDistance && player.weapon is not ranged) {
-		makeHot("Do nothing",player,&queueDoNothing,"You wait to see what happens");	
+		makeHot("Do nothing",player,&queueCombatAction,&doNothing,0,"You wait to see what happens");	
 		setWindow(mainWindow);
 		return;
 	}
 	
+	roll = d100;
+	
 	for each robot of robots {
 		if (player.weapon is ranged) {
 			if (first) {
-				makeHot("Quick shot",player,&queueFastShot,robot,"You aim a quick shot at the " + robot.name());
-				makeHot("Careful shot",player,&queueCarefulShot,robot,"You aim carefully and fire at the " + robot.name());
+				makeHot("Quick shot",player,&queueCombatAction,&fastShot,robot,"You aim a quick shot at the " + robot.name());
+				makeHot("\nCareful shot",player,&queueCombatAction,&carefulShot,robot,"You aim carefully and fire at the " + robot.name());
 			}
 			else {
-				makeHotAlt("Quick shot",player,&queueFastShot,robot,"You aim a quick shot at the " + robot.name());
-				makeHotAlt("Careful shot",player,&queueCarefulShot,robot,"You aim carefully and fire at the " + robot.name());
+				makeHotAlt("Quick shot",player,&queueCombatAction,&fastShot,robot,"You aim a quick shot at the " + robot.name());
+				makeHotAlt("\nCareful shot",player,&queueCombatAction,&carefulShot,robot,"You aim carefully and fire at the " + robot.name());
 			}
 		}
 		else {
@@ -104,19 +106,47 @@ showPlayerOptions() {
 			//makeHot("Hit\n",player,&queueHit,attacker,narrative);	
 			//makeHot("Block\n",player,&queueBlock,attacker,narrative);
 			//makeHot("Dodge",player,&queueDodge,attacker,narrative);
+			fastRoll = roll % 6 + 1;
+			if (fastRoll == 1)
+				fastMsg = "You aim a quick strike at the " + robot.name();
+			if (fastRoll == 2)
+				fastMsg = "Hastily, you swing your " + player.weapon.name() + " at the " + robot.name();
+			if (fastRoll == 3)
+				fastMsg = "Trying to keep your distance, you jab at the " + robot.name();
+			if (fastRoll == 4)
+				fastMsg = "Moving fast, you aim a quick strike at the " + robot.name();
+			if (fastRoll == 5)
+				fastMsg = "Keeping your guard up, you aim a hasty swing at the " + robot.name();
+			if (fastRoll == 6)
+				fastMsg = "Weaving defensively, you chance a swift strike at the " + robot.name();
+			
+			heavyRoll = roll % 6 + 1;
+			if (heavyRoll == 1)
+				heavyMsg = "You swing a heavy blow at the " + robot.name();
+			if (heavyRoll == 2)
+				heavyMsg = "Taking your time, you swing at the " + robot.name() + " as hard as you can";	
+			if (heavyRoll == 3)
+				heavyMsg = "Standing your ground, you swing your " + player.weapon.name() + " at the " + robot.name();	
+			if (heavyRoll == 4)
+				heavyMsg = "Keeping your cool, you heave a solid blow at the " + robot.name();
+			if (heavyRoll == 5)
+				heavyMsg = "Focusing on damage over defence, you swing at the " + robot.name();
+			if (heavyRoll == 6)
+				heavyMsg = "Moving with strength, not speed, you hammer at the " + robot.name();
+			
 			if (first) {
-				makeHot("Fast hit",player,&queueFastHit,robot,"You aim a quick strike at the " + robot.name());
-				makeHot("Heavy hit",player,&queueHeavyHit,robot,"You swing a heavy blow at the " + robot.name());
+				makeHot("Fast hit",player,&queueCombatAction,&fastHit,robot,fastMsg);
+				makeHot("\nHeavy hit",player,&queueCombatAction,&heavyHit,robot,heavyMsg);
 			} else { 
-				makeHotAlt("Fast hit",player,&queueFastHit,robot,"You aim a quick strike at the " + robot.name());
-				makeHotAlt("Heavy hit",player,&queueHeavyHit,robot,"You swing a heavy blow at the " + robot.name());
+				makeHotAlt("Fast hit",player,&queueCombatAction,&fastHit,robot,fastMsg);
+				makeHotAlt("\nHeavy hit",player,&queueCombatAction,&heavyHit,robot,heavyMsg);
 				
 			}
 
 		}
 	}
 	
-	makeHot("Do nothing",player,&queueDoNothing,"You wait to see what happens");
+	makeHot("\nDo nothing",player,&queueCombatAction,&doNothing,0,"You wait to see what happens");
 	setWindow(mainWindow);
 },
 

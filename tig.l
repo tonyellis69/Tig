@@ -142,6 +142,7 @@ d[1-9]([0-9])*					{
 "to"					return TO;
 "from"					return FROM;
 "openWindow"			return OPEN_WINDOW;
+"modal"					return MODAL;
 "setWindow"				return SET_WINDOW;
 "clearWindow"			return CLEAR_WINDOW;
 "clearMarkedText"		return CLEAR_MARKED;

@@ -56,7 +56,7 @@
 %type <nPtr> make_hot style cap 
 //%type <nPtr> range_expr
 
-%token PRINT SET_WINDOW CLEAR_WINDOW OPEN_WINDOW CLEAR_MARKED END RETURN
+%token PRINT SET_WINDOW CLEAR_WINDOW OPEN_WINDOW MODAL CLEAR_MARKED END RETURN
 %token EVENT OPTION
 %token OBJECT  ARROW INHERITS SUPERCLASS FLAG DELETE
 %token GETSTRING
@@ -142,6 +142,7 @@ statement:
 		| TRON	';'										{ $$ = new CTronNode(true); }
 		| TROFF	';'										{ $$ = new CTronNode(false); }
 		| OPEN_WINDOW expression ';'					{ $$ = new COpNode(opOpenWin,$2); }
+		| OPEN_WINDOW expression MODAL ';'				{ $$ = new COpNode(opOpenWinModal,$2); }
 		| SET_WINDOW '(' expression ')' ';'				{ $$ = new COpNode(opWin,$3); }
 		| CLEAR_WINDOW ';'								{ $$ = new COpNode(opClr); }
 		| HOT CLEAR ';'									{ $$ = new COpNode(opHotClr); }
@@ -219,7 +220,7 @@ dec_statement:
 		//EVENT event_identifier code_block ';'								{ $$ = new CEventNode($2,$3); }	
 		 obj_identifier optional_member_list ';'							{ $$ = new CObjDeclNode($1,$2,NULL); }
 		| class_identifier obj_identifier optional_member_list ';'			{ $$ = new CObjDeclNode($2,$3,$1); }
-		| level  obj_identifier optional_member_list ';'				{ $$ = new CObjDeclNode($2,$3,NULL); }
+		| level  obj_identifier optional_member_list ';'					{ $$ = new CObjDeclNode($2,$3,NULL); }
 		| level class_identifier obj_identifier optional_member_list ';'	{ $$ = new CObjDeclNode($3,$4,$2); }
 		| global_func_decl ';'												{ $$ = $1; }
 		| CONST IDENTIFIER '=' INTEGER ';'									{ $$ = new CConstNode($2,$4); }

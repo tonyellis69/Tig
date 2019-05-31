@@ -31,19 +31,11 @@ click() {
 	examine();
 },
 
-/*
-click {
-	//tell ui to open a menu window
-	openWindow(menuWindow);
-	setWindow(menuWindow);
-	createMenu();
-	setWindow(mainWindow);
-},*/
+
 
 /** Create the options provided by this object in the form of hot text calls. */
 listObjectOptions() {
-	
-	
+	//just a virtual func here in the base class.
 },
 
 /** Create the options provided by this object in the form of hot text calls. */
@@ -101,19 +93,16 @@ listObjectOptions() {
 	if (self in player) {
 		makeHot("Drop",self,&drop,"You drop the " + msg + ". ") + " ";
 	}	
-};
+},
 
-/** Create the options provided by this object in the form of hot text calls. */
-/*
-createMenu() {
-	msg = makeHot(name,self,&click);
-	if (self not in player && !self inherits CStatic) 
-		makeHot("Take",self,&take,"You pick up the " + msg + ". ") + "\n";
-	if (self in player) {
-		makeHot("Drop",self,&drop,"You drop the " + msg + ". ") + "\n";
-	}
-	makeHot("Examine",self,&examine);	
-}*/
+/** Remove this object from the game world. */
+destroy() {
+	delete self;
+	updateInventory();
+}
+;
+
+
 
 
 

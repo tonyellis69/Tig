@@ -1,7 +1,7 @@
 
 
 /** The base robot class. */
-CGameObj CombatantClass CRobot has opponent, hitPoints 15, initiative, combatActionFn, weapon, armour, initialText,
+CGameObj CombatantClass CRobot has opponent, hitPoints 15, maxHitPoints 15, initiative, combatActionFn, weapon, armour, initialText,
 distance = 1,
 
 initial() {
@@ -11,6 +11,7 @@ initial() {
 		"The wreckage of a " + name + " litters the floor.";
 	
 },
+
 
 take() {
 	"\nThe lifeless robot is too heavy.";
@@ -139,7 +140,23 @@ bash(target) {
 	" vs player AC: " + targetAC;
 	
 	if (hitRoll < targetAC) {
-		"The " + name() + " swipes at you ineffectually.";
+		roll = d8;
+		if (roll == 1)
+			"The " + name() + " swipes at you ineffectually.";
+		if (roll == 2)
+			"The " + name() + "'s " + weapon.name() + " cleaves the air an inch in front of your face.";
+		if (roll == 3)
+			"The " + name() + " swings at you but misses.";
+		if (roll == 4)
+			"You sidestep just in time as the " + name() + " swings at you.";
+		if (roll == 5)
+			"The " + name() + " lashes at you but you're just too fast.";
+		if (roll == 6)
+			"Yod dodge the " + name() + "'s attack.";
+		if (roll == 7)
+			"The " + name() + " swings viciously, but misses.";
+		if (roll == 1)
+			"The " + name() + " slashes at you but fails to connect.";
 		return;
 	}
 	
@@ -270,7 +287,36 @@ onPlayerEntry() {
 	if (self not in liveList) //only wake up if we're not awake already
 		liveList[] += self;
 	
+},
+
+/** Subclass examine to include robot status. */
+examine {
+	openWindow self;
+	setWindow(self);
+	clearWindow;
+	print style("smallHeader") + cap(name) + style("small") + "\n";
+	description();
+	robotStatus();
+	listObjectOptions();
+	setWindow(mainWindow);
+},
+
+/** Report combat activity, damage etc.*/
+robotStatus() {
+	if (combatState == inCombat) {
+		"The " + name + " is poised to strike you.";
+	}
+	if (hitPoints < maxHitPoints)
+		"\nHit points: " + hitPoints;
 }
+
+
+;
+
+CRobot CServobot has name "rectangular servobot", shortName "servobot", initialText "a rectangular servobot is stalking about here",
+description "A collection of hard, metallic edges and surfaces.",
+weapon = metalArm, armour = lightRoboArmour, distance = 1, //was 5
+armourClass = 10
 ;
 
 
