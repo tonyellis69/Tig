@@ -136,6 +136,11 @@ gameTurn() {
 	
 	if (combatAssistant is active)
 		combatAssistant.doCombatRound();
+	
+	player.stamina += 1;
+	if (player.stamina > player.maxStamina)
+		player.stamina = player.maxStamina;
+	log "\nStamina: " + player.stamina;
 };
 
 

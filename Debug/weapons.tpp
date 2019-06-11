@@ -69,7 +69,8 @@ getHeavyACmodifier() {
 
 
 /** Prototype melee weapon. */
-CWeapon CMeleeWeapon has 
+CWeapon CMeleeWeapon has heavyStaminaCost = 4, lightStaminaCost = 2, staminaHeavyReq = 8, blockMod = 5,
+
 
 /** Returns false if the weapon fails to block the given damage. */ 
 doesBlock(damage) {
@@ -105,9 +106,7 @@ bash(target) {
 	
 	"You punch the ";
 	
-	if (target is stumbling) {
-		damage = damage + 2;
-	}
+
 	
 	target.combatName(); 
 	

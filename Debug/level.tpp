@@ -22,10 +22,11 @@ init() {
 	move blaster to player;
 	move medpack to player;
 	//move robot to testRoomSouth;
-	player.weapon = blaster;
+	player.weapon = wrench;
 	player.armour = ablat;
 	updateInventory();
-
+	
+	
 
 	//entranceHub = powerPlant.createMap();
 

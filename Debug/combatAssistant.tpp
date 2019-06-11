@@ -5,18 +5,30 @@ const initiatingCombat = 10;
 const inCombat = 20;
 const chasingPlayer = 30;
 
-CombatantClass has hitPoints, maxHitPoints, opponent, initiative, combatActionFn, chooseCombatAction, combatState = notInCombat, ACmodifier, armourClass, toHitModifier,
+CombatantClass has hitPoints, maxHitPoints, opponent, initiative, combatActionFn, chooseCombatAction, combatState = notInCombat, ACmodifier, armourClass, toHitModifier, blockTarget,
 
 /** Reset stuff for a new round of combat. */
-initialiseCombat() {
+initialiseCombatRound() {
 	ACmodifier = 0;
 	toHitModifier = 0;
+	blockTarget = 0;
 },
 
 /** Return this combatant's modified AC, including any weakness/resistance to the given weapon.*/
-getModifiedAC(weapon) {
+getModifiedAC(attackerWeapon) {
+	if (blockTarget == player) { //TO DO: more accurate to check if blockTarget is sender
+		log "\nblockTarget is player";
+		ACmodifier += getBlockMod(attackerWeapon);
+	}
+	
 	return armourClass + ACmodifier;
-}; 
+},
+
+/** Return this combatant's block modifier. */
+getBlockMod(attackerWeapon) {
+	return self.weapon.blockMod;
+}
+; 
 
 
 /** An object for keeping track of fights and the combatants involved.*/
@@ -35,7 +47,7 @@ unregister(combatant) {
 
 /** All combatants perform their chosen combat action for this turn in initiative order.*/
 doCombatRound() {
-	player.initialiseCombat();
+	player.initialiseCombatRound();
 	
 	sort> combatants by &initiative;
 	
@@ -53,6 +65,13 @@ doCombatRound() {
 	
 	//set up next round
 	combatants[] -= player;
+	
+	//ask opponents to choose next round's action now
+	for each combatant of combatants {
+		combatant.initialiseCombatRound();
+		combatant.chooseCombatAction();
+	}
+	
 	if (combatants > 0) 
 		warningMsg();
 	
@@ -92,20 +111,12 @@ showPlayerOptions() {
 	
 	for each robot of robots {
 		if (player.weapon is ranged) {
-			if (first) {
-				makeHot("Quick shot",player,&queueCombatAction,&fastShot,robot,"You aim a quick shot at the " + robot.name());
-				makeHot("\nCareful shot",player,&queueCombatAction,&carefulShot,robot,"You aim carefully and fire at the " + robot.name());
-			}
-			else {
-				makeHotAlt("Quick shot",player,&queueCombatAction,&fastShot,robot,"You aim a quick shot at the " + robot.name());
-				makeHotAlt("\nCareful shot",player,&queueCombatAction,&carefulShot,robot,"You aim carefully and fire at the " + robot.name());
-			}
+			makeHotAlt("Quick shot",player,&queueCombatAction,&fastShot,robot,"You aim a quick shot at the " + robot.name());
+			makeHotAlt("\nCareful shot",player,&queueCombatAction,&carefulShot,robot,"You aim carefully and fire at the " + robot.name());
+
 		}
 		else {
-			
-			//makeHot("Hit\n",player,&queueHit,attacker,narrative);	
-			//makeHot("Block\n",player,&queueBlock,attacker,narrative);
-			//makeHot("Dodge",player,&queueDodge,attacker,narrative);
+
 			fastRoll = roll % 6 + 1;
 			if (fastRoll == 1)
 				fastMsg = "You aim a quick strike at the " + robot.name();
@@ -134,14 +145,19 @@ showPlayerOptions() {
 			if (heavyRoll == 6)
 				heavyMsg = "Moving with strength, not speed, you hammer at the " + robot.name();
 			
-			if (first) {
-				makeHot("Fast hit",player,&queueCombatAction,&fastHit,robot,fastMsg);
-				makeHot("\nHeavy hit",player,&queueCombatAction,&heavyHit,robot,heavyMsg);
-			} else { 
-				makeHotAlt("Fast hit",player,&queueCombatAction,&fastHit,robot,fastMsg);
-				makeHotAlt("\nHeavy hit",player,&queueCombatAction,&heavyHit,robot,heavyMsg);
-				
+			if (player.stamina < player.weapon.staminaHeavyReq) {
+				heavyMsg = "You try a heavy swing at the " + robot.name() + " but you don't quite have the strength";	
 			}
+			
+		
+			makeHotAlt("Fast hit",player,&queueCombatAction,&fastHit,robot,fastMsg);
+			makeHotAlt("\nHeavy hit",player,&queueCombatAction,&heavyHit,robot,heavyMsg);	
+
+			
+			blockMsg = "You raise your " + player.weapon.name() + " to fend off the " + robot.name() + "'s attack";
+			makeHotAlt("Block",player,&queueCombatAction,&block,robot,blockMsg);
+			
+			
 
 		}
 	}

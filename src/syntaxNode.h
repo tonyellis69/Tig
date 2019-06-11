@@ -40,6 +40,7 @@ struct TMemberCheck {
 	int lineNum;
 	int fileNum;
 	int memberId;
+	int objId;
 };
 
 struct TNameCheck {

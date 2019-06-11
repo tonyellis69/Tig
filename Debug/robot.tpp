@@ -26,8 +26,8 @@ createMenu() {
 
 /** Return a prefixed name to provide context in combat. */
 combatName() {
-	if (self is stumbling)
-		return "off-balance " + name;
+	//if (self is stumbling)
+	//	return "off-balance " + name;
 
 	if (self.combatActionFn == &charge)
 		return	"fast approaching " + name;
@@ -58,16 +58,20 @@ followPlayer() {
 
 /** Initiate a round of combat with the target. */
 fight(target) {
-	initialiseCombat();
-	unflag self combatMessaged;
-	opponent = target;
+
 	rollInitiative();
-	if (combatState ==  notInCombat) {
+	if (combatState ==  notInCombat) { //TO DO, prob shift all this to end of doCombatRound
+		initialiseCombatRound();
+		opponent = target;
 		combatState = initiatingCombat;
-		combatActionFn = &initiatingCombatMsg;
-	} else {
-		chooseCombatAction();	
-	}
+		
+		examine();
+		
+		//combatActionFn = &initiatingCombatMsg;
+		initiatingCombatMsg();
+	} //else {
+	//	chooseCombatAction();	
+	//}
 	
 	combatAssistant.register(self);
 },
@@ -76,6 +80,7 @@ fight(target) {
 
 /** Deliver a one-off message announcing that this robot is starting combat. */
 initiatingCombatMsg() {
+	log " initiatingCombatMsg";
 	"Seeing you, the " + shortName + " ";
 	roll = d3;
 	if (roll == 1)
@@ -100,22 +105,21 @@ chooseCombatAction() {
 		return;
 	}
 	
-	/*choice = d6;
+	choice = d3;
 	if (choice == 1) {
+		combatActionFn = &bash;
+		log "\nchose to bash.";
+	} else {
 		combatActionFn = &block;
-	} else if (choice == 2) {
-		combatActionFn = &dodge;
+		blockTarget = opponent;
+		log "\nchose to block.";
 	}
-	else {
-		combatActionFn = &bash;	
-	}*/
-	
-	combatActionFn = &bash;	
 },
 
 
 /** Carry out whatever combat move the robot has previously announced.*/
 combatAction() {
+	log "\nRobot combat fn: "  + combatActionFn;
 	<combatActionFn>(opponent);
 },
 
@@ -123,8 +127,6 @@ combatAction() {
 /** Roll for initiative! This value will help the combatAssistant determine battle order.*/
 rollInitiative() {
 	initiative = d10;
-	if (self is stumbling)
-		initiative += 5;
 	//TO DO: modify with dexterity, etc
 },
 
@@ -136,10 +138,20 @@ bash(target) {
 	hitRoll += weapon.getFastHitModifier(target);
 	targetAC = target.getModifiedAC(weapon);
 	
+	if (target.blockTarget == self) { //is the target trying to block me?
+		targetAC += target.getBlockMod(weapon);
+	}
+	
 	log "\nRobot ACmodifier: " + ACmodifier + " hit roll + mod: " + hitRoll + 
 	" vs player AC: " + targetAC;
 	
 	if (hitRoll < targetAC) {
+		if (target.blockTarget == self) {
+			", and the blow glances off.";
+			return;
+		}
+		
+		
 		roll = d8;
 		if (roll == 1)
 			"The " + name() + " swipes at you ineffectually.";
@@ -159,6 +171,11 @@ bash(target) {
 			"The " + name() + " slashes at you but fails to connect.";
 		return;
 	}
+	
+	if (target.blockTarget == self) {
+		", but not quite fast enough. ";
+	}
+	
 	
 	damage = weapon.getLightDamage(target);
 	
@@ -183,35 +200,8 @@ rollToHit() {
 
 /** Passive block action. Do nothing. */
 block(target) {
-	//evadingMsg();
-
-	log "\n" + self.name + ": [Silent block action.]";
-},
-
-/** Passive dodge action. Do nothing. */
-dodge(target) {
-	//evadingMsg();
-	if (self is not combatMessaged)
-		"The " + self.name + " shifts evasively without striking.";
-	log "\n" + self.name + ": [Silent dodge action.]";
-},
-
-/**	If defending and not the player's opponent, simply mention what this robot is doing.*/
-evadingMsg() {
-	if (player.opponent != self) {
-		if  (combatActionFn == &block || combatActionFn == &dodge) {
-
-		roll = d4;
-		if (roll == 1)
-			"The " + self.name + " just shifts evasively.";
-		if (roll == 2)
-			"The " + self.name + " edges around you, looking for an opening.";
-		if (roll == 3)
-			"Feinting left, the " + self.name + " dodges right.";
-		if (roll == 4)
-			"Feinting right, the " + self.name + " dodges left.";
-		}
-	}
+	//blockTarget = target;
+	//as long as actions are in initiative order, there's no point doing anything here
 },
 
 
@@ -223,31 +213,7 @@ charge() {
 
 
 
-/** Handle being shot. */
-receiveShot(attacker,damage) {
-	flag self combatMessaged;
-	if (combatActionFn == &dodge && self is not stumbling) {
-		", but it dodges out of the way. ";
-		return;
-	}
-	
-	
-	reducedDamage = armour.getReduction(damage);
-	
-	" for " + reducedDamage + " damage";
-	
-	//if (reducedDamage < damage && armour is broken)
-	//	", wrecking its armour in the process";
-	
-	".";
-	
-	hitPoints -= reducedDamage;
-	log "\nrobot hitpoints " + hitPoints;
-	
-	if (hitPoints <= 0) {
-		death();
-	}
-},
+
 
 receiveDamage(weapon,damage) {
 	//reduce damage by any modifiers
@@ -256,6 +222,8 @@ receiveDamage(weapon,damage) {
 
 	if (damage < 1)
 		damage = 1;
+	if (blockTarget == player)
+		", which the " + name() + " unsuccessfully tries to block";
 	", hitting it for " + damage + " damage.";
 	hitPoints -= damage;
 },
@@ -304,12 +272,64 @@ examine {
 /** Report combat activity, damage etc.*/
 robotStatus() {
 	if (combatState == inCombat) {
-		"The " + name + " is poised to strike you.";
+		print combatHint();
 	}
 	if (hitPoints < maxHitPoints)
 		"\nHit points: " + hitPoints;
-}
+},
 
+
+
+/** Return a string hinting at what this robot is gearing up to do next combat round. */
+combatHint() {
+	attackResponses = ["The " + name() + " is poised to strike you.",
+					"The " + name() + " seems about to strike you.",
+					"The " + name() + " may be about strike you.",
+					"The " + name() + " is hard to read, but may be about strike you.",
+					"The " + name() + "'s body language is impossible to read."];
+	defenceResponses = ["The " + name() + " has raised its arms defensively",
+						"The " + name() + " seems about to block you",
+						"The " + name() + " may be about to block you",
+						"The " + name() + " is hard to read, but it may be about to block you",
+						"The " + name() + "'s body language is impossible to read."];
+						
+	readingRoll = d20;
+	if (readingRoll > 10) {  //success!
+		if (combatActionFn == &block)
+			return defenceResponses[0];
+		else
+			return attackResponses[0];	
+	}
+	
+	certainty =  d4;
+	accuracy = d6; 
+	swap = false;
+	if (certainty == 1)
+		if (accuracy < 2)
+			swap = true;
+		
+	if (certainty == 2)
+		if (accuracy < 3)
+			swap = true;
+		
+	if (certainty == 3)
+		if (accuracy < 4)
+			swap = true;
+		
+	if (combatActionFn == &block) {
+		if (swap)
+			return attackResponses[certainty];
+		else
+			return defenceResponses[certainty];
+	}
+	else {
+		if (swap)
+			return defenceResponses[certainty];
+		else
+			return attackResponses[certainty];
+	}
+	
+}
 
 ;
 

@@ -20,6 +20,7 @@ drop {
 examine {
 	openWindow self;
 	setWindow(self);
+	clearWindow;
 	print style("smallHeader") + cap(name) + style("small") + "\n";
 	description();
 	listObjectOptions();

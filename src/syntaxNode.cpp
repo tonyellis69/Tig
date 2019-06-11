@@ -291,10 +291,10 @@ void CSyntaxNode::logLocalMemberCheck(int objId, int memberId) {
 
 void CSyntaxNode::logGlobalMemberCheck(int lineNum, int fileNum, int memberId) {
 	for (auto globalRef : globalMembersToCheck) {
-		if (globalRef.memberId == memberId) //only need one check
+		if (globalRef.memberId == memberId && globalRef.objId == currentObj) //only need one check
 			return;
 	}
-	globalMembersToCheck.push_back({ lineNum,fileNum, memberId });
+	globalMembersToCheck.push_back({ lineNum,fileNum, memberId,currentObj });
 }
 
 /** Register the given flag name as one that has been encountered without yet being
@@ -446,8 +446,9 @@ int CSyntaxNode::getMemberId(std::string & identifier) {
 	if (iter == memberIds.end()) {
 		memberIds[identifier] = nextMemberId++;
 
-		logGlobalMemberCheck(sourceLine, sourceFile, nextMemberId-1);
+		//logGlobalMemberCheck(sourceLine, sourceFile, nextMemberId-1);
 		//TO DO: experimental! See how this works
+		//update: suspended, it was logging 'name' in obj.name[0] as a potential global
 
 		return memberIds[identifier];
 	}
@@ -841,7 +842,7 @@ void CObjDeclNode::encode() {
 			thisObj->members.push_back(memberRec2);
 		}
 		memberStack2.clear();
-		currentObj = 0;
+		
 		memberNames.clear();
 		declaredMemberNamesTmp.clear();
 
@@ -880,6 +881,16 @@ void CObjDeclNode::encode() {
 		thisObj->localMembersToCheck.clear();
 	}
 
+	//check if any members logged as potentially undefined globals were in fact local members
+	//run through list and remove any false positives
+	for (auto it = globalMembersToCheck.begin(); it != globalMembersToCheck.end();) {
+		if (it->objId == currentObj && objectHasMember(currentObj, it->memberId))
+			it = globalMembersToCheck.erase(it);
+		else
+			it++;
+	}
+
+	currentObj = 0;
 
 	if (parentId == 0)
 		return;
@@ -1470,6 +1481,11 @@ CMemberCallNode::CMemberCallNode(CSyntaxNode * object, CSyntaxNode * funcName, C
 void CMemberCallNode::encode() {
 
 	string funcName = operands[1]->getText();
+	//if (funcName == "initialiseCombat" && sourceLine == 29)
+	//	int b = 0;
+
+
+
 	int nameId = -1;
 
 	if (funcName.size() > 0) {
@@ -1482,6 +1498,10 @@ void CMemberCallNode::encode() {
 		}
 	}
 
+	//if there's no parent object, are we sure this is a local member call?
+	if (operands[0] == NULL && funcName != "") {
+		logGlobalMemberCheck(sourceLine, sourceFile, nameId);
+	}
 
 	//write code to leave parameter values on stack
 	paramCount.push_back(0);
@@ -1719,8 +1739,13 @@ CGlobalFuncDeclNode::CGlobalFuncDeclNode(CSyntaxNode * ident, CSyntaxNode * para
 	name = ident->getText();
 	//id = getGlobalFuncId(name);
 	id = getMemberId(name); //Any call-forward to this func will have made its name a member, so let's use that id.
-	//globalFuncIds[name] = { id, NULL };
-
+	
+	//has a previously uncertain global member reference now been confirmed?
+	for (unsigned int x = 0; x < globalMembersToCheck.size(); x++) {
+		if (globalMembersToCheck[x].memberId == id && globalMembersToCheck[x].objId == 0) {
+			globalMembersToCheck.erase(globalMembersToCheck.begin() + x);
+		}
+	}
 }
 
 void CGlobalFuncDeclNode::encode() {
@@ -1813,11 +1838,12 @@ void CNothingNode::encode() {
 CSuperCallNode::CSuperCallNode(CSyntaxNode * super, CSyntaxNode * funcName, CSyntaxNode * params) {
 	operands.push_back(super);
 	memberId = getMemberId(funcName->getText());
-	logGlobalMemberCheck(sourceLine, sourceFile, memberId); //makes a note to check if this function was ever found										//}
 	operands.push_back(params);
 }
 
 void CSuperCallNode::encode() {
+	logGlobalMemberCheck(sourceLine, sourceFile, memberId); //makes a note to check if this function was ever found										//}
+
 	//write code to leave parameter value on stack
 	paramCount.push_back(0);
 	if (operands[1]) {

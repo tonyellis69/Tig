@@ -2,7 +2,7 @@
 
 
 CGameObj CombatantClass player has onObject, backDirection, name "player", hitPoints 25, maxHitPoints 25, armour,
-weapon, armourClass = 10,
+weapon, armourClass = 10, stamina = 10, maxStamina = 10,
 
 /** An attempt by the player to move in the given direction to a new location.*/
 moveTo (direction) {
@@ -36,7 +36,9 @@ queueCombatAction(action,target) {
 
 /** Carry out whatever combat move the player has lined up.*/
 combatAction() {
-	log "\n[" + self.name + " acts on " + opponent.name + "]";
+	if (combatActionFn == 0)
+		return;
+	log "\n[" + self.name() + " combats " + opponent.name() + "]";
 	<combatActionFn>(opponent);
 	combatActionFn = 0;
 },
@@ -44,26 +46,9 @@ combatAction() {
 /** Roll for initiative! This value will help the combatAssistant determine battle order.*/
 rollInitiative() {
 	initiative = d10;
-	if (self is stumbling)
-		initiative += 5;
 	//TO DO: modify with dexterity, etc
 },
 
-
-
-
-block(target) {
-	log "\n" + self.name + ": [Silent block action.]";
-	if (target.combatActionFn == &block || target.combatActionFn == &dodge)
-		"You make a defensive move, but so does the " + target.name + ".";
-},
-
-dodge(target) {
-	log "\n" + self.name + ": [Silent dodge action.]";
-	
-	if (target.combatActionFn == &block || target.combatActionFn == &dodge)
-		"You make a defensive move, but so does the " + target.name + ".";
-},
 
 doNothing(target) {
 	//"You bide your time";
@@ -82,8 +67,13 @@ fastHit(target) {
 	hitRoll += weapon.getFastHitModifier(target);
 	log "\nplus weapon mod = " + hitRoll;
 	targetAC = target.getModifiedAC(weapon);
+	
 	log "\nTarget AC " + targetAC;
-		
+	
+	stamina -= weapon.lightStaminaCost;
+	if (stamina < 0)
+		stamina = 0;
+	
 	if (hitRoll < targetAC) {
 		meleeMissMsg();
 		return;
@@ -96,6 +86,13 @@ fastHit(target) {
 
 /** Attempt a heavy hit on the target.*/
 heavyHit(target) {
+	if (stamina < weapon.staminaHeavyReq) {
+		". ";
+		return;	
+	}
+	
+	
+	
 	ACmodifier += weapon.getHeavyACmodifier();
 	hitRoll = rollToHit();
 	log "\nPlayer rolls a " + hitRoll;
@@ -104,6 +101,10 @@ heavyHit(target) {
 	targetAC = target.getModifiedAC(weapon);
 	
 	log "\nTarget AC " + targetAC;
+	
+	stamina -= weapon.heavyStaminaCost;
+	if (stamina < 0)
+		stamina = 0;
 	
 	if (hitRoll < targetAC) {
 		meleeMissMsg();
@@ -116,6 +117,11 @@ heavyHit(target) {
 },
 
 meleeMissMsg() {
+	if (opponent.blockTarget == self) {
+		", but your opponent blocks it. " + opponent.blockTarget;
+		return;
+	}
+	
 	roll = d8;
 	if (roll == 1)
 		", but miss.";
@@ -133,6 +139,11 @@ meleeMissMsg() {
 		", but your opponent eels out of the way.";
 	if (roll == 8)
 		" - just wide of the mark.";
+},
+
+/** Record that the player is attempting to block any attack by this target. */
+block(target) {
+	blockTarget = target;
 },
 
 /** Attempt a fast shot on the target. */
@@ -215,32 +226,9 @@ receiveDamage(weapon,damage) {
 
 /** Handle a bash attack. */
 receiveBash(attacker,damage) {
-	if (combatActionFn == &block && opponent == attacker && self is not stumbling) {
-		if (weapon.doesBlock(damage) == true) {
-			", but you block its attack.";
-			return;
-		} else { 
-			", too fast for you to block";
-		
-		}
-	}
 	
-	if (combatActionFn == &dodge && opponent == attacker && self is not stumbling) {
-		", but you dodge its attack";
-		if (d3 == 1) {
-			", causing it to stumble slightly.";
-			flag attacker stumbling;
-		} 
-		else
-			".";
-		return;
-	}
 	
-	if (self is stumbling) {
-		" as you flounder";
-		damage += 2;
-	}
-	unflag self stumbling;
+
 	
 	damageAfterArmour = armour.getReduction(damage);
 	

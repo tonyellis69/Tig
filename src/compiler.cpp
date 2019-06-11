@@ -137,16 +137,18 @@ bool CTigCompiler::globalMemberChecksResolve(CSyntaxNode * node) {
 	bool resolve = true;
 	for (auto check : node->globalMembersToCheck) {
 		bool found = false;
-		for (auto obj : node->objects) { //1. check if this member was ever defined in an object
-			for (auto objMember : obj.second.members) {
-				if (objMember.memberId == check.memberId) {
-					found = true;
-					break;
+		//if (check.objId != 0)
+			for (auto obj : node->objects) { //1. check if this member was ever defined in an object
+				for (auto objMember : obj.second.members) {
+					if (objMember.memberId == check.memberId && 
+						(obj.second.objectId == check.objId || obj.second.objectId == 0) ) {
+						found = true;
+						break;
+					}
 				}
+				if (found)
+					break;
 			}
-			if (found)
-				break;
-		}
 		for (auto globalVar : node->globalVarIds) {
 			if (globalVar == check.memberId) {
 				found = true;
