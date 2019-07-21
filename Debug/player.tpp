@@ -118,7 +118,7 @@ heavyHit(target) {
 
 meleeMissMsg() {
 	if (opponent.blockTarget == self) {
-		", but your opponent blocks it. " + opponent.blockTarget;
+		", but your opponent blocks it. ";
 		return;
 	}
 	

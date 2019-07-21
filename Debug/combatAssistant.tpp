@@ -82,7 +82,6 @@ doCombatRound() {
 
 /** Make it clear to the player that they're in a fight. */
 warningMsg() {
-	//TO DO: this is temp! Fix!
 	
 	purge showPlayerOptions, self;
 	

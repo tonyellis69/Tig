@@ -35,6 +35,10 @@ init() {
 	player.parent.look();
 
 	gameTurn();
+	
+	for each x of (1 to 1) {
+		"\n\nThis is line " + x;
+	}
 };
 
 
