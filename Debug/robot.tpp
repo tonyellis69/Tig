@@ -5,6 +5,11 @@ CGameObj CombatantClass CRobot has opponent, hitPoints 15, maxHitPoints 15, init
 distance = 1,
 
 initial() {
+	if (combatState == inCombat) { ///test!!!!!! don't keep
+	 "a rectangular servobot is attacking you!";
+	 return;
+	}
+	
 	if (self is not dead) 
 		print initialText;
 	else
@@ -35,17 +40,45 @@ combatName() {
 	return name;
 },
 
-/** Called every round the robot is activated, determines what action the robot will perform.*/
+/** Called every round the robot is live, determines what action the robot will perform.*/
 turn {
+	//For now, entering combat is automatic	
+	if (combatState == notInCombat) 
+		combatState = initiatingCombat;
+	
+	
+	if (combatState != notInCombat)
+		combatAction2();
+
+	//do non-combat stuff
+},
+
+/** Perform the requisite combat action. */
+combatAction2() {
 	if (combatState == chasingPlayer) {
 		followPlayer();
 		return;
 	}
-		
-	if (playerPresent())
-		fight(player);
-	else
-		liveList[] -= self;
+	
+	if (combatState == initiatingCombat) {
+		print style("markOn");
+		"\n\nThe " + self.name + " rushes to attack you!";
+		combatState = inCombat;
+		flag gameState tidyMode;
+		return;
+	}
+	
+	if (combatState == inCombat) {
+		hit(player);
+		//TO DO: target should not automatically be the player. Set up an 'opponent' variable.
+	}
+	
+},
+
+/** Attempt to hit the given target. */
+hit(target) {
+	"\n\nThe " + name + " takes a wild swing at you!";
+	
 },
 
 /** Follow the player when they leave the room, because we're in combat. */
@@ -254,10 +287,11 @@ onPlayerEntry() {
 		return;
 	if (self not in liveList) //only wake up if we're not awake already
 		liveList[] += self;
-	
+
 },
 
 /** Subclass examine to include robot status. */
+/*
 examine {
 	openWindow self;
 	setWindow(self);
@@ -267,13 +301,17 @@ examine {
 	robotStatus();
 	listObjectOptions();
 	setWindow(mainWindow);
-},
+},*/
+
+
 
 /** Report combat activity, damage etc.*/
-robotStatus() {
+currentStatus() {
 	if (combatState == inCombat) {
 		print combatHint();
 	}
+	if (combatState == initiatingCombat)
+		"\nThe robot is rushing to attack you!";
 	if (hitPoints < maxHitPoints)
 		"\nHit points: " + hitPoints;
 },
@@ -328,6 +366,14 @@ combatHint() {
 		else
 			return attackResponses[certainty];
 	}
+	
+},
+
+
+/** Create the options provided by this robot in the form of hot text calls. */
+listObjectOptions() {
+	"\n";
+	player.writeAttackOption(self);
 	
 }
 

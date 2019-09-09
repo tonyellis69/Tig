@@ -214,6 +214,15 @@ void CSyntaxNode::writeMemberNameTable() {
 		writeCString(member.first);
 	}
 }
+
+/** Write the names of the flags. */
+void CSyntaxNode::writeFlagNameTable() {
+	writeWord(flagStack.size());
+	for (auto flagName : flagStack) {
+		writeCString(flagName);
+	}
+}
+
 /*
 void CSyntaxNode::writeGlobalFuncTable() {
 	std::vector<std::pair<std::string, TGlobalFn>> orderedFuncs;

@@ -104,6 +104,7 @@ void CTigCompiler::encode(CSyntaxNode * node) {
 
 	node->writeObjectDefTable();
 	node->writeMemberNameTable();
+	node->writeFlagNameTable();
 	//node->writeGlobalFuncTable();
 	fullCode.close();
 

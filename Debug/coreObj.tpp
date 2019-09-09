@@ -1,6 +1,9 @@
 /* Core game objects. */
 
-CGameObj has parent = 0, child = 0, sibling = 0,  initial, click, turn, name, description,
+
+
+CGameObj has parent = 0, child = 0, sibling = 0,  initial, mouseOver, turn, name, description,
+currentStatus,
 /*
 take {
 	oldParent = self.parent;
@@ -23,12 +26,13 @@ examine {
 	clearWindow;
 	print style("smallHeader") + cap(name) + style("small") + "\n";
 	description();
+	currentStatus();
 	listObjectOptions();
 	setWindow(mainWindow);
 },
 
-/** Player has clicked on this object. */
-click() {
+/** Player has moused over this object. */
+mouseOver() {
 	examine();
 },
 
@@ -39,14 +43,6 @@ listObjectOptions() {
 	//just a virtual func here in the base class.
 },
 
-/** Create the options provided by this object in the form of hot text calls. */
-//createMenu() {
-	/*if (self not in player && !self inherits CStatic)
-			print makeHot("Take",self,&take) + "\n";
-	if (self in player)
-			print makeHot("Drop",self,&drop) + "\n";*/
-//	makeHot("Examine",self,&examine);	
-//},*/
 
 /** An empty default method to prevent tiresome warnings in room descriptions.*/
 search() {},
@@ -88,7 +84,7 @@ drop {
 /** Create the options provided by this object in the form of hot text calls. */
 listObjectOptions() {
 	"\n";
-	msg = makeHot(name,self,&click);
+	msg = makeHot(name,self,&mouseOver);
 	if (self not in player && !self inherits CStatic) 
 		makeHot("Take",self,&take,"You pick up the " + msg + ". ") + " ";
 	if (self in player) {
@@ -116,14 +112,14 @@ registerHotText {
 	x = 0; //local 0
 	for each directionId of directionIds { 
 		if (self.<directionId>)  {
-			hot directionNames[x], player, &moveTo, directionId, "You go " + directionNames[x] ;
+			hot directionNames[x], player, &attemptMove, directionId, "You go " + directionNames[x] ;
 		}
 		x += 1;
 	}
 
 	//register hot text for any room objects
 	for each item of self {  
-			hot item.name, item, &click;
+			hot item.name, item, &mouseOver;
 	}
 
 },
@@ -278,6 +274,7 @@ listRoomContents() {
 },
 look {
 	purge all;
+	print style("bookmark");
 	print "\n\n" + style("mainHeader") + cap(name) + style("mainBody") + "\n";
 	registerHotText();
 	description(); //TO DO: should really be called describe.

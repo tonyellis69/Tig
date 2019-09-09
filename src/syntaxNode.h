@@ -101,7 +101,8 @@ public:
 	void writeEventTable();
 	void writeObjectDefTable();
 	void writeMemberNameTable();
-	void writeGlobalFuncTable();
+	void writeFlagNameTable();
+	//void writeGlobalFuncTable();
 	void writeHeader();
 
 	void killNodes();

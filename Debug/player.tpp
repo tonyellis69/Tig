@@ -5,7 +5,7 @@ CGameObj CombatantClass player has onObject, backDirection, name "player", hitPo
 weapon, armourClass = 10, stamina = 10, maxStamina = 10,
 
 /** An attempt by the player to move in the given direction to a new location.*/
-moveTo (direction) {
+attemptMove (direction) {
 	setWindow(mainWindow);
 	
 	destination = parent.<direction>;
@@ -21,7 +21,24 @@ moveTo (direction) {
 	} else
 		backDirection = calcBackDirection(direction);
 
-	teleport(destination);
+	moveTo(destination);
+},
+
+/** Move the player to the destination, displaying the room description and triggering
+	any necessary messages. */
+moveTo(destination) {
+	for each obj of player.parent 
+		obj.onPlayerExit();
+	
+	move player to destination;
+	
+	purge all;
+
+	message msgRoomChange, destination;
+	destination.look();
+	
+	for each obj of destination
+		obj.onPlayerEntry();
 },
 
 
@@ -258,14 +275,27 @@ receiveBash(attacker,damage) {
 resurrect() {
 	hitPoints = 15;
 	unflag self dead;
-	teleport(arena);
+	moveTo(arena);
 	
 },
 
 queueTest(item) {
 	"\n\nYour perform test option " + item;
 	
+},
+
+/** Write a hot text for attacking the given target with current weapon configuration. */
+writeAttackOption(target) {
+	choiceTxt = "You swing at the " + target.name() + " with your " + weapon.name();
+	makeHot("Hit",self,&hit,target,choiceTxt);	
+},
+
+/** Attempt to hit the target with the current weapon. */
+hit(target) {
+	"...the blow connects with the " + target.name() +", causing some damage.";
+	
 }
+
 ;
 
 

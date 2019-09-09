@@ -31,14 +31,25 @@ init() {
 	//entranceHub = powerPlant.createMap();
 
 	//move player to entranceHub.hubRoom;
-
-	player.parent.look();
+	
+	/*"A short first line.";
+	"\nThis is a longer second line, about three times as long at least, definitely.";
+	"\nAnother short line.";
+	"\nAnd another long line, are we seeing any kind of pattern yet in all of this?";
+	"\n\nThat was a line gap, did it make a difference?";
+	"\n\n\nAnd that was a double line gap.";
+	"\nNow here is a section of text that is going to run on for some lines, on and on 
+	and on in the interest of seeing what difference that makes. Of the trail of ink 
+	there is no end, as the man said. How many lines is this, I wonder. Enough to 
+	make a difference? We shall see.";
+	"\n\nAnother line gap. Done.";
+	
+	*/
+	globalLook();
 
 	gameTurn();
 	
-	for each x of (1 to 1) {
-		"\n\nThis is line " + x;
-	}
+
 };
 
 
@@ -61,13 +72,13 @@ northTo arena;
 
 -> CServobot robot;
 
-
+/*
 -> CRobot cleaningBot has name "cleaning bot", initialText "a cleaning bot polishes the floor", 
 description "A low, four-legged machine with orange brushes for feet.",
 weapon = brushArm, armour = lightRoboArmour, distance = 1, //was 5
 armourClass = 10
 ;
-
+*/
 
 
 CRoom testRoomSouthWest has name "Test room southwest",  description {

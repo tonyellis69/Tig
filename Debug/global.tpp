@@ -21,12 +21,18 @@ playerObj = player;
 
 liveList = []; //Active objects that get their turn() function called every turn.
 
+/** Global object to store game state stuff. tempState is just there to allow it to be declared,
+	remove once we have some real variables. */
+gameState has tempState;
+
+gameStateObj = gameState;
+
 updateInventory() {
 	setWindow(invWindow);
 	clearWindow;
 	print style("smallHeader") + "Inventory:\n" + style("small");
 	for each possession of player {
-		print makeHot(cap(aAn(possession)),possession,&click) + "\n"; 
+		print makeHot(cap(aAn(possession)),possession,&mouseOver) + "\n"; 
 	}
 	setWindow(mainWindow);
 };
@@ -70,7 +76,7 @@ listChildren(parentObj) {
 	count = 0; result = "";
 	numChildren = children(parentObj); 
 	for each childObj of parentObj { 
-		result += makeHot(aAn(childObj),childObj,&click); 
+		result += makeHot(aAn(childObj),childObj,&mouseOver); 
 		count += 1;
 		if (count < numChildren -2) //probably needs to be -1
 			result = result + ",";
@@ -84,7 +90,7 @@ listChildren(parentObj) {
 listElements(array) {
 	count = 0; result = "";
 	for each element of array { 
-		result += "a " + makeHot(element.name,element,&click); 
+		result += "a " + makeHot(element.name,element,&mouseOver); 
 		count += 1;
 		if (count < array -1)
 			result = result + ",";
@@ -95,26 +101,11 @@ listElements(array) {
 };
 
 clickableName(obj) {
-	purge click, self; //remove any existing hot text for this name.
-	return makeHot(obj.name,obj,&click);
+	purge mouseOver, self; //remove any existing hot text for this name.
+	return makeHot(obj.name,obj,&mouseOver);
 };
 
-teleport(destination) {
-	for each obj of player.parent 
-		obj.onPlayerExit();
-	
-	move player to destination;
-	
-	unflag combatAssistant active;
-	
-	purge all;
 
-	message msgRoomChange, destination;
-	destination.look();
-	
-	for each obj of destination
-		obj.onPlayerEntry();
-};
 
 /** Return the object name correctly prefixed with 'a' or 'an'.*/
 aAn(obj) {
@@ -134,8 +125,8 @@ gameTurn() {
 		liveObject.turn();	
 	}
 	
-	if (combatAssistant is active)
-		combatAssistant.doCombatRound();
+	if (gameState is tidyMode)
+		print style("markOff");
 	
 	player.stamina += 1;
 	if (player.stamina > player.maxStamina)
@@ -160,7 +151,7 @@ shortcutMenu() {
 	
 		if (player.parent.<exit> != 0) {
 			name = directionNames[idx];
-			makeHot("\nGo " + name,player, &moveTo, exit);
+			makeHot("\nGo " + name,player, &attemptMove, exit);
 		}
 		idx += 1;
 		
@@ -168,6 +159,11 @@ shortcutMenu() {
 	setWindow(mainWindow);
 };
 
+
+/** Global look, handy for the user. */
+globalLook() {
+	player.parent.look();
+};
 
 playerPresent() {
 	if (self in player.parent)
