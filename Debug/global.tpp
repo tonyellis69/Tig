@@ -14,7 +14,7 @@ meleeDistance = 4;
 mediumDistance = 10;
 
 directionIds = [&northTo,&neTo,&eastTo,&seTo,&southTo,&swTo,&westTo,&nwTo,&upTo,&downTo,&inTo,&outTo];
-directionNames = ["north","northeast","east","southeast","south","southwest","west","northwest","up","down","in","out"]; 
+directionNames = ["north","northeast","east","southeast","south","southwest","west","northwest","up","down","in","out"];
 
 
 playerObj = player;
@@ -32,14 +32,14 @@ updateInventory() {
 	clearWindow;
 	print style("smallHeader") + "Inventory:\n" + style("small");
 	for each possession of player {
-		print makeHot(cap(aAn(possession)),possession,&mouseOver) + "\n"; 
+		print makeHot(cap(aAn(possession)),possession,&mouseOver) + "\n";
 	}
 	setWindow(mainWindow);
 };
 
 
 getDirectionName(directionId) {
-	index = 0; 
+	index = 0;
 	for each dir of directionIds {
 		if (dir == directionId) {
 			//break;
@@ -74,9 +74,9 @@ calcBackDirection(direction) {
 
 listChildren(parentObj) {
 	count = 0; result = "";
-	numChildren = children(parentObj); 
-	for each childObj of parentObj { 
-		result += makeHot(aAn(childObj),childObj,&mouseOver); 
+	numChildren = children(parentObj);
+	for each childObj of parentObj {
+		result += makeHot(aAn(childObj),childObj,&mouseOver);
 		count += 1;
 		if (count < numChildren -2) //probably needs to be -1
 			result = result + ",";
@@ -89,8 +89,8 @@ listChildren(parentObj) {
 
 listElements(array) {
 	count = 0; result = "";
-	for each element of array { 
-		result += "a " + makeHot(element.name,element,&mouseOver); 
+	for each element of array {
+		result += "a " + makeHot(element.name,element,&mouseOver);
 		count += 1;
 		if (count < array -1)
 			result = result + ",";
@@ -114,20 +114,20 @@ aAn(obj) {
 	if (obj.name[0] matches "aieouAIEOU" >= 0)
 		return "an " + obj.name;
 	return "a " + obj.name;
-	
+
 };
 
 
 /** After the player has acted, the rest of the game world gets a chance to act. */
-gameTurn() {	
-	
+gameTurn() {
+
 	for each liveObject of liveList {
-		liveObject.turn();	
+		liveObject.turn();
 	}
-	
+
 	if (gameState is tidyMode)
 		print style("markOff");
-	
+
 	player.stamina += 1;
 	if (player.stamina > player.maxStamina)
 		player.stamina = player.maxStamina;
@@ -143,18 +143,18 @@ shortcutMenu() {
 	openWindow(menuWindow);
 	setWindow(menuWindow);
 	makeHot("Look",player.parent, &look);
-	
+
 	//loop through exits of player location
 	idx = 0;
 	for each exit of directionIds {
 		//if (!first)
-	
+
 		if (player.parent.<exit> != 0) {
 			name = directionNames[idx];
 			makeHot("\nGo " + name,player, &attemptMove, exit);
 		}
 		idx += 1;
-		
+
 	}
 	setWindow(mainWindow);
 };
@@ -169,8 +169,11 @@ playerPresent() {
 	if (self in player.parent)
 		return true;
 	return false;
-	
+
 };
 
+/** Return a results score for an action investing the given points at the given tier. */
+resultTable(tier, points) {
+	return d7+7; ///TEMP
 
-
+};
