@@ -84,10 +84,15 @@ IDENT    {LETTER}({LETTER}|{DIGIT})*
 [0-9]+					{	yylval.iValue = atoi(yytext);
 							return INTEGER;
 						}
+
+[0-9]+\.[0-9]+			{	yylval.fValue = atof(yytext);
+							return FLOAT;
+						}
 d[1-9]([0-9])*					{
 							yylval.iValue = atoi(yytext+1);
 							return ROLL;
-						}					
+						}	
+"d"						return RANDOM;
 [#()<>=+*/%;{}.,\[\]!&-] 		return *yytext;    // Match any one of these nonalphanumeric characters amd returns the Ascii code.
 	
 ">="					return GE;    /* Matches the literal string inside " " */
@@ -165,7 +170,9 @@ d[1-9]([0-9])*					{
 "sort>"					return SORT_DESC;
 "by"					return BY;
 "log"					return LOG;
-"random"				return RANDOM;
+"rand"					return RANDOM;
+"random"				return RAND_ARRAY;
+"round"					return ROUND;
 "const"					return CONST;
 {IDENT}					{	identBufs[currentIdentBuf].clear(); 
 							identBufs[currentIdentBuf].assign(yytext,yyleng);

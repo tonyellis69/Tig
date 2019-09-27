@@ -39,7 +39,7 @@
 
 
 %type <nPtr> program tigcode statement expression constant_expr statement_list dec_statement
-%type <nPtr> integer_constant
+%type <nPtr> integer_constant float_constant
 %type <nPtr>  string_literal event_identifier 
 %type <nPtr> code_block 
 %type <nPtr> variable_expr assignment variable_assignee obj_member_assignee element_assignee var_or_obj_memb deref_variable_expr
@@ -64,6 +64,7 @@
 %token MESSAGE PAUSE UNPAUSE //ARRAY
 %token START_TIMER START_EVENT AT
 %token <iValue> INTEGER
+%token <fValue> FLOAT
 %token <str> IDENTIFIER STRING
 %token ENDL
 %token IF
@@ -76,7 +77,8 @@
 %token MOVE TO 
 %token UNFLAG
 %token <iValue> ROLL
-%token RANDOM
+%token RANDOM ROUND
+%token RAND_ARRAY
 %token SORT_DESC BY
 %token LOG 
 %token NEW  ARRAY WITH CONST
@@ -338,6 +340,8 @@ expression:
 	 // | '&' IDENTIFIER					{ $$ = new CVarIdNode($2); }
 	  | member_id_expr					{ $$ = $1; }
 	  | GETSTRING						{ $$ = new COpNode(opGetString); }
+	  | expression '/' expression		{ $$ = new COpNode(opDiv, $1, $3); }
+	  | expression '*' expression		{ $$ = new COpNode(opMult, $1, $3); }
 	  | expression '+' expression		{ $$ = new COpNode(opAdd, $1, $3); }
 	  | expression '-' expression		{ $$ = new COpNode(opSub, $1, $3); }
 	  | expression '%' expression		{ $$ = new COpNode(opMod, $1, $3); }
@@ -367,7 +371,9 @@ expression:
 	  | FINAL_LOOP						{ $$ = new CFinalLoopNode(); }
 	  | FIRST_LOOP						{ $$ = new CFirstLoopNode(); }
 	  | ROLL							{ $$ = new CRollNode($1); }
-	  | RANDOM var_or_obj_memb ARRAY	{ $$ = new COpNode(opRand,$2); }
+	  | RANDOM '(' expression ')'		{ $$ = new COpNode(opRand,$3); }
+	  | RAND_ARRAY var_or_obj_memb ARRAY	{ $$ = new COpNode(opRandArray,$2); }
+	  | ROUND '(' expression ')'		{ $$ = new COpNode(opRound,$3); }
       ;
 
 negatable_expression:
@@ -457,14 +463,20 @@ param_list:
 	|										{ $$ = NULL; }
 	;
 
-constant_expr:							//TO DO: float
+constant_expr:							
 	integer_constant					{ $$ = $1; }
+	| float_constant					{ $$ = $1; }
 	| STRING 							{ $$ = new CStrNode($1); } 
 	; 
 
 integer_constant:
 	INTEGER								{ $$ = new CIntNode($1); }
 	| '-' INTEGER %prec UMINUS			{ $$ = new CIntNode(-$2); }
+	;
+
+float_constant:
+	FLOAT								{ $$ = new CFloatNode($1); }
+	| '-' FLOAT %prec UMINUS			{ $$ = new CFloatNode(-$2); }
 	;
 
 array_init_expr:

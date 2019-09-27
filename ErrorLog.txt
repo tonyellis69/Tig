@@ -1,3 +1,0 @@
-
-Error! Identifier "initialiseCombat" used in file D:\projects\TC\Debug\combatAssistant.tpp at line 72 but never defined.
-Error! Identifier "initialiseCombat" used in file D:\projects\TC\Debug\level.tpp at line 29 but never defined.

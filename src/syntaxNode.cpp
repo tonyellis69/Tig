@@ -101,6 +101,12 @@ void CSyntaxNode::writeWord(unsigned int word) {
 		cout << " " << word;
 }
 
+void CSyntaxNode::writeFWord(float word) {
+	outputFile->write((char*)& word, 4);
+	if (tron)
+		cout << " " << word;
+}
+
 void CSyntaxNode::writeString(const std::string & text) {
 	writeWord(text.size());
 	*outputFile << text.c_str();
@@ -743,6 +749,17 @@ CIntNode::CIntNode(int parsedInteger) {
 void CIntNode::encode() {
 	writeOp(opPushInt);
 	writeWord(integer);
+}
+
+/** Create a node representing the given float. */
+CFloatNode::CFloatNode(float parsedFloat) {
+	floatVal = parsedFloat;
+}
+
+/** Push this integer onto the stack for the VM to pick up.*/
+void CFloatNode::encode() {
+	writeOp(opPushFloat);
+	writeFWord(floatVal);
 }
 
 /** Create a node representing a timed event declaration. */

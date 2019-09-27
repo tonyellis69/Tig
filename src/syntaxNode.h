@@ -96,6 +96,7 @@ public:
 	void writeOp(char byte);
 	void writeByte(char byte);
 	void writeWord(unsigned int word);
+	void writeFWord(float word);
 	void writeString(const std::string& text);
 	void writeCString(const std::string & text);
 	void writeEventTable();
@@ -291,6 +292,15 @@ public:
 	void encode();
 
 	int integer;
+};
+
+
+class CFloatNode : public CSyntaxNode {
+public:
+	CFloatNode(float parsedFloat);
+	void encode();
+
+	float floatVal;
 };
 
 class CTimedEventNode : public CSyntaxNode {

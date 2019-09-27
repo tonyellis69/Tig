@@ -174,6 +174,21 @@ playerPresent() {
 
 /** Return a results score for an action investing the given points at the given tier. */
 resultTable(tier, points) {
-	return d7+7; ///TEMP
+	base = points / 2;
+	score = d(base) + base;
+	score = score * 1.5;
+	score = round(score);
 
+	return score;
+};
+
+/** Set the player's distributor object according to the given parameters. */
+setDistributor(offencePower,defencePower) {
+	log "\noffence " + offencePower + " defence " + defencePower;
+};
+
+
+/** Return the currently available power in the player's distributor object.*/
+getDistributorPower() {
+	return 18;
 };
