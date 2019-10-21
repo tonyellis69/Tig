@@ -77,7 +77,7 @@
 %token MOVE TO 
 %token UNFLAG
 %token <iValue> ROLL
-%token RANDOM ROUND
+%token RANDOM ROUND MIN MAX
 %token RAND_ARRAY
 %token SORT_DESC BY
 %token LOG 
@@ -374,6 +374,8 @@ expression:
 	  | RANDOM '(' expression ')'		{ $$ = new COpNode(opRand,$3); }
 	  | RAND_ARRAY var_or_obj_memb ARRAY	{ $$ = new COpNode(opRandArray,$2); }
 	  | ROUND '(' expression ')'		{ $$ = new COpNode(opRound,$3); }
+	  | MIN '(' expression ',' expression ')'	{ $$ = new COpNode(opMin,$3,$5); }
+	  | MAX '(' expression ',' expression ')'	{ $$ = new COpNode(opMax,$3,$5); }
       ;
 
 negatable_expression:

@@ -2,7 +2,7 @@
 
 
 CGameObj CombatantClass player has onObject, backDirection, name "player", hitPoints 25, maxHitPoints 25, armour,
-weapon, armourClass = 10, stamina = 10, maxStamina = 10,
+weapon, distributor, suit, shieldGen,
 
 /** An attempt by the player to move in the given direction to a new location.*/
 attemptMove (direction) {
@@ -86,9 +86,7 @@ writeAttackOption(target) {
 
 /** Attempt to hit the target with the current weapon. */
 hit(target) {
-
-	points = 10; //TEMP
-	damage = weapon.getDamage(points);
+	damage = suit.getDamage();
 	defence = target.getDefence();
 	"damage " + damage + " defence " + defence;
 	damage = damage - defence;
@@ -97,6 +95,17 @@ hit(target) {
 		return;
 	}
 	target.receiveDamage(damage);
+},
+
+/** Return the player's current defence score based on shield generator etc. */
+getDefence() {
+	return shieldGen.getDefence();
+},
+
+/** Set the power levels of the player's current distributor. */
+setDistributor(offencePower,defencePower) {
+	log "\nPlayer offence " + offencePower + " defence " + defencePower;
+	distributor.setPowerLevels(offencePower,defencePower);
 }
 
 ;

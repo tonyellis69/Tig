@@ -11,7 +11,7 @@ enum TOpCode {
 	opMove, opOpenWin, opOpenWinModal, opWin, opClr, opStyle, opCap, opCapNext, opInherits, opHotClr, opClrMarked, opArrayIt,
 	opHotCheck, opNot, opAnd, opOr, opArrayPush, opArrayRemove, opMsg, opHas, opMatch, opIs,
 	opIsNot, opSet, opUnset, opNew, opDelete, opFinalLoop, opFirstLoop, opRoll, opRand,
-	opSortDesc, opLog, opPause, opRandArray, opRound
+	opSortDesc, opLog, opPause, opRandArray, opRound, opMin, opMax
 };
 
 static char* opCode[] = { "opNop\0",
@@ -100,7 +100,9 @@ static char* opCode[] = { "opNop\0",
 	"opLog\0",
 	"opPause\0",
 	"opRandArray\0",
-	"opRound\0"
+	"opRound\0",
+	"opMin\0",
+	"opMax\0"
 
 };
 

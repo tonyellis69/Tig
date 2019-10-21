@@ -173,6 +173,8 @@ d[1-9]([0-9])*					{
 "rand"					return RANDOM;
 "random"				return RAND_ARRAY;
 "round"					return ROUND;
+"min"					return MIN;
+"max"					return MAX;
 "const"					return CONST;
 {IDENT}					{	identBufs[currentIdentBuf].clear(); 
 							identBufs[currentIdentBuf].assign(yytext,yyleng);

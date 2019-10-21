@@ -8,6 +8,7 @@ combatWindow = 3;
 
 //Constants for messaging the user
 msgRoomChange = 5000;
+msgAccumulatorUpdate = 6000;
 
 //max distance constants, in metres
 meleeDistance = 4;
@@ -128,10 +129,6 @@ gameTurn() {
 	if (gameState is tidyMode)
 		print style("markOff");
 
-	player.stamina += 1;
-	if (player.stamina > player.maxStamina)
-		player.stamina = player.maxStamina;
-	log "\nStamina: " + player.stamina;
 };
 
 
@@ -184,7 +181,7 @@ resultTable(tier, points) {
 
 /** Set the player's distributor object according to the given parameters. */
 setDistributor(offencePower,defencePower) {
-	log "\noffence " + offencePower + " defence " + defencePower;
+	player.setDistributor(offencePower,defencePower);
 };
 
 

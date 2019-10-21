@@ -7,6 +7,7 @@
 #include player.tpp
 #include weapons.tpp
 #include items.tpp
+#include gear.tpp
 #include robot.tpp
 #include powerPlant.tpp
 
@@ -17,14 +18,31 @@ init() {
 	//start player in the right room:
 	move player to arena;
 	move wrench to player;
-	move pipe to player;
+	//move pipe to player;
 	move ablat to player;
-	move blaster to player;
-	move medpack to player;
+	//move blaster to player;
+	//move medpack to player;
+	move smallPowerCell to player;
+	move basicConverter to player;
+	move basicAccumulator to player;
+	move basicDistributor to player;
+	move basicShieldGen to player;
+	move basicSuit to player;
 	//move robot to testRoomSouth;
 	player.weapon = wrench;
 	player.armour = ablat;
 	updateInventory();
+
+	basicConverter.attachCell(smallPowerCell);
+	basicConverter.attachAccumulator(basicAccumulator);
+	basicDistributor.attachAccumulator(basicAccumulator);
+	basicShieldGen.attachDistributor(basicDistributor);
+	basicSuit.attachDistributor(basicDistributor);
+
+	player.distributor = basicDistributor;
+	player.suit = basicSuit;
+	player.shieldGen = basicShieldGen;
+	//TO DO: handle automatically!
 
 
 
@@ -45,6 +63,9 @@ init() {
 	"\n\nAnother line gap. Done.";
 
 	*/
+
+	liveList[] += basicConverter;
+
 	globalLook();
 
 	gameTurn();
@@ -91,3 +112,24 @@ CPipe pipe;
 CAblat ablat;
 CBlaster blaster;
 CMedpack medpack;
+
+CPowerCell smallPowerCell has name "small powercell",
+description() {
+	"A small but weighty white plastic octagon.";
+};
+
+CConverter basicConverter has name "basic power converter",
+description	"A rectangular device with a prominent slot."
+;
+
+CAccumulator basicAccumulator has name "basic power accumulator",
+description "A cylindrical device with a number of flashing lights.";
+
+CDistributor basicDistributor has name "basic power distributor",
+description "A flatish, dark plastic device.";
+
+CShieldGen basicShieldGen has name "basic shield generator",
+description	"A hemispherical device.";
+
+CSuit basicSuit has name "basic actuator suit",
+description "A light, one-piece outfit with a network of tiny motors and support struts woven into it.";
