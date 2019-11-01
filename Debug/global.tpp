@@ -6,10 +6,6 @@ invWindow = 1;
 menuWindow = 2;
 combatWindow = 3;
 
-//Constants for messaging the user
-msgRoomChange = 5000;
-msgAccumulatorUpdate = 6000;
-
 //max distance constants, in metres
 meleeDistance = 4;
 mediumDistance = 10;
@@ -188,4 +184,14 @@ setDistributor(offencePower,defencePower) {
 /** Return the currently available power in the player's distributor object.*/
 getDistributorPower() {
 	return 18;
+};
+
+/** Return player health. */
+getPlayerHP() {
+	return player.hitPoints;
+};
+
+/** Return current power cell power. */
+getRemainingPower() {
+	return player.converter.getRemainingPower();
 };

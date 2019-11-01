@@ -39,9 +39,12 @@ init() {
 	basicShieldGen.attachDistributor(basicDistributor);
 	basicSuit.attachDistributor(basicDistributor);
 
+
+	player.converter = basicConverter;
 	player.distributor = basicDistributor;
 	player.suit = basicSuit;
 	player.shieldGen = basicShieldGen;
+
 	//TO DO: handle automatically!
 
 

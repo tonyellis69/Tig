@@ -147,7 +147,6 @@ void CSyntaxNode::writeObjectDefTable() {
 	writeWord(objects.size());
 	for (auto object : orderedObjects) {
 		writeWord(object.objectId);
-	/////////////////////	writeWord(object.classId);
 		writeByte(object.classIds.size());
 		for (auto classId : object.classIds) {
 			writeWord(classId);
@@ -375,7 +374,11 @@ void CSyntaxNode::mergeInheritedFlags() {
 			}
 		}
 		else { //otherwise give it one now
-			object.second.members.push_back({ flagsId,cumulativeFlags });
+			TMemberRec flagMember;
+			flagMember.memberId = flagsId;
+			flagMember.value = cumulativeFlags;
+			//object.second.members.push_back({ flagsId,cumulativeFlags });
+			object.second.members.push_back(flagMember);
 		}
 	
 	}
@@ -886,7 +889,11 @@ void CObjDeclNode::encode() {
 			//if object doesn't have the flags member, add it
 			TMemberRec* flagsMember = getObjectMember(*thisObj, "#flags");
 			if (flagsMember == NULL) {
-				thisObj->members.push_back({ memberIds["#flags"], CTigVar(flagValues) });
+				TMemberRec flagMember;
+				flagMember.memberId = memberIds["#flags"];
+				flagMember.value = flagValues;
+				//thisObj->members.push_back({ memberIds["#flags"], CTigVar(flagValues) });
+				thisObj->members.push_back(flagMember);
 			}
 			else {
 				int oldVal = flagsMember->value.getIntValue();
@@ -1802,7 +1809,11 @@ void CGlobalFuncDeclNode::encode() {
 	//globalFuncIds[name].addr = fnStartAddr; 
 	CTigVar addr;
 	addr.setFuncAddr(fnStartAddr);
-	objects[""].members.push_back({ id,addr });
+	TMemberRec  fnMember;
+	fnMember.memberId = id;
+	fnMember.value = addr;
+	//objects[""].members.push_back({ id,addr });
+	objects[""].members.push_back(fnMember);
 	global = true;
 	//setOutputFile(globalByteCode); cerr << "\n\n[GLOBAL] end of global func def";
 	setCodeDestination(globalDest);

@@ -2,7 +2,7 @@
 
 
 CGameObj CombatantClass player has onObject, backDirection, name "player", hitPoints 25, maxHitPoints 25, armour,
-weapon, distributor, suit, shieldGen,
+weapon, distributor, suit, shieldGen, converter,
 
 /** An attempt by the player to move in the given direction to a new location.*/
 attemptMove (direction) {
@@ -34,7 +34,7 @@ moveTo(destination) {
 
 	purge all;
 
-	message msgRoomChange, destination;
+	message "roomChange", destination;
 	destination.look();
 
 	for each obj of destination
@@ -51,8 +51,11 @@ receiveDamage(attacker,damage) {
 
 
 	hitPoints -= damage;
+	hitPoints = max(hitPoints,0);
 
-	if (hitPoints <= 0) {
+	message "HPchange", hitPoints;
+
+	if (hitPoints == 0) {
 		"\n\nThe blow kills you!";
 		flag self dead;
 		combatActionFn = 0;

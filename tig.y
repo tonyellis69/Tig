@@ -1,6 +1,6 @@
 %{
 	#define YYDEBUG 1
-    #include <cstdio>
+	#include <cstdio>
 	#include <iostream>
 	#include <string>
 	#include <vector>
@@ -9,8 +9,8 @@
 	#include "syntaxNode.h"
 	#include "lineRec.h"
 
-    void yyerror(const char *);
-    int yylex(void);
+	void yyerror(const char *);
+	int yylex(void);
 
 
 	CTigCompiler* tigC;
@@ -31,9 +31,9 @@
 	// Definition of YYSTYPE - the type used for symbols, which enables them to hold various values. 
 	// Causes this definition to appear in y.tab.h as a C union with these members: 
 %union {				 						
-    int iValue;                 // integer value - for numeric constants etc 
+	int iValue;                 // integer value - for numeric constants etc 
 	float fValue;				//float value - for floating-point constants
-    CSyntaxNode *nPtr;          // node pointer - enables symbols to point to syntax nodes
+	CSyntaxNode *nPtr;          // node pointer - enables symbols to point to syntax nodes
 	 std::string* str;
 };	
 
@@ -115,10 +115,10 @@ tigcode:
 		| tigcode statement				{ $$ = new CJointNode($1,$2); }
 		| dec_statement					{ $$ = $1; }
 		| tigcode dec_statement			{ $$ = new CJointNode($1,$2); }
-        ;
+		;
 
 statement:
-        PRINT expression ';'							{ $$ = new COpNode(opPrint,$2); }   	
+		PRINT expression ';'							{ $$ = new COpNode(opPrint,$2); }   	
 		| assignment ';'								{ $$ = $1; }
 		| '{' statement_list '}'						{ $$ = $2; }
 		| END ';'										{ $$ = new COpNode(opEnd);}
@@ -134,7 +134,7 @@ statement:
 		| PURGE ALL ';'										{ $$ = new COpNode(opPurge,new CIntNode(0),new CIntNode(0)); }
 		| RETURN return_expr ';'						{ $$ = new CReturnNode($2); }
 		| IF '(' expression ')' statement %prec IFX			{ $$ = new CIfNode($3, $5, NULL); }	//$prec gives this rule the lesser precedence of dummy token IFX
-        | IF '(' expression ')' statement ELSE statement	{ $$ = new CIfNode($3, $5, $7); } //thus rule has the greater precedence of ELSE
+		| IF '(' expression ')' statement ELSE statement	{ $$ = new CIfNode($3, $5, $7); } //thus rule has the greater precedence of ELSE
 		| FOR EACH var_or_obj_memb OF obj_expr statement	{ $$ = new CForEachElementNode($3, $5, $6, NULL); }
 		| FOR EACH var_or_obj_memb OF '(' expression TO expression ')' statement	{ $$ = new CForEachElementNode($3, $8, $10, $6); }
 		| var_or_obj_memb ADD_ASSIGN expression ';'			{ $$ = new COpAssignNode(opAdd,$1,$3); }
@@ -165,7 +165,7 @@ statement:
 		| UNPAUSE ';'									{ $$ = new COpNode(opPause); }
 		| CAP NEXT ';'									{ $$ = new COpNode(opCapNext); }
 		| WHILE '(' expression ')' statement			{ $$ = new CWhileNode($3,$5); }
-        ;
+		;
 
 			//TO DO: this repeats the function of '&memberName' (member_id_expr), without the
 			//clarifying '&'. Choose one consistent way to do this.
@@ -336,7 +336,7 @@ code_block:
 		;
 
 expression:
-      variable_expr						{ $$ = $1; }
+	  variable_expr						{ $$ = $1; }
 	 // | '&' IDENTIFIER					{ $$ = new CVarIdNode($2); }
 	  | member_id_expr					{ $$ = $1; }
 	  | GETSTRING						{ $$ = new COpNode(opGetString); }
@@ -376,7 +376,7 @@ expression:
 	  | ROUND '(' expression ')'		{ $$ = new COpNode(opRound,$3); }
 	  | MIN '(' expression ',' expression ')'	{ $$ = new COpNode(opMin,$3,$5); }
 	  | MAX '(' expression ',' expression ')'	{ $$ = new COpNode(opMax,$3,$5); }
-      ;
+	  ;
 
 negatable_expression:
 		variable_expr					{ $$ = $1; }
