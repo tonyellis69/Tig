@@ -53,7 +53,7 @@ init() {
 
 	//move player to entranceHub.hubRoom;
 
-	/*"A short first line.";
+	"A short first line.";
 	"\nThis is a longer second line, about three times as long at least, definitely.";
 	"\nAnother short line.";
 	"\nAnd another long line, are we seeing any kind of pattern yet in all of this?";
@@ -64,8 +64,27 @@ init() {
 	there is no end, as the man said. How many lines is this, I wonder. Enough to
 	make a difference? We shall see.";
 	"\n\nAnother line gap. Done.";
+	"\nline one";
+	"\nline two";
+	"\nline three";
+	"\nline five";
+	"\nline six";
+	"\nline seven";
+	"\nline eight";
+	"\none more line to cause a scroll...";
+	"\n...this one";
 
-	*/
+	"\n\nAnother line gap. Done. x";
+	"\nline one x";
+	"\nline twox";
+	//"\nline three x";
+	//"\nline five x";
+	//"\nline six x";
+	//"\nline seven x";
+	//"\nline eight x";
+	//"\none more line to cause a scroll... x";
+	//"\n...this one x";
+
 
 	liveList[] += basicConverter;
 
