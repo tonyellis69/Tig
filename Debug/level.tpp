@@ -63,6 +63,7 @@ init() {
 	and on in the interest of seeing what difference that makes. Of the trail of ink
 	there is no end, as the man said. How many lines is this, I wonder. Enough to
 	make a difference? We shall see.";
+
 	"\n\nAnother line gap. Done.";
 	"\nline one";
 	"\nline two";
