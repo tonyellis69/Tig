@@ -4,6 +4,7 @@
 #include <string>
 
 #include "syntaxNode.h"
+#include "nameBase.h"
 
 /** The CTigCompiler class wraps the entire parser into self-contained object
 	for parsing and compiling Tig programs. */
@@ -22,4 +23,6 @@ public:
 	bool objNameChecksResolve(CSyntaxNode * node);
 
 	std::string outputFile;
+
+	CNamebase nameBase; ///<Database of all identifiers.
 };

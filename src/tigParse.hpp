@@ -141,10 +141,10 @@ union YYSTYPE
 {
 #line 33 "tig.y" /* glr.c:2553  */
 				 						
-    int iValue;                 // integer value - for numeric constants etc 
+	int iValue;                 // integer value - for numeric constants etc 
 	float fValue;				//float value - for floating-point constants
-    CSyntaxNode *nPtr;          // node pointer - enables symbols to point to syntax nodes
-	 std::string* str;
+	CSyntaxNode *nPtr;          // node pointer - enables symbols to point to syntax nodes
+	 std::string* str;			//can't use string type so has to be a pointer
 
 #line 150 "tigParse.hpp" /* glr.c:2553  */
 };

@@ -34,7 +34,7 @@
 	int iValue;                 // integer value - for numeric constants etc 
 	float fValue;				//float value - for floating-point constants
 	CSyntaxNode *nPtr;          // node pointer - enables symbols to point to syntax nodes
-	 std::string* str;
+	 std::string* str;			//can't use string type so has to be a pointer
 };	
 
 
@@ -54,6 +54,7 @@
 %type <nPtr> memberId flag_expr member_id_expr memb_or_obj_id
 %type <nPtr> optional_new_init new_init_list new_init optional_hot_param_list
 %type <nPtr> make_hot style cap 
+%type <nPtr> const_decl_list const_decl
 //%type <nPtr> range_expr
 
 %token PRINT SET_WINDOW CLEAR_WINDOW OPEN_WINDOW MODAL CLEAR_MARKED END RETURN
@@ -225,9 +226,19 @@ dec_statement:
 		| level  obj_identifier optional_member_list ';'					{ $$ = new CObjDeclNode($2,$3,NULL); }
 		| level class_identifier obj_identifier optional_member_list ';'	{ $$ = new CObjDeclNode($3,$4,$2); }
 		| global_func_decl ';'												{ $$ = $1; }
-		| CONST IDENTIFIER '=' INTEGER ';'									{ $$ = new CConstNode($2,$4); }
+		| CONST const_decl_list ';'											{ $$ = $2; }
 		;
 
+const_decl_list:
+		const_decl								{ $$ = $1; }
+		| const_decl_list ',' const_decl		{ $$ = new CJointNode($1,$3); }
+		;
+
+const_decl:
+		IDENTIFIER						{ $$ = new CConstNode($1); } 
+		| IDENTIFIER '=' INTEGER		{ $$ = new CConstNode($1,$3); }
+		//| IDENTIFIER '=' FLOAT			{ $$ = new CConstNode($1,$3); }
+		;
 
 
 level:

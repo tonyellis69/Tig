@@ -17,6 +17,8 @@
 
 #include "nodeLib.h"
 
+#include "inameBase.h"
+
 class CSyntaxNode;
 
 
@@ -139,7 +141,6 @@ public:
 	static int nextEventId;
 
 	static std::vector<std::string> localVarIds; ///<Local variable names.
-	static std::map<std::string,int> localVarIdsPermanent; ///<Local variable names, permanent list.
 
 	static std::map<std::string, int> memberIds; ///<Object member names and their ids.
 	static int nextMemberId;
@@ -165,7 +166,7 @@ public:
 	static std::map<int,int> parentList; //ids of current parent objects at each tree level
 	static int childLevel;
 
-	static bool global; ///<True if we're encoding global code, false inside function definitions.
+	static bool globalCode; ///<True if we're encoding global code, false inside function definitions.
 
 	static char lastOp; ///<Most recent op code written;
 
@@ -199,7 +200,11 @@ public:
 	static std::vector<TLoopTypes> currentLoop; ///<What kind of loop we're currently encoding, if any.
 	static std::vector<std::string> declaredMemberNamesTmp; ///<Temporary store of each member name encountered building an object definition tree.
 	static std::vector<TMemberCheck> unconfirmedLocalMember;
-	static std::map<std::string, CTigVar> consts;
+	
+
+	inline static INameBase* nameBase; ///<Pointer to identifier database interface.
+
+
 };
 
 enum TIdentType { local, globalVar, object };
@@ -783,8 +788,10 @@ public:
 class CConstNode : public CSyntaxNode {
 public:
 	CConstNode(std::string* idName, int value);
+	CConstNode(std::string* idName) : CConstNode(idName, uniqueConstId++) {};
+	//CConstNode(std::string* idName, float value);
 
-
+	inline static int uniqueConstId = 1;
 };
 
 class CNegateNode : public CSyntaxNode {

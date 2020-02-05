@@ -11,9 +11,18 @@
 #include robot.tpp
 #include powerPlant.tpp
 
+//test = 77;
+
+
+const test, test2;
+
 
 /** Initialisation code.*/
 init() {
+	tron;
+	//test = 77;
+	print test2;
+	troff;
 
 	//start player in the right room:
 	move player to arena;
@@ -86,6 +95,24 @@ init() {
 	//"\none more line to cause a scroll... x";
 	//"\n...this one x";
 
+/*
+	"\n111111111111111111111111";
+	"\n222222222222222222222222";
+	"\n333333333333333333333333";
+	"\n444444444444444444444444";
+	"\n555555555555555555555555";
+	"\n666666666666666666666666666666666666666666666666666";
+	"\n777777777777777777777777777777777777777777777777777";
+	"\n888888888888888888888888888";
+	"\n999999999999999999999999999";
+	"\nAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA";
+	"\nBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB";
+	"\nCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC";
+	"\nDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDX";
+	"\nEEEEEEEEEEEEEEEEEEEEEEE";
+	"\nFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF";
+*/
+
 
 	liveList[] += basicConverter;
 
@@ -97,7 +124,7 @@ init() {
 };
 
 
-CRoom arena has name "Bare room",  description {
+CRoom arena has name "Bare room", description {
 "This is a plain, unremarkable room.";
 }, southTo testRoomSouth, swTo testRoomSouthWest;
 

@@ -27,7 +27,7 @@ std::vector<CTigVar> CSyntaxNode::arrayStack;
 std::vector<std::string> CSyntaxNode::unrecognisedArrayIniterStack;
 int CSyntaxNode::childLevel = 0;
 std::map<int,int> CSyntaxNode::parentList;
-bool CSyntaxNode::global = true;
+bool CSyntaxNode::globalCode = true;
 char CSyntaxNode::lastOp = 0;
 int CSyntaxNode::currentObj = 0;
 std::vector<int>* CSyntaxNode::parentClassList = NULL;
@@ -41,7 +41,6 @@ TCodeDest CSyntaxNode::codeDestination;
 bool CSyntaxNode::tron;
 set<int> CSyntaxNode::globalVarIds;
 std::vector<int> CSyntaxNode::arrayInitCount;
-std::map<std::string, int> CSyntaxNode::localVarIdsPermanent;
 std::vector<int> CSyntaxNode::continueAddr;
 std::vector<int> CSyntaxNode::breakAddr;
 std::vector<std::string> CSyntaxNode::flagNamesTmp; 
@@ -54,7 +53,6 @@ std::string CSyntaxNode::latestNewLocalVarName;
 std::vector<TLoopTypes> CSyntaxNode::currentLoop;
 std::vector<std::string> CSyntaxNode::declaredMemberNamesTmp;
 std::vector<TMemberCheck> CSyntaxNode::unconfirmedLocalMember;
-std::map<std::string, CTigVar> CSyntaxNode::consts;
 
 extern std::vector<TLineRec> lineRecs;
 
@@ -277,7 +275,7 @@ TMemberRec * CSyntaxNode::getObjectMember(CObject & obj, std::string  membName) 
 }
 
 void CSyntaxNode::funcMode(bool onOff) {
-	global = !onOff;
+	globalCode = !onOff;
 	//std::cerr << "\nglobal mode set to " << global;
 }
 
@@ -428,7 +426,7 @@ int CSyntaxNode::getVarId(std::string & identifier) {
 
 	//Check if it's an existing local variable
 	//if not, make it one
-	localVarIdsPermanent[identifier] = sourceLine;
+	nameBase->storeLocalVar(identifier, { sourceFile,sourceLine });
 	auto it = std::find_if(localVarIds.begin(), localVarIds.end(),
 		[&](auto& varName) { return varName == identifier; });
 	if (it == localVarIds.end()) {
@@ -688,8 +686,13 @@ CVarAssigneeNode::~CVarAssigneeNode() {
 
 /** Tell the VM to push this variable's identifier on to the stack. */
 void CVarAssigneeNode::encode() {
-	if (name == "combatActionFn")
-		int b = 0;
+
+	if (nameBase->isConst(name)) {
+		cerr << "\nError: file " << filenames[sourceFile] << ", line: " <<
+			sourceLine << ". Attempt to assign value to const '" << name << "'.";
+		exit(1);
+	}
+
 	writeOp(opPushInt); //TO DO make pushObj where necessary
 		//check if it's an existing data member or global variable.
 		auto iter = memberIds.find(name);
@@ -703,7 +706,7 @@ void CVarAssigneeNode::encode() {
 				writeWord(zeroObject); //tells VM to resolve whether global or local at runtime
 				writeOp(opPushInt);
 				writeWord(memberId);
-				if (global) {
+				if (globalCode) {
 					globalVarIds.insert(memberId);
 				}
 				return;
@@ -711,13 +714,14 @@ void CVarAssigneeNode::encode() {
 		}
 
 		
-		if (global) {
+		if (globalCode) {
 			//have we previously used this as a local variable?
-			auto it = localVarIdsPermanent.find(name);
-			if (it != localVarIdsPermanent.end()) {
-				cerr << "\nError: local variable " << name << " declared at line " << it->second 
+			if (nameBase->isLocalVar(name)) {
+				cerr << "\nError: local variable " << name << " declared at line " 
+					<< nameBase->getSrcLocationConst(name).srcLine
 					<< " is also declared as a global variable at line " << sourceLine;
 				exit(1);
+				//TO DO: maybe scrap this and do all checks at end?
 			}
 			writeWord(zeroObject);
 			writeOp(opPushInt);
@@ -780,8 +784,20 @@ void CTimedEventNode::encode() {
 
 /** Create a node representing the declaration of the named object member. */
 CMemberDeclNode::CMemberDeclNode(CSyntaxNode* identifier, CSyntaxNode* initialiser) {
-	declaredMemberNamesTmp.push_back(identifier->getText());
-	memberId = getMemberId(identifier->getText());
+	std::string name = identifier->getText();
+	if (nameBase->isConst(name)) {
+		std::cerr << "\nError: file " << filenames[sourceFile] << " line: " << sourceLine << ", "
+		<< "member '" << name << "' already defined as a const.";
+		exit(1);
+	}
+
+
+
+	declaredMemberNamesTmp.push_back(name);
+	memberId = getMemberId(name);
+
+	nameBase->storeMember(name, memberId, { sourceFile,sourceLine });
+
 	if (initialiser)
 		operands.push_back(initialiser);
 }
@@ -1088,9 +1104,9 @@ void CVarExprNode::encode() {
 	}
 
 	//is it a const?
-	if (consts.find(name) != consts.end()) {
+	if (nameBase->isConst(name)) {
 		writeOp(opPushInt);
-		writeWord(consts[name].getIntValue());
+		writeWord(nameBase->getConstValue(name));
 		return;
 	}
 
@@ -1161,8 +1177,8 @@ CInitNode::CInitNode(CObjIdentNode * objIdent) {//
 CInitNode::CInitNode(CObjOrConstIdentNode* ident) {
 	//identifier could be an object name or a global variable
 	//search consts list
-	if (consts.find(ident->name) != consts.end()) {
-		value = consts[ident->name];
+	if (nameBase->isConst(ident->name)) {
+		value = nameBase->getConstValue(ident->name);
 		return;
 	}
 
@@ -1402,15 +1418,14 @@ void CFunctionDefNode::encode() {
 	//should now know how many params
 
 	setCodeDestination(funcDest);
-	global = false;
+	globalCode = false;
 	int varCountAddr = outputFile->tellp();
 	writeByte(0);
 	operands[1]->encode();
 
 	for (auto varName : unconfirmedLocalVarNames) {
 		cerr << "\nError! Unrecognised identifier \"" << varName << "\" in file " <<
-			filenames[sourceFile] << ", line " << localVarIdsPermanent[varName] << ".";
-
+			filenames[sourceFile] << ", line " << nameBase->getSrcLocationLocalVar(varName).srcLine << ".";
 		exit(1);
 	}
 
@@ -1425,7 +1440,7 @@ void CFunctionDefNode::encode() {
 	}
 //	if (lastOp != opReturn && lastOp != opReturnTrue)
 		writeOp(opReturnTrue); 
-	global = true;
+	globalCode = true;
 	setCodeDestination(globalDest);
 }
 
@@ -1791,7 +1806,7 @@ void CGlobalFuncDeclNode::encode() {
 	//should now know how many params
 	//setOutputFile(fnByteCode); cerr << "\n\n[FUNCTION write global def]";
 	setCodeDestination(funcDest);
-	global = false; 
+	globalCode = false; 
 	int fnStartAddr = outputFile->tellp();
 	writeByte(0); //initial var count
 	operands[1]->encode(); //actual function code
@@ -1814,7 +1829,7 @@ void CGlobalFuncDeclNode::encode() {
 	fnMember.value = addr;
 	//objects[""].members.push_back({ id,addr });
 	objects[""].members.push_back(fnMember);
-	global = true;
+	globalCode = true;
 	//setOutputFile(globalByteCode); cerr << "\n\n[GLOBAL] end of global func def";
 	setCodeDestination(globalDest);
 }
@@ -2281,8 +2296,17 @@ CObjOrConstIdentNode::CObjOrConstIdentNode(std::string* idName) {
 
 /** A node representing a constant declaration. */
 CConstNode::CConstNode(std::string* idName, int value) {
-	consts[*idName] = value;
+	if (nameBase->isMember(*idName)) {
+		cerr << "\nError: file " << filenames[sourceFile] << ", line: " <<
+			sourceLine << ", const '" << *idName << "' already defined as a member.";
+		exit(1);
+	}
+
+	nameBase->storeConst(*idName, value, {sourceLine, sourceFile});
 }
+
+
+
 
 CNegateNode::CNegateNode(CSyntaxNode* expr) {
 	numericConst = false;

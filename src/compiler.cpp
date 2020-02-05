@@ -21,7 +21,7 @@ extern string homeDir;
 extern std::vector<TLineRec> lineRecs;
 
 CTigCompiler::CTigCompiler() {
-	
+	CSyntaxNode::nameBase = &nameBase;
 }
 
 
