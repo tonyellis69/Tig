@@ -6,6 +6,9 @@
 #include <fstream>
 
 #include <iostream>
+
+#include <algorithm>
+
 using namespace std;
 
 extern FILE* yyin;
@@ -22,6 +25,7 @@ extern std::vector<TLineRec> lineRecs;
 
 CTigCompiler::CTigCompiler() {
 	CSyntaxNode::nameBase = &nameBase;
+	CSyntaxNode::compiler = this;
 }
 
 
@@ -33,7 +37,7 @@ void CTigCompiler::compile(std::string filename) {
 		std::cout << "\nFile not found";
 		return;
 	}
-	outputFile = "output.tig";
+	outputFileName = "output.tig";
 	filenames.push_back(filename);
 	TLineRec file1;
 	lineRecs.push_back({ 1,0 }); //so source line tracking starts on line 1, source file 0
@@ -44,7 +48,7 @@ void CTigCompiler::compile(std::string filename) {
 
 	yyparse();
 
-	cout << "\n" << outputFile << " compiled successfully!";
+	cout << "\n" << outputFileName << " compiled successfully!";
 
 	fclose(yyin);
 
@@ -55,14 +59,15 @@ void CTigCompiler::compile(std::string filename) {
 
 /** Convert the given syntax tree into bytecode, and write it to a file. */
 void CTigCompiler::encode(CSyntaxNode * node) {
-	node->objects[""] = CObject();
-	node->tron = false;// true;
+	objects[""] = CObject();
+	tron = false;// true;
 	node->fnByteCode.open("fnCode.tmp", ios::binary | ios::out );
 	node->globalByteCode.open("globalCode.tmp", ios::binary | ios::out );
 	
 	//node->setOutputFile(node->globalByteCode); cerr << "\n[Global]";
 	node->codeDestination = destNone;
 	node->setCodeDestination(globalDest);
+	//outputFile = node->outputFile; //TO DO: bring setCodeDestinaton into compiler to avoid this
 	node->encode();
 
 	if (!globalMemberChecksResolve(node))
@@ -95,27 +100,30 @@ void CTigCompiler::encode(CSyntaxNode * node) {
 	//fullCode.seekp(0, ios::end);
 	tmp = fullCode.tellp();
 
-	node->tron = false;
+	tron = false;
 	//add events table
-	node->setOutputFile(fullCode); if (node->tron) cout << "\n\n[Tables]\n";
+	setOutputFile(fullCode); if (tron) cout << "\n\n[Tables]\n";
+	
+
 	node->writeEventTable();
 	
 	node->mergeInheritedFlags();
 
 	node->writeObjectDefTable();
+	writeObjectNameTable();
 	node->writeMemberNameTable();
 	node->writeFlagNameTable();
 	//node->writeGlobalFuncTable();
 	fullCode.close();
 
 	//write header
-	ofstream main(outputFile, ios::ate | ios::binary | ios::out);
-	node->setOutputFile(main); if (node->tron) cout << "\n\n[Header]\n";
+	ofstream main(outputFileName, ios::ate | ios::binary | ios::out);
+	setOutputFile(main); if (tron) cout << "\n\n[Header]\n";
 	node->writeHeader();
 	main.close();
 
 	//stitch together
-	main.open(outputFile, ios::binary | ios::out | ios::app);
+	main.open(outputFileName, ios::binary | ios::out | ios::app);
 	ifstream tempFile("fnCode.tmp", ios::binary | ios::in);
 
 	main << tempFile.rdbuf();
@@ -139,7 +147,7 @@ bool CTigCompiler::globalMemberChecksResolve(CSyntaxNode * node) {
 	for (auto check : node->globalMembersToCheck) {
 		bool found = false;
 		//if (check.objId != 0)
-			for (auto obj : node->objects) { //1. check if this member was ever defined in an object
+			for (auto obj : objects) { //1. check if this member was ever defined in an object
 				for (auto objMember : obj.second.members) {
 					if (objMember.memberId == check.memberId && 
 						(obj.second.objectId == check.objId || obj.second.objectId == 0) ) {
@@ -188,6 +196,39 @@ bool CTigCompiler::objNameChecksResolve(CSyntaxNode * node) {
 			" but never declared.";
 	}
 	return false;
+}
+
+void CTigCompiler::setOutputFile(std::ofstream& file) {
+	outputFile = &file;
+	CSyntaxNode::outputFile = &file;
+}
+
+void CTigCompiler::writeString(const std::string& text) {
+	writeWord(text.size());
+	*outputFile << text.c_str();
+	if (tron) {
+		std::string trim = text;
+		trim.erase(trim.begin(), find_if_not(trim.begin(), trim.end(), [](int c) {return isspace(c); }));
+		cout << " " << trim.substr(0, 20);
+	}
+}
+
+void CTigCompiler::writeCString(const std::string& text) {
+	*outputFile << text.c_str() << '\0';
+}
+
+void CTigCompiler::writeWord(unsigned int word) {
+	outputFile->write((char*)&word, 4);
+	if (tron)
+		cout << " " << word;
+}
+
+void CTigCompiler::writeObjectNameTable() {
+	writeWord(objects.size());
+	for (auto object : objects) {
+		writeCString(object.first);
+		writeWord(object.second.objectId);
+	}
 }
 
 

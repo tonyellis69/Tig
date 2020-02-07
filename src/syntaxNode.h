@@ -18,6 +18,7 @@
 #include "nodeLib.h"
 
 #include "inameBase.h"
+#include  "ICompiler.h"
 
 class CSyntaxNode;
 
@@ -31,19 +32,7 @@ const int variableExpression = 2001;
 enum TLoopTypes { forEachLoop, whileLoop};
 
 class CSyntaxNode;
-struct TMemberRec {
-	int memberId;
-	CTigVar value;
-	std::vector<CTigVar> arrayInitList;
-	std::vector<std::string> unrecogniseArrayInitIds;
-};
 
-struct TMemberCheck {
-	int lineNum;
-	int fileNum;
-	int memberId;
-	int objId;
-};
 
 struct TNameCheck {
 	int lineNum;
@@ -54,15 +43,7 @@ struct TNameCheck {
 
 
 
-class CObject {
-public:
-	CObject() : objectId(0), flags(0) {};
-	int objectId;
-	std::vector<int> classIds;
-	std::vector<TMemberRec> members;
-	std::vector<TMemberCheck> localMembersToCheck;
-	int flags; //storing to help with inheritence
-};
+
 
 struct TGlobalFn {
 	int id;
@@ -94,13 +75,13 @@ public:
 	int getMemberId(std::string & identifier);
 	int getObjectId(std::string & identifier);
 	int getGlobalFuncId(std::string& identifier);
-	static void setOutputFile(std::ofstream& file);
+	//static void setOutputFile(std::ofstream& file);
 	void writeOp(char byte);
 	void writeByte(char byte);
-	void writeWord(unsigned int word);
+	//void writeWord(unsigned int word);
 	void writeFWord(float word);
-	void writeString(const std::string& text);
-	void writeCString(const std::string & text);
+	//void writeString(const std::string& text);
+	//void writeCString(const std::string & text);
 	void writeEventTable();
 	void writeObjectDefTable();
 	void writeMemberNameTable();
@@ -144,7 +125,7 @@ public:
 
 	static std::map<std::string, int> memberIds; ///<Object member names and their ids.
 	static int nextMemberId;
-	static std::map<std::string, CObject> objects; ///<Objects names and their details.
+
 	static int nextObjectId;
 
 	static std::map<int, int> eventTable; ///<Tables event IDs and addresses.
@@ -181,7 +162,7 @@ public:
 	static std::vector<TMemberCheck> globalMembersToCheck;
 
 	static TCodeDest codeDestination;
-	static bool tron;
+
 
 	static std::set<int> globalVarIds; ///<Set of member ids that reperesent global variables.
 
@@ -204,6 +185,7 @@ public:
 
 	inline static INameBase* nameBase; ///<Pointer to identifier database interface.
 
+	inline static ICompiler* compiler; ///<Pointer to the compiler we're using.
 
 };
 
@@ -601,7 +583,7 @@ public:
 class CTronNode : public CSyntaxNode {
 public:
 	CTronNode(bool onOff) { mTron = onOff;}
-	void encode() { tron = mTron;}
+	void encode() { compiler->tron = mTron;}
 
 	bool mTron;
 };

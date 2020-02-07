@@ -5,13 +5,14 @@
 
 #include "syntaxNode.h"
 #include "nameBase.h"
+#include  "ICompiler.h"
 
 /** The CTigCompiler class wraps the entire parser into self-contained object
 	for parsing and compiling Tig programs. */
 
 
 
-class CTigCompiler {
+class CTigCompiler : public ICompiler {
 public:
 	CTigCompiler();
 	~CTigCompiler();
@@ -22,7 +23,17 @@ public:
 	bool flagNameChecksResolve(CSyntaxNode * node);
 	bool objNameChecksResolve(CSyntaxNode * node);
 
-	std::string outputFile;
+	void setOutputFile(std::ofstream& file);
+	void writeString(const std::string& text);
+	void writeCString(const std::string& text);
+	void writeWord(unsigned int word);
+
+	void writeObjectNameTable();
+
+	std::string outputFileName;
 
 	CNamebase nameBase; ///<Database of all identifiers.
+
+	std::ofstream* outputFile;
+	
 };

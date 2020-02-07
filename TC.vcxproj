@@ -31,6 +31,7 @@
   <ItemGroup>
     <ClInclude Include="..\VMtest\src\var.h" />
     <ClInclude Include="src\compiler.h" />
+    <ClInclude Include="src\ICompiler.h" />
     <ClInclude Include="src\inameBase.h" />
     <ClInclude Include="src\lineRec.h" />
     <ClInclude Include="src\nameBase.h" />

@@ -11,18 +11,15 @@
 #include robot.tpp
 #include powerPlant.tpp
 
-//test = 77;
 
+const large;
 
-const test, test2;
+CTestRoom has size large;
 
 
 /** Initialisation code.*/
 init() {
-	tron;
-	//test = 77;
-	print test2;
-	troff;
+
 
 	//start player in the right room:
 	move player to arena;
@@ -87,13 +84,13 @@ init() {
 	"\n\nAnother line gap. Done. x";
 	"\nline one x";
 	"\nline twox";
-	//"\nline three x";
-	//"\nline five x";
-	//"\nline six x";
-	//"\nline seven x";
-	//"\nline eight x";
-	//"\none more line to cause a scroll... x";
-	//"\n...this one x";
+	"\nline three x";
+	"\nline five x";
+	"\nline six x";
+	"\nline seven x";
+	"\nline eight x";
+	"\none more line to cause a scroll... x";
+	"\n...this one x";
 
 /*
 	"\n111111111111111111111111";

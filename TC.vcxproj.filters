@@ -68,5 +68,8 @@
     <ClInclude Include="src\nameBase.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\ICompiler.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
