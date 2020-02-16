@@ -68,6 +68,7 @@ public:
 	virtual int getStrIndex() {  return NULL; } ;
 	virtual void encode() {};
 	virtual int getId() { return NULL; }
+	virtual int getOpCode() { return -1; }
 	virtual std::string& getText() { std::string nul;  return nul; };
 	int getEventId(std::string& identifier); //TO DO still needed?
 	int getVarId(std::string & identifier);
@@ -209,6 +210,8 @@ public:
 	COpNode(TOpCode code, CSyntaxNode* operand1, CSyntaxNode* operand2, CSyntaxNode* operand3);
 	COpNode(TOpCode code, CSyntaxNode* operand1, CSyntaxNode* operand2, CSyntaxNode* operand3, CSyntaxNode* operand4);
 	void encode();
+
+	int getOpCode() { return opCode; }
 
 	TOpCode opCode;
 	

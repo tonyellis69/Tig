@@ -111,6 +111,7 @@ void CTigCompiler::encode(CSyntaxNode * node) {
 
 	node->writeObjectDefTable();
 	writeObjectNameTable();
+	writeConstNameTable();
 	node->writeMemberNameTable();
 	node->writeFlagNameTable();
 	//node->writeGlobalFuncTable();
@@ -228,6 +229,19 @@ void CTigCompiler::writeObjectNameTable() {
 	for (auto object : objects) {
 		writeCString(object.first);
 		writeWord(object.second.objectId);
+	}
+}
+
+void CTigCompiler::writeConstNameTable() {
+	writeWord(nameBase.constRecs.size());
+
+	sort(nameBase.constRecs.begin(), nameBase.constRecs.end(),
+		[&](CNameRec& const1, CNameRec& const2) {return const1.identifier < const2.identifier; });
+
+
+	for (auto constRec : nameBase.constRecs) {
+		writeCString(constRec.identifier);
+		writeWord(constRec.intValue);
 	}
 }
 

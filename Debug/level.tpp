@@ -12,14 +12,29 @@
 #include powerPlant.tpp
 
 
-const large;
+const small, medium, large;
 
-CTestRoom has size large;
+testRoom has size medium;
+
+CRobot2 has name, hitPoints,
+receiveDamage(attacker,damage) {
+	hitPoints -= damage;
+	CConsole.msgFn("Hello world, from Tig!");
+};
+
+CRobot2 botA has name "Robot A", hitPoints 3;
+CRobot2 botB has name "Robot B", hitPoints 3;
+
+
+CConsole has msgFn() { };
 
 
 /** Initialisation code.*/
-init() {
-
+init(param1,param2,param3) {
+tron;
+	x = 42;
+	x = param1;
+troff;
 
 	//start player in the right room:
 	move player to arena;

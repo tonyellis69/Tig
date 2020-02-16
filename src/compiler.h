@@ -29,6 +29,7 @@ public:
 	void writeWord(unsigned int word);
 
 	void writeObjectNameTable();
+	void writeConstNameTable();
 
 	std::string outputFileName;
 

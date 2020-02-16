@@ -1221,12 +1221,16 @@ CInitNode::CInitNode() {
 /** Throw the value of this initialiser on the stack to use when writing the object table. */
 void CInitNode::encode() {
 	if (value.type == tigFunc) {
-		//compiler->setOutputFile(fnByteCode); cerr << "\n\n[FUNCTION INIT]";
-		int codeStart = fnByteCode.tellp();
-		operands[0]->encode();
-		//writeOp(opReturn);
-		value.setFuncAddr(codeStart);
-		//compiler->setOutputFile(globalByteCode);
+		// empty function definition = external function
+		if (operands[0]->operands[1]->getOpCode() == opNop) {
+			value.setFuncAddr(-1);
+		}
+		else 
+	{
+			int codeStart = fnByteCode.tellp();
+			operands[0]->encode();
+			value.setFuncAddr(codeStart);
+		}
 	}
 
 

@@ -25,14 +25,14 @@ public:
 	TSrcLoc getSrcLocationConst(const std::string& ident);
 	TSrcLoc getSrcLocationLocalVar(const std::string& ident);
 
-
+	std::vector<CNameRec> constRecs;
+	std::vector<CNameRec> localVarRecs;
+	std::vector<CNameRec> memberRecs;
 
 private:
 	bool isFound(const std::string& ident, TIdentifierType identType);
 
-	std::vector<CNameRec> constRecs;
-	std::vector<CNameRec> localVarRecs;
-	std::vector<CNameRec> memberRecs;
+
 
 };
 
