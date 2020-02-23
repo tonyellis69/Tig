@@ -6,15 +6,20 @@
 
 #include "..\..\VMtest\src\var.h"
 
+enum TCodeDest { funcDest, globalDest, destNone };
+
 /** An interface class for using the compiler. */
 class CObject;
 class ICompiler {
 public:
+	virtual void writeOp(char byte) = 0;
+	virtual void writeByte(char byte) = 0;
 	virtual void writeWord(unsigned int word) = 0;
 	virtual void writeString(const std::string& text) = 0;
 	virtual void writeCString(const std::string& text) = 0;
 
 	virtual void setOutputFile(std::ofstream& file) = 0;
+	virtual void setCodeDestination(TCodeDest dest) = 0;
 
 	std::map<std::string, CObject> objects; ///<Objects names and their details.
 	bool tron;

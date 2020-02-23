@@ -1,6 +1,6 @@
-    /* Tig lexer */
+	/* Tig lexer */
 %{	//Definitions section. Anything here is copied to the generated C file.
-   	#include "syntaxNode.h"
+	#include "syntaxNode.h"
 
 	#include <iostream>
 
@@ -15,7 +15,7 @@
 
 	#include "lineRec.h"
 
-    void yyerror(const char *);
+	void yyerror(const char *);
 	void trackLine();
 	
 	std::string stringBuf;
@@ -28,6 +28,7 @@
 	std::vector<TLineRec> lineRecs;
 
 	std::string homeDir;
+
 %}
 
 	/* Substitutions simplify pattern-matching rules, eg, letter [A-Za-z] or digit [0-9] */
@@ -82,6 +83,10 @@ IDENT    {LETTER}({LETTER}|{DIGIT})*
 
 
 [0-9]+					{	yylval.iValue = atoi(yytext);
+							return INTEGER;
+						}
+
+"0x"[0-9a-fA-F]+		{	yylval.iValue  = int(std::stoul(yytext,nullptr,0));
 							return INTEGER;
 						}
 
@@ -207,7 +212,7 @@ d[1-9]([0-9])*					{
 %%
 
 int yywrap(void) { //Called when input exhausted. Reset yyin and return 0 to process another file.
-    return 1;
+	return 1;
 }
 
 void trackLine() {

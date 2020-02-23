@@ -12,15 +12,43 @@
 #include powerPlant.tpp
 
 
-const small, medium, large;
+const smallMap, mediumMap, largeMap;
 
-testRoom has size medium;
+const actSerial = 0x80000000, actNone = 0x0, actChasePlayer = 0x1, actAttackPlayer = 0x80000002,
+actCombatPassive = 0x3, actTrackPlayer = 0x4, actPlayerAttack = 0x80000005,
+actPlayerTurnToAttack = 0x80000006, actDead = 0x7, actDither = 0x8;
 
-CRobot2 has name, hitPoints,
+testRoom has size mediumMap;
+
+CRobot2 has name, hitPoints, action = actNone,
 receiveDamage(attacker,damage) {
 	hitPoints -= damage;
-	CConsole.msgFn("Hello world, from Tig!");
-};
+	CConsole.msgFn("You hit " + name);
+},
+chooseTurnAction() {
+	if (action == actDead)
+			return; //TO DO never seem to get here!!!!
+
+	result = isNeighbour(player);
+
+	 if (result == 1)
+	 		action = attackOrNot();
+		else
+			action = actChasePlayer;
+
+},
+attackOrNot() {
+	roll = d2;
+	if (roll == 1) {
+		CConsole.msgFn("\nRobot dithers!");
+		return  actDither;
+	}
+	return actAttackPlayer;
+},
+isNeighbour(obj) {};
+
+
+
 
 CRobot2 botA has name "Robot A", hitPoints 3;
 CRobot2 botB has name "Robot B", hitPoints 3;
@@ -29,12 +57,20 @@ CRobot2 botB has name "Robot B", hitPoints 3;
 CConsole has msgFn() { };
 
 
-/** Initialisation code.*/
-init(param1,param2,param3) {
-tron;
-	x = 42;
+
+
+
+func1 (param1, param2) {
 	x = param1;
-troff;
+	//y = param2 ;
+};
+
+/** Initialisation code.*/
+init() {
+
+
+
+
 
 	//start player in the right room:
 	move player to arena;

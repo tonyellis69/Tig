@@ -50,7 +50,7 @@ struct TGlobalFn {
 	int addr;
 };
 
-enum TCodeDest {funcDest, globalDest, destNone};
+;
 
 //namespace syn {
 	extern std::vector<CSyntaxNode*> nodeList;
@@ -76,18 +76,14 @@ public:
 	int getMemberId(std::string & identifier);
 	int getObjectId(std::string & identifier);
 	int getGlobalFuncId(std::string& identifier);
-	//static void setOutputFile(std::ofstream& file);
-	void writeOp(char byte);
-	void writeByte(char byte);
-	//void writeWord(unsigned int word);
+
 	void writeFWord(float word);
-	//void writeString(const std::string& text);
-	//void writeCString(const std::string & text);
+
 	void writeEventTable();
-	void writeObjectDefTable();
+
 	void writeMemberNameTable();
 	void writeFlagNameTable();
-	//void writeGlobalFuncTable();
+
 	void writeHeader();
 
 	void killNodes();
@@ -104,7 +100,6 @@ public:
 	void logObjDeclarationCheck(int lineNum, int fileNum, std::string objName);
 	std::string getMemberName(int memberId);
 
-	void setCodeDestination(TCodeDest dest);
 
 	void mergeInheritedFlags();
 
@@ -150,8 +145,6 @@ public:
 
 	static bool globalCode; ///<True if we're encoding global code, false inside function definitions.
 
-	static char lastOp; ///<Most recent op code written;
-
 	static int currentObj; ///<Current object being defined, if any.
 
 	static std::vector<int>* parentClassList;
@@ -162,7 +155,7 @@ public:
 	static bool paramDeclarationMode;
 	static std::vector<TMemberCheck> globalMembersToCheck;
 
-	static TCodeDest codeDestination;
+	//static TCodeDest codeDestination;
 
 
 	static std::set<int> globalVarIds; ///<Set of member ids that reperesent global variables.

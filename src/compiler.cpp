@@ -43,7 +43,6 @@ void CTigCompiler::compile(std::string filename) {
 	lineRecs.push_back({ 1,0 }); //so source line tracking starts on line 1, source file 0
 	homeDir = filename.substr(0, filename.find_last_of('\\') + 1);
 
-
 	tigC = this;
 
 	yyparse();
@@ -65,8 +64,8 @@ void CTigCompiler::encode(CSyntaxNode * node) {
 	node->globalByteCode.open("globalCode.tmp", ios::binary | ios::out );
 	
 	//node->setOutputFile(node->globalByteCode); cerr << "\n[Global]";
-	node->codeDestination = destNone;
-	node->setCodeDestination(globalDest);
+	codeDestination = destNone;
+	setCodeDestination(globalDest);
 	//outputFile = node->outputFile; //TO DO: bring setCodeDestinaton into compiler to avoid this
 	node->encode();
 
@@ -109,8 +108,12 @@ void CTigCompiler::encode(CSyntaxNode * node) {
 	
 	node->mergeInheritedFlags();
 
-	node->writeObjectDefTable();
+	//node->writeObjectDefTable();
+	writeObjectDefTable();
 	writeObjectNameTable();
+
+	writeConstFile();
+
 	writeConstNameTable();
 	node->writeMemberNameTable();
 	node->writeFlagNameTable();
@@ -133,15 +136,28 @@ void CTigCompiler::encode(CSyntaxNode * node) {
 
 
 	tempFile.close();
-//	node->killNodes();
+
 
 	for (auto killNode : nodeList)
 		 delete killNode;
 
 	remove("fnCode.tmp");
 	remove("globalCode.tmp");
-
 }
+
+
+void CTigCompiler::setCodeDestination(TCodeDest dest) {
+	if (dest != codeDestination) {
+		codeDestination = dest;
+		if (codeDestination == funcDest) {
+			setOutputFile(CSyntaxNode::fnByteCode);
+		}
+		else {
+			setOutputFile(CSyntaxNode::globalByteCode);
+		}
+	}
+}
+
 
 bool CTigCompiler::globalMemberChecksResolve(CSyntaxNode * node) {
 	bool resolve = true;
@@ -189,7 +205,7 @@ bool CTigCompiler::flagNameChecksResolve(CSyntaxNode * node) {
 
 /** Return false if there are still object names that were used but never declared. */
 bool CTigCompiler::objNameChecksResolve(CSyntaxNode * node) {
-	if (node->objNamesToCheck.size() == 0)
+	if (node->objNamesToCheck.empty())
 		return true;
 	for (auto failName : node->objNamesToCheck) {
 		cerr << "\nError! Object \"" << failName.name << "\"  used in file " <<
@@ -202,6 +218,22 @@ bool CTigCompiler::objNameChecksResolve(CSyntaxNode * node) {
 void CTigCompiler::setOutputFile(std::ofstream& file) {
 	outputFile = &file;
 	CSyntaxNode::outputFile = &file;
+}
+
+void CTigCompiler::writeOp(char byte) {
+	if (tron) {
+		int addr = outputFile->tellp();
+		cout << "\n" << (codeDestination == funcDest ? "F " : "G ") << " " << addr << " " << opCode[byte];
+	}
+	outputFile->write(&byte, 1);
+}
+
+void CTigCompiler::writeByte(char byte) {
+	if (tron) {
+		int addr = outputFile->tellp();
+		cout << "\n" << (codeDestination == funcDest ? "F " : "G ") << " " << addr << " [writeByte] " << (int)byte;
+	}
+	outputFile->write(&byte, 1);
 }
 
 void CTigCompiler::writeString(const std::string& text) {
@@ -224,6 +256,81 @@ void CTigCompiler::writeWord(unsigned int word) {
 		cout << " " << word;
 }
 
+
+/**Write the definitions of all compiler->objects.*/
+void CTigCompiler::writeObjectDefTable() {
+	//sort object table by objectId, which is also order of creation. This is useful for the VM.
+	std::vector<CObject> orderedObjects;
+	for (auto object : objects) {
+		orderedObjects.push_back(object.second);
+	}
+	sort(orderedObjects.begin(), orderedObjects.end(),
+		[&](CObject& obj1, CObject& obj2) {return obj1.objectId < obj2.objectId; });
+
+	writeWord(objects.size());
+	for (auto object : orderedObjects) {
+		writeWord(object.objectId);
+		writeByte(object.classIds.size());
+		for (auto classId : object.classIds) {
+			writeWord(classId);
+		}
+		writeByte(object.members.size());
+		for (auto member : object.members) {
+			writeWord(member.memberId);
+			writeByte(member.value.type);
+			if (member.value.type == tigString)
+				writeString(member.value.getStringValue());
+			if (member.value.type == tigInt)
+				writeWord(member.value.getIntValue());
+			if (member.value.type == tigFunc)
+				writeWord(member.value.getFuncAddress());
+			if (member.value.type == tigObj)
+				writeWord(member.value.getObjId());
+			if (member.value.type == tigUndefined)
+				writeWord(0);
+			if (member.value.type == tigArray) {
+				writeWord(member.arrayInitList.size()); int unrecognisedIdx = 0;
+				for (auto element : member.arrayInitList) {
+					if (element.type == tigUndefined) {
+					std:string unrecognisedStr = member.unrecogniseArrayInitIds[unrecognisedIdx++];
+						auto iter = objects.find(unrecognisedStr);
+						if (iter != objects.end()) {
+							writeByte(tigObj);
+							writeWord(iter->second.objectId);
+							continue;
+						}
+						auto iter2 = CSyntaxNode::memberIds.find(unrecognisedStr);
+						if (iter2 != CSyntaxNode::memberIds.end()) {
+							writeByte(tigInt);
+							writeWord(iter2->second);
+							continue;
+						}
+						cerr << "\nError! Identifier " << unrecognisedStr << " used to"
+							<< "initialise object " << object.objectId << " but never defined.";
+						exit(1);
+					}
+
+					writeByte(element.type);
+					if (element.type == tigInt)
+						writeWord(element.getIntValue());
+					if (element.type == tigObj)
+						writeWord(element.getObjId());
+					if (element.type == tigString)
+						writeString(element.getStringValue());
+
+
+					//TO DO: provide for other values
+				}
+			}
+		}
+	}
+}
+
+
+
+
+
+
 void CTigCompiler::writeObjectNameTable() {
 	writeWord(objects.size());
 	for (auto object : objects) {
@@ -243,6 +350,25 @@ void CTigCompiler::writeConstNameTable() {
 		writeCString(constRec.identifier);
 		writeWord(constRec.intValue);
 	}
+}
+
+/** Write a handy C++ header file providing all constants found. */
+void CTigCompiler::writeConstFile() {
+	std::ofstream constFile("tigConst.h", ios::out);
+
+	constFile << "#pragma once";
+	constFile << "\n\n//Machine-generated file, do not alter!";
+
+	constFile << "\n\nnamespace tig {";
+
+	constFile << "\n\t//Tig constants";
+	for (auto constRec : nameBase.constRecs) {
+		constFile << "\n\tconst int " << constRec.identifier;
+		constFile << " = " << constRec.intValue << ";";
+	}
+
+	constFile << "\n}";
+	constFile.close();
 }
 
 

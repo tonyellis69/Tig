@@ -17,24 +17,33 @@ public:
 	CTigCompiler();
 	~CTigCompiler();
 	void compile(std::string filename);
-	//COpNode* opNode(TOpCode opCode, CSyntaxNode* operand);
 	void encode(CSyntaxNode* node);
+
+	void setCodeDestination(TCodeDest dest);
+
+private:
 	bool globalMemberChecksResolve(CSyntaxNode* node);
 	bool flagNameChecksResolve(CSyntaxNode * node);
 	bool objNameChecksResolve(CSyntaxNode * node);
 
 	void setOutputFile(std::ofstream& file);
+	void writeOp(char byte);
+	void writeByte(char byte);
 	void writeString(const std::string& text);
 	void writeCString(const std::string& text);
 	void writeWord(unsigned int word);
 
+	void writeObjectDefTable();
+
 	void writeObjectNameTable();
 	void writeConstNameTable();
+
+	void writeConstFile();
 
 	std::string outputFileName;
 
 	CNamebase nameBase; ///<Database of all identifiers.
 
 	std::ofstream* outputFile;
-	
+	TCodeDest codeDestination;
 };

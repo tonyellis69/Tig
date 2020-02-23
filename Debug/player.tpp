@@ -2,7 +2,7 @@
 
 
 CGameObj CombatantClass player has onObject, backDirection, name "player", hitPoints 25, maxHitPoints 25, armour,
-weapon, distributor, suit, shieldGen, converter,
+weapon, distributor, suit, shieldGen, converter, action,
 
 /** An attempt by the player to move in the given direction to a new location.*/
 attemptMove (direction) {
