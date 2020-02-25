@@ -113,6 +113,7 @@ void CTigCompiler::encode(CSyntaxNode * node) {
 	writeObjectNameTable();
 
 	writeConstFile();
+	writeExportFile();
 
 	writeConstNameTable();
 	node->writeMemberNameTable();
@@ -354,11 +355,12 @@ void CTigCompiler::writeConstNameTable() {
 
 /** Write a handy C++ header file providing all constants found. */
 void CTigCompiler::writeConstFile() {
-	std::ofstream constFile("tigConst.h", ios::out);
+	if (nameBase.constRecs.empty())
+		return;
 
+	std::ofstream constFile("tigConst.h", ios::out);
 	constFile << "#pragma once";
 	constFile << "\n\n//Machine-generated file, do not alter!";
-
 	constFile << "\n\nnamespace tig {";
 
 	constFile << "\n\t//Tig constants";
@@ -369,6 +371,53 @@ void CTigCompiler::writeConstFile() {
 
 	constFile << "\n}";
 	constFile.close();
+}
+
+/** Write a handy C++ header file providing const int values for all
+	exported identifiers. */
+void CTigCompiler::writeExportFile() {
+	if (nameBase.exportNames.empty())
+		return;
+
+	std::map<std::string,int> memberNames;
+	std::map<std::string,int> objectNames;
+	for (auto ident : nameBase.exportNames) {
+		auto it = std::find_if(nameBase.memberRecs.begin(), nameBase.memberRecs.end(),
+				[&](auto& member) { return member.identifier == ident; });
+		if (it == nameBase.memberRecs.end())
+			objectNames.insert({ ident,objects[ident].objectId });
+		else
+			memberNames.insert({ ident,it->intValue });	
+	}
+
+
+	std::ofstream exportFile("tigExport.h", ios::out);
+	exportFile << "#pragma once";
+	exportFile << "\n\n//Machine-generated file, do not alter!";
+	exportFile << "\n\nnamespace tig {";
+
+	if (!objectNames.empty()) {
+		exportFile << "\n\t//Tig exported object identifiers";
+		for (auto obj : objectNames) {
+			exportFile << "\n\tconst int " << obj.first;
+			exportFile << " = " << obj.second << ";";
+		}
+
+		exportFile << "\n";
+	}
+
+	if (!memberNames.empty()) {
+		exportFile << "\n\t//Tig exported member identifiers";
+		for (auto memb : memberNames) {
+			exportFile << "\n\tconst int " << memb.first;
+			exportFile << " = " << memb.second << ";";
+		}
+	}
+
+
+	exportFile << "\n}";
+	exportFile.close();
+
 }
 
 

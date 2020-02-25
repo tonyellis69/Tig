@@ -12,6 +12,10 @@
 #include powerPlant.tpp
 
 
+export CConsole, action, player, onChooseTurnAction,onHitPlayer,onReceiveDamage,
+	isNeighbour, botA, botB;
+
+
 const smallMap, mediumMap, largeMap;
 
 const actSerial = 0x80000000, actNone = 0x0, actChasePlayer = 0x1, actAttackPlayer = 0x80000002,
@@ -21,11 +25,23 @@ actPlayerTurnToAttack = 0x80000006, actDead = 0x7, actDither = 0x8;
 testRoom has size mediumMap;
 
 CRobot2 has name, hitPoints, action = actNone,
-receiveDamage(attacker,damage) {
+onReceiveDamage(attacker,damage) {
+	if (action == actDead) {
+		CConsole.msgFn("\nYou're flogging a dead robot");
+		return;
+	}
+
 	hitPoints -= damage;
+
+	if (hitPoints <= 0) {
+		CConsole.msgFn("\nYou trash " + name + "!");
+		action = actDead;
+		return;
+	}
+
 	CConsole.msgFn("You hit " + name);
 },
-chooseTurnAction() {
+onChooseTurnAction() {
 	if (action == actDead)
 			return; //TO DO never seem to get here!!!!
 
@@ -35,7 +51,9 @@ chooseTurnAction() {
 	 		action = attackOrNot();
 		else
 			action = actChasePlayer;
-
+},
+onHitPlayer() {
+		CConsole.msgFn("\n" + name + " hits you!");
 },
 attackOrNot() {
 	roll = d2;

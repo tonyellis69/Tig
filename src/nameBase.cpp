@@ -35,6 +35,10 @@ void CNamebase::storeMember(const std::string& ident, int memberId, TSrcLoc sour
 
 }
 
+void CNamebase::storeExport(const std::string& ident) {
+	exportNames.push_back(ident);
+}
+
 bool CNamebase::isConst(const std::string& ident) {
 	return isFound(ident, identConst);
 }

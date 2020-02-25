@@ -39,6 +39,7 @@ private:
 	void writeConstNameTable();
 
 	void writeConstFile();
+	void writeExportFile();
 
 	std::string outputFileName;
 

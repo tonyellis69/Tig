@@ -11,6 +11,7 @@ public:
 	virtual void storeConst(const std::string& ident, int value, TSrcLoc srcLoc) = 0;
 	virtual void storeLocalVar(const std::string& ident, TSrcLoc sourceLoc) = 0;
 	virtual void storeMember(const std::string& ident, int memberId, TSrcLoc sourceLoc) = 0;
+	virtual void storeExport(const std::string& ident) = 0;
 
 	virtual bool isConst(const std::string& ident) = 0;
 	virtual bool isLocalVar(const std::string& ident) = 0;

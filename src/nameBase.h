@@ -15,6 +15,7 @@ public:
 	void storeConst(const std::string& ident, int value, TSrcLoc srcLoc);
 	void storeLocalVar(const std::string& ident, TSrcLoc srcLoc);
 	void storeMember(const std::string& ident, int memberId, TSrcLoc sourceLoc);
+	void storeExport(const std::string& ident);
 
 	bool isConst(const std::string& ident);
 	bool isLocalVar(const std::string& ident);
@@ -28,6 +29,7 @@ public:
 	std::vector<CNameRec> constRecs;
 	std::vector<CNameRec> localVarRecs;
 	std::vector<CNameRec> memberRecs;
+	std::vector<std::string> exportNames;
 
 private:
 	bool isFound(const std::string& ident, TIdentifierType identType);

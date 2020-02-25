@@ -780,3 +780,11 @@ public:
 
 	bool numericConst;
 };
+
+
+class CExportDeclNode : public CSyntaxNode {
+public:
+	CExportDeclNode(std::string* idName);
+
+	void encode();
+};

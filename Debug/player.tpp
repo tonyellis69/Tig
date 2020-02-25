@@ -1,8 +1,24 @@
 
 
 
-CGameObj CombatantClass player has onObject, backDirection, name "player", hitPoints 25, maxHitPoints 25, armour,
+CGameObj CombatantClass player has onObject, backDirection, name "player", hitPoints 3, maxHitPoints 25, armour,
 weapon, distributor, suit, shieldGen, converter, action,
+
+
+onReceiveDamage(attacker,damage) {
+
+	CConsole.msgFn("\n" + attacker.name + " swings at you!");
+
+	hitPoints -= damage;
+
+	if (hitPoints <= 0) {
+		CConsole.msgFn("\nOh no, you're dead!");
+		action = actDead;
+		return;
+	}
+
+
+},
 
 /** An attempt by the player to move in the given direction to a new location.*/
 attemptMove (direction) {

@@ -2198,3 +2198,11 @@ void CNegateNode::encode() {
 	if (!numericConst)
 		compiler->writeOp(opMinus);
 }
+
+CExportDeclNode::CExportDeclNode(std::string* idName) {
+	nameBase->storeExport(*idName);
+}
+
+void CExportDeclNode::encode()
+{
+}

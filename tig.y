@@ -54,7 +54,7 @@
 %type <nPtr> memberId flag_expr member_id_expr memb_or_obj_id
 %type <nPtr> optional_new_init new_init_list new_init optional_hot_param_list
 %type <nPtr> make_hot style cap 
-%type <nPtr> const_decl_list const_decl
+%type <nPtr> const_decl_list const_decl export_decl_list
 //%type <nPtr> range_expr
 
 %token PRINT SET_WINDOW CLEAR_WINDOW OPEN_WINDOW MODAL CLEAR_MARKED END RETURN
@@ -82,7 +82,7 @@
 %token RAND_ARRAY
 %token SORT_DESC BY
 %token LOG 
-%token NEW  ARRAY WITH CONST
+%token NEW  ARRAY WITH CONST EXPORT
 
 %left OR AND 
 %left NE GE '>' LE '<'     // '%left' makes these tokens left associative
@@ -227,6 +227,12 @@ dec_statement:
 		| level class_identifier obj_identifier optional_member_list ';'	{ $$ = new CObjDeclNode($3,$4,$2); }
 		| global_func_decl ';'												{ $$ = $1; }
 		| CONST const_decl_list ';'											{ $$ = $2; }
+		| EXPORT export_decl_list ';'										{ $$ = $2; }	
+		;
+
+export_decl_list:
+		IDENTIFIER							{ $$ = new CExportDeclNode($1); }
+		| export_decl_list ',' IDENTIFIER	{ $$ = new CJointNode($1, new CExportDeclNode($3) ); }
 		;
 
 const_decl_list:
