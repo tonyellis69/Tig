@@ -4,6 +4,7 @@
 CGameObj CombatantClass player has onObject, backDirection, name "player", hitPoints 3, maxHitPoints 25, armour,
 weapon, distributor, suit, shieldGen, converter, action,
 
+inventory,
 
 onReceiveDamage(attacker,damage) {
 
@@ -16,9 +17,32 @@ onReceiveDamage(attacker,damage) {
 		action = actDead;
 		return;
 	}
-
-
 },
+onTake(item) {
+	inventory[] += item;
+},
+onInventory() {
+	CConsole.msgFn("\nInventory: ");
+	if (inventory == 0) {
+		CConsole.msgFn("carrying nothing!");
+		return;
+	}
+
+	count = 1;
+	for each item of inventory {
+			CConsole.msgFn(count + ". " + item.name + " ");
+			count += 1;
+	}
+},
+onDrop(itemNo) {
+	CConsole.msgFn("\n" + inventory[itemNo].name + " dropped!");
+	item = inventory[itemNo];
+	remove inventory[itemNo];
+	return item;
+},
+
+
+
 
 /** An attempt by the player to move in the given direction to a new location.*/
 attemptMove (direction) {
@@ -123,7 +147,7 @@ getDefence() {
 
 /** Set the power levels of the player's current distributor. */
 setDistributor(offencePower,defencePower) {
-	log "\nPlayer offence " + offencePower + " defence " + defencePower;
+//	log "\nPlayer offence " + offencePower + " defence " + defencePower;
 	distributor.setPowerLevels(offencePower,defencePower);
 }
 

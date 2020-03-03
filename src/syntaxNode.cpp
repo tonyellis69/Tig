@@ -2098,12 +2098,12 @@ void CArrayPushNode::encode() {
 }
 
 /** Node for a -= operation on an array. */
-CArrayRemoveNode::CArrayRemoveNode(CSyntaxNode* assignee, CSyntaxNode* value) {
+CArrayRemoveValueNode::CArrayRemoveValueNode(CSyntaxNode* assignee, CSyntaxNode* value) {
 	operands.push_back(assignee);
 	operands.push_back(value);
 }
 
-void CArrayRemoveNode::encode() {
+void CArrayRemoveValueNode::encode() {
 	operands[0]->encode();
 	operands[1]->encode();
 
@@ -2112,7 +2112,7 @@ void CArrayRemoveNode::encode() {
 	if (it != unconfirmedLocalVarNames.end())
 		unconfirmedLocalVarNames.erase(it);
 
-	compiler->writeOp(opArrayRemove);
+	compiler->writeOp(opArrayRemoveValue);
 }
 
 /** A node defining a while loop. */

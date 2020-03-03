@@ -74,15 +74,15 @@ CRobot2 botB has name "Robot B", hitPoints 3;
 
 CConsole has msgFn() { };
 
+/** Basic template for portable items. */
+CItem has name;
 
+CItem monkeyWrench has name "monkey wrench";
+CItem shield has name "shield";
+CItem blaster has name "blaster";
 
-
-
-func1 (param1, param2) {
-	x = param1;
-	//y = param2 ;
-};
-
+export monkeyWrench, shield, blaster, name, inventory, onTake, onInventory,
+	onDrop;
 /** Initialisation code.*/
 init() {
 
@@ -129,11 +129,13 @@ init() {
 	//move player to entranceHub.hubRoom;
 
 	"A short first line.";
-	"\nThis is a longer second line, about three times as long at least, definitely.";
+
+	"\nZhis is a longer second line, about three times as long at least, definitely.";
 	"\nAnother short line.";
 	"\nAnd another long line, are we seeing any kind of pattern yet in all of this?";
 	"\n\nThat was a line gap, did it make a difference?";
 	"\n\n\nAnd that was a double line gap.";
+
 	"\nNow here is a section of text that is going to run on for some lines, on and on
 	and on in the interest of seeing what difference that makes. Of the trail of ink
 	there is no end, as the man said. How many lines is this, I wonder. Enough to
@@ -150,7 +152,9 @@ init() {
 	"\none more line to cause a scroll...";
 	"\n...this one";
 
+
 	"\n\nAnother line gap. Done. x";
+
 	"\nline one x";
 	"\nline twox";
 	"\nline three x";
@@ -158,7 +162,7 @@ init() {
 	"\nline six x";
 	"\nline seven x";
 	"\nline eight x";
-	"\none more line to cause a scroll... x";
+	"\none more line to cause a scroll... @";
 	"\n...this one x";
 
 /*

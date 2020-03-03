@@ -182,6 +182,7 @@ d[1-9]([0-9])*					{
 "max"					return MAX;
 "const"					return CONST;
 "export"				return EXPORT;
+"remove"				return REMOVE;
 {IDENT}					{	identBufs[currentIdentBuf].clear(); 
 							identBufs[currentIdentBuf].assign(yytext,yyleng);
 							yylval.str = &identBufs[currentIdentBuf];

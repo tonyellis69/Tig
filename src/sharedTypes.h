@@ -9,9 +9,9 @@ enum TOpCode {
 	opPushElem, opAssignElem, opPop, opEq, opNE, opLT, opLE, opGT, opGE,
 	opJumpFalse, opJump, opChild, opSibling, opIn, opNotIn, opGetVar, opChildren, opMakeHot, opMakeHotAlt, opBrk,
 	opMove, opOpenWin, opOpenWinModal, opWin, opClr, opStyle, opCap, opCapNext, opInherits, opHotClr, opClrMarked, opArrayIt,
-	opHotCheck, opNot, opAnd, opOr, opArrayPush, opArrayRemove, opMsg, opHas, opMatch, opIs,
+	opHotCheck, opNot, opAnd, opOr, opArrayPush, opArrayRemoveValue, opMsg, opHas, opMatch, opIs,
 	opIsNot, opSet, opUnset, opNew, opDelete, opFinalLoop, opFirstLoop, opRoll, opRand,
-	opSortDesc, opLog, opPause, opRandArray, opRound, opMin, opMax
+	opSortDesc, opLog, opPause, opRandArray, opRound, opMin, opMax, opArrayRemove
 };
 
 static char* opCode[] = { "opNop\0",
@@ -82,7 +82,7 @@ static char* opCode[] = { "opNop\0",
 	"opAnd\0",
 	"opOr\0",
 	"opArrayPush\0",
-	"opArrayRemove\0",
+	"opArrayRemoveValue\0",
 	"opMsg\0",
 	"opHas\0",
 	"opMatch\0",
@@ -102,7 +102,8 @@ static char* opCode[] = { "opNop\0",
 	"opRandArray\0",
 	"opRound\0",
 	"opMin\0",
-	"opMax\0"
+	"opMax\0",
+	"opArrayRemove\0"
 
 };
 

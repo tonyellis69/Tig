@@ -735,9 +735,9 @@ public:
 };
 
 
-class CArrayRemoveNode : public CSyntaxNode {
+class CArrayRemoveValueNode : public CSyntaxNode {
 public:
-	CArrayRemoveNode(CSyntaxNode* assignee, CSyntaxNode* value);
+	CArrayRemoveValueNode(CSyntaxNode* assignee, CSyntaxNode* value);
 	void encode();
 };
 

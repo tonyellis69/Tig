@@ -82,7 +82,7 @@
 %token RAND_ARRAY
 %token SORT_DESC BY
 %token LOG 
-%token NEW  ARRAY WITH CONST EXPORT
+%token NEW  ARRAY WITH CONST EXPORT REMOVE
 
 %left OR AND 
 %left NE GE '>' LE '<'     // '%left' makes these tokens left associative
@@ -151,7 +151,7 @@ statement:
 		| HOT CLEAR ';'									{ $$ = new COpNode(opHotClr); }
 		| CLEAR_MARKED ';'								{ $$ = new COpNode(opClrMarked); }
 		| var_or_obj_memb ARRAY ADD_ASSIGN expression	';'		{ $$ = new CArrayPushNode($4,$1); }
-		| var_or_obj_memb ARRAY SUB_ASSIGN expression	';'		{ $$ = new CArrayRemoveNode($4,$1); }
+		| var_or_obj_memb ARRAY SUB_ASSIGN expression	';'		{ $$ = new CArrayRemoveValueNode($4,$1); }
 		| MESSAGE param_list ';'						{ $$ = new CMsgNode($2); }
 		| CONTINUE ';'									{ $$ = new CContinueNode(); }
 		| LOOP_BREAK ';'								{ $$ = new CLoopBreakNode(); }
@@ -166,6 +166,7 @@ statement:
 		| UNPAUSE ';'									{ $$ = new COpNode(opPause); }
 		| CAP NEXT ';'									{ $$ = new COpNode(opCapNext); }
 		| WHILE '(' expression ')' statement			{ $$ = new CWhileNode($3,$5); }
+		| REMOVE element_assignee						{ $$ = new COpNode(opArrayRemove,$2); }
 		;
 
 			//TO DO: this repeats the function of '&memberName' (member_id_expr), without the
