@@ -4,7 +4,7 @@
 CGameObj CombatantClass player has onObject, backDirection, name "player", hitPoints 3, maxHitPoints 25, armour,
 weapon, distributor, suit, shieldGen, converter, action,
 
-inventory,
+inventory, equippedWeapon, equippedShield,
 
 onReceiveDamage(attacker,damage) {
 
@@ -20,6 +20,7 @@ onReceiveDamage(attacker,damage) {
 },
 onTake(item) {
 	inventory[] += item;
+		CConsole.msgFn("\n" + item.name + " takken!");
 },
 onInventory() {
 	CConsole.msgFn("\nInventory: ");
@@ -40,7 +41,13 @@ onDrop(itemNo) {
 	remove inventory[itemNo];
 	return item;
 },
-
+onEquip(itemNo) {
+	item = inventory[itemNo];
+	item.equip();
+},
+getWeaponDamage() {
+	return equippedWeapon.getDamage();
+},
 
 
 

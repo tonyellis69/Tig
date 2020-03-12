@@ -77,12 +77,29 @@ CConsole has msgFn() { };
 /** Basic template for portable items. */
 CItem has name;
 
-CItem monkeyWrench has name "monkey wrench";
-CItem shield has name "shield";
-CItem blaster has name "blaster";
+CItem CWeapon has damage,
+equip() {
+	player.equippedWeapon = self;
+	CConsole.msgFn("\nEquipped " + name + "!");
+},
+getDamage() {
+	return damage;
+};
+
+CItem CShield has
+equip() {
+	player.equippedShield = self;
+	CConsole.msgFn("\nEquipped " + name + "!");
+};
+
+CWeapon monkeyWrench has name "monkey wrench", damage = 1;
+CShield shield has name "shield";
+CWeapon blaster has name "blaster", damage = 2;
+
+CGroupItem has name;
 
 export monkeyWrench, shield, blaster, name, inventory, onTake, onInventory,
-	onDrop;
+	onDrop, onEquip, CItem, CGroupItem, getWeaponDamage, equippedShield;
 /** Initialisation code.*/
 init() {
 
