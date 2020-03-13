@@ -18,9 +18,10 @@ export CConsole, action, player, onChooseTurnAction,onHitPlayer,onReceiveDamage,
 
 const smallMap, mediumMap, largeMap;
 
-const actSerial = 0x80000000, actNone = 0x0, actChasePlayer = 0x1, actAttackPlayer = 0x80000002,
-actCombatPassive = 0x3, actTrackPlayer = 0x4, actPlayerAttack = 0x80000005,
-actPlayerTurnToAttack = 0x80000006, actDead = 0x7, actDither = 0x8;
+const actSerial = 0x8000, actNone = 0x0, actChasePlayer = 0x1, actAttackPlayer = 0x8002,
+actCombatPassive = 0x3, actTrackPlayer = 0x4, actPlayerAttack = 0x8005,
+actPlayerTurnToAttack = 0x8006, actDead = 0x7, actDither = 0x8,
+actShootPlayer =0x8007;
 
 testRoom has size mediumMap;
 
@@ -49,8 +50,13 @@ onChooseTurnAction() {
 
 	 if (result == 1)
 	 		action = attackOrNot();
-		else
-			action = actChasePlayer;
+		else {
+			roll = d2;
+			if (roll == 1)
+				action = actChasePlayer;
+			else
+				action = actShootPlayer;
+		}
 },
 onHitPlayer() {
 		CConsole.msgFn("\n" + name + " hits you!");
