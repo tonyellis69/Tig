@@ -1,7 +1,7 @@
 
 
 
-CGameObj CombatantClass player has onObject, backDirection, name "player", hitPoints 3, maxHitPoints 25, armour,
+CGameObj CombatantClass player has onObject, backDirection, name "player", hitPoints 30, maxHitPoints 25, armour,
 weapon, distributor, suit, shieldGen, converter, action,
 
 inventory, equippedWeapon, equippedShield,
