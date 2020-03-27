@@ -21,7 +21,8 @@ const smallMap, mediumMap, largeMap;
 const actSerial = 0x8000, actNone = 0x0, actChasePlayer = 0x1, actAttackPlayer = 0x8002,
 actCombatPassive = 0x3, actTrackPlayer = 0x4, actPlayerMeleeAttack = 0x8005,
 actPlayerTurnToAttack = 0x8006, actDead = 0x7, actDither = 0x8,
-actShootPlayer =0x8009, actTurnToTarget = 0x0A;
+actShootPlayer =0x8009, actTurnToTarget = 0x0A, actTurnToTargetDest = 0x0B,
+actPlayerMove = 0x0C, actPlayerShoot = 0x800D;
 
 testRoom has size mediumMap;
 
@@ -51,16 +52,16 @@ onChooseTurnAction() {
 	 if (result == 1)
 	 		action = attackOrNot();
 		else {
-			action = actChasePlayer;
-			return;
+		//	action = actChasePlayer;
+		//	return;
 
-			/*
-			roll = d2;
+
+			roll = d4;
 			if (roll == 1)
-				action = actChasePlayer;
-			else
 				action = actShootPlayer;
-				*/
+			else
+				action = actChasePlayer;
+
 		}
 },
 onHitPlayer() {
