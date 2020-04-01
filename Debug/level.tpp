@@ -12,8 +12,8 @@
 #include powerPlant.tpp
 
 
-export CConsole, action, player, onChooseTurnAction,onHitPlayer,onReceiveDamage,
-	isNeighbour, botA, botB;
+export IHexWorld, action, player, onChooseTurnAction,onHitPlayer,onReceiveDamage,
+	isNeighbour, botA, botB, onMouseOver, msgFn, popupWin;
 
 
 const smallMap, mediumMap, largeMap;
@@ -29,19 +29,19 @@ testRoom has size mediumMap;
 CRobot2 has name, hitPoints, action = actNone,
 onReceiveDamage(attacker,damage) {
 	if (action == actDead) {
-		CConsole.msgFn("\nYou're flogging a dead robot");
+		IHexWorld.msgFn("\nYou're flogging a dead robot");
 		return;
 	}
 
 	hitPoints -= damage;
 
 	if (hitPoints <= 0) {
-		CConsole.msgFn("\nYou trash " + name + "!");
+		IHexWorld.msgFn("\nYou trash " + name + "!");
 		action = actDead;
 		return;
 	}
 
-	CConsole.msgFn("You hit " + name);
+	IHexWorld.msgFn("You hit " + name);
 },
 onChooseTurnAction() {
 	if (action == actDead)
@@ -65,12 +65,15 @@ onChooseTurnAction() {
 		}
 },
 onHitPlayer() {
-		CConsole.msgFn("\n" + name + " hits you!");
+		IHexWorld.msgFn("\n" + name + " hits you!");
+},
+onMouseOver() {
+		IHexWorld.popupWin(name + "\nA servobot in a bronze-metallic casing.");
 },
 attackOrNot() {
 	roll = d2;
 	if (roll == 1) {
-		CConsole.msgFn("\nRobot dithers!");
+		IHexWorld.msgFn("\nRobot dithers!");
 		return  actDither;
 	}
 	return actAttackPlayer;
@@ -84,7 +87,8 @@ CRobot2 botA has name "Robot A", hitPoints 3;
 CRobot2 botB has name "Robot B", hitPoints 3;
 
 
-CConsole has msgFn() { };
+IHexWorld has msgFn() { },
+popupWin(text) { };
 
 /** Basic template for portable items. */
 CItem has name;
@@ -92,7 +96,7 @@ CItem has name;
 CItem CWeapon has damage,
 equip() {
 	player.equippedWeapon = self;
-	CConsole.msgFn("\nEquipped " + name + "!");
+	IHexWorld.msgFn("\nEquipped " + name + "!");
 },
 getDamage() {
 	return damage;
@@ -101,7 +105,7 @@ getDamage() {
 CItem CShield has
 equip() {
 	player.equippedShield = self;
-	CConsole.msgFn("\nEquipped " + name + "!");
+	IHexWorld.msgFn("\nEquipped " + name + "!");
 };
 
 CWeapon monkeyWrench has name "monkey wrench", damage = 1;

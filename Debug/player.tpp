@@ -8,35 +8,35 @@ inventory, equippedWeapon, equippedShield,
 
 onReceiveDamage(attacker,damage) {
 
-	CConsole.msgFn("\n" + attacker.name + " swings at you!");
+	IHexWorld.msgFn("\n" + attacker.name + " swings at you!");
 
 	hitPoints -= damage;
 
 	if (hitPoints <= 0) {
-		CConsole.msgFn("\nOh no, you're dead!");
+		IHexWorld.msgFn("\nOh no, you're dead!");
 		action = actDead;
 		return;
 	}
 },
 onTake(item) {
 	inventory[] += item;
-		CConsole.msgFn("\n" + item.name + " takken!");
+		IHexWorld.msgFn("\n" + item.name + " takken!");
 },
 onInventory() {
-	CConsole.msgFn("\nInventory: ");
+	IHexWorld.msgFn("\nInventory: ");
 	if (inventory == 0) {
-		CConsole.msgFn("carrying nothing!");
+		IHexWorld.msgFn("carrying nothing!");
 		return;
 	}
 
 	count = 1;
 	for each item of inventory {
-			CConsole.msgFn(count + ". " + item.name + " ");
+			IHexWorld.msgFn(count + ". " + item.name + " ");
 			count += 1;
 	}
 },
 onDrop(itemNo) {
-	CConsole.msgFn("\n" + inventory[itemNo].name + " dropped!");
+	IHexWorld.msgFn("\n" + inventory[itemNo].name + " dropped!");
 	item = inventory[itemNo];
 	remove inventory[itemNo];
 	return item;
