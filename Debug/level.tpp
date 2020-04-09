@@ -114,8 +114,12 @@ CWeapon blaster has name "blaster", damage = 2;
 
 CGroupItem has name;
 
+CScenery has name;
+CScenery desk;
+
 export monkeyWrench, shield, blaster, name, inventory, onTake, onInventory,
-	onDrop, onEquip, CItem, CGroupItem, getWeaponDamage, equippedShield;
+	onDrop, onEquip, CItem, CGroupItem, getWeaponDamage, equippedShield,
+	desk;
 /** Initialisation code.*/
 init() {
 
@@ -176,16 +180,18 @@ init() {
 
 	"\n\nAnother line gap. Done.";
 	"\nline one";
-	"\nline two";
+	"\nline two ";
+	makeHot("Test1",IHexWorld,&msgFn);
+	" space text ";
+	makeHot("Test2",IHexWorld,&msgFn);
 	"\nline three";
-	"\nline five";
-	"\nline six";
-	"\nline seven";
-	"\nline eight";
-	"\none more line to cause a scroll...";
-	"\n...this one";
+///	"\nline six";
+	//"\nline seven";
+//	"\nline eight";
+	//"\none more line to cause a scroll...";
+	//"\n...this one";
 
-
+/*
 	"\n\nAnother line gap. Done. x";
 
 	"\nline one x";
@@ -197,7 +203,7 @@ init() {
 	"\nline eight x";
 	"\none more line to cause a scroll... @";
 	"\n...this one x";
-
+*/
 /*
 	"\n111111111111111111111111";
 	"\n222222222222222222222222";
