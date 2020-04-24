@@ -117,9 +117,11 @@ CGroupItem has name;
 CScenery has name;
 CScenery desk;
 
+CDoor has name "door";
+
 export monkeyWrench, shield, blaster, name, inventory, onTake, onInventory,
 	onDrop, onEquip, CItem, CGroupItem, getWeaponDamage, equippedShield,
-	desk;
+	desk, CDoor;
 /** Initialisation code.*/
 init() {
 
