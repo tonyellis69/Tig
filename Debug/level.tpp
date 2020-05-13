@@ -56,10 +56,10 @@ onChooseTurnAction() {
 		//	return;
 
 
-			roll = d4;
+		/*	roll = d4;
 			if (roll == 1)
 				action = actShootPlayer;
-			else
+			else*/
 				action = actChasePlayer;
 
 		}
@@ -68,12 +68,20 @@ onHitPlayer() {
 		IHexWorld.msgFn("\n" + name + " hits you!");
 },
 onMouseOver() {
-		IHexWorld.popupWin(name + "\nA servobot in a bronze-metallic casing.");
+		str = name + "\nA servobot in a bronze-metallic casing.";
+		str += "\nStatus: ";
+		if (action == actChasePlayer)
+			str += "rushing toward you!";
+		if (action == actAttackPlayer)
+			str += "about to hit you!";
+		if (action == actDither)
+				str += "shifting uncertainly.";
+
+		IHexWorld.popupWin(str);
 },
 attackOrNot() {
 	roll = d2;
 	if (roll == 1) {
-		IHexWorld.msgFn("\nRobot dithers!");
 		return  actDither;
 	}
 	return actAttackPlayer;
