@@ -129,7 +129,7 @@ CDoor has name "door";
 
 export monkeyWrench, shield, blaster, name, inventory, onTake, onInventory,
 	onDrop, onEquip, CItem, CGroupItem, getWeaponDamage, equippedShield,
-	desk, CDoor;
+	desk, CDoor, CRobot2;
 /** Initialisation code.*/
 init() {
 
