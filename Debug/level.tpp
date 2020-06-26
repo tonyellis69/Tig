@@ -13,7 +13,7 @@
 
 
 export IHexWorld, action, player, onChooseTurnAction,onHitPlayer,onReceiveDamage,
-	isNeighbour, botA, botB, onMouseOver, msgFn, popupWin;
+	isNeighbour, botA, botB, onMouseOver, msgFn, popupWin, getStatus;
 
 
 const smallMap, mediumMap, largeMap;
@@ -79,6 +79,19 @@ onMouseOver() {
 
 		IHexWorld.popupWin(str);
 },
+
+getStatus() {
+	str = name + "\nA servobot in a bronze-metallic casing.";
+	str += "\nStatus: ";
+	if (action == actChasePlayer)
+		str += "rushing toward you!";
+	if (action == actAttackPlayer)
+		str += "about to hit you!";
+	if (action == actDither)
+			str += "shifting uncertainly.";
+		return str;
+},
+
 attackOrNot() {
 	roll = d2;
 	if (roll == 1) {
