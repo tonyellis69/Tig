@@ -56,10 +56,10 @@ onChooseTurnAction() {
 		//	return;
 
 
-		/*	roll = d4;
+			roll = d4;
 			if (roll == 1)
 				action = actShootPlayer;
-			else*/
+			else
 				action = actChasePlayer;
 
 		}
